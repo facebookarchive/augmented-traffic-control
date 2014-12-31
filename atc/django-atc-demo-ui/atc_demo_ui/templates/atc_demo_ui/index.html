@@ -1,0 +1,14 @@
+{% extends "atc_demo_ui/base.html" %}
+{% block content %}
+<div id="atc_demo_ui">
+
+
+</div>
+
+<script type="text/jsx">
+    React.render(
+        <Atc endpoint="{{ atc_demo_ui_settings.REST_ENDPOINT }}"/>,
+        document.getElementById('atc_demo_ui')
+);
+</script>
+{% endblock %}

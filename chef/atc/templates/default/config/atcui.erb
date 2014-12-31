@@ -1,0 +1,15 @@
+<% if node['atc']['atcui']['listen']['address'] %>
+ATCUI_LISTEN_ADDRESS=<%= node['atc']['atcui']['listen']['address'] %>
+<% end %>
+<% if node['atc']['atcui']['listen']['port'] %>
+ATCUI_LISTEN_PORT=<%= node['atc']['atcui']['listen']['port'] %>
+<% end %>
+<% if node['atc']['atcui']['workers'] %>
+ATCUI_WORKERS=<%= node['atc']['atcui']['workers'] %>
+<% end %>
+<% if node['atc']['atcui']['base_dir'] %>
+ATCUI_SETTINGS_PATH=<%= node['atc']['atcui']['base_dir'] %>
+<% end %>
+<% if node['atc']['venv']['path'] %>
+ATCUI_VENV=<%= node['atc']['venv']['path'] %>
+<% end %>

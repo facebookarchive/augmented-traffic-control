@@ -1,0 +1,4 @@
+site :opscode
+
+metadata
+cookbook 'simple_iptables', git: 'https://github.com/rtkwlf/cookbook-simple-iptables.git', tag: '0.6.4'

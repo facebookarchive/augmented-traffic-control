@@ -1,0 +1,2 @@
+[pep8]
+exclude = migrations, */atc_thrift/atc_thrift

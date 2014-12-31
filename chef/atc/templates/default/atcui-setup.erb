@@ -1,0 +1,26 @@
+#!/bin/bash
+
+GREEN="\e[0;32m"
+NC="\e[00m"
+
+function p() {
+    echo -e "${GREEN}${1}${NC}"
+}
+
+# source virtualenvironment
+. <%= File.join(node['atc']['venv']['path'], 'bin', 'activate') %>
+
+cd /var/django
+
+p "Syncing DB"
+python manage.py syncdb
+
+p "Migrating DB"
+python ./manage.py migrate
+
+p "Loading Samples"
+python ./manage.py loaddata sample
+
+p "Generating static files"
+python ./manage.py collectstatic --noinput
+

@@ -1,0 +1,18 @@
+<% if node['atc']['atcd']['listen']['address'] %>
+ATCD_LISTEN_ADDRESS=<%= node['atc']['atcd']['listen']['address'] %>
+<% end %>
+<% if node['atc']['atcd']['listen']['port'] %>
+ATCD_LISTEN_PORT=<%= node['atc']['atcd']['listen']['port'] %>
+<% end %>
+<% if node['atc']['venv']['path'] %>
+ATCD_VENV=<%= node['atc']['venv']['path'] %>
+<% end %>
+<% if node['atc']['atcd']['sqlite'] %>
+ATCD_SQLITE=<%= node['atc']['atcd']['sqlite'] %>
+<% end %>
+<% if node['atc']['atcd']['interface']['wan'] %>
+ATCD_WAN=<%= node['atc']['atcd']['interface']['wan'] %>
+<% end %>
+<% if node['atc']['atcd']['interface']['lan'] %>
+ATCD_LAN=<%= node['atc']['atcd']['interface']['lan'] %>
+<% end %>
