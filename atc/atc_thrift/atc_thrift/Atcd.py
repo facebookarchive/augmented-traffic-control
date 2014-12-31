@@ -3,9 +3,8 @@
 #
 # DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 #
-#  options string: py
+#  options string: py:new_style
 #
-# @generated
 
 from thrift.Thrift import TType, TMessageType, TException, TApplicationException
 from ttypes import *
@@ -18,7 +17,7 @@ except:
   fastbinary = None
 
 
-class Iface:
+class Iface(object):
   def startShaping(self, tc):
     """
     Parameters:
@@ -752,7 +751,7 @@ class Processor(Iface, TProcessor):
 
 # HELPER FUNCTIONS AND STRUCTURES
 
-class startShaping_args:
+class startShaping_args(object):
   """
   Attributes:
    - tc
@@ -813,7 +812,7 @@ class startShaping_args:
   def __ne__(self, other):
     return not (self == other)
 
-class startShaping_result:
+class startShaping_result(object):
   """
   Attributes:
    - success
@@ -886,7 +885,7 @@ class startShaping_result:
   def __ne__(self, other):
     return not (self == other)
 
-class stopShaping_args:
+class stopShaping_args(object):
   """
   Attributes:
    - device
@@ -947,7 +946,7 @@ class stopShaping_args:
   def __ne__(self, other):
     return not (self == other)
 
-class stopShaping_result:
+class stopShaping_result(object):
   """
   Attributes:
    - success
@@ -1020,7 +1019,7 @@ class stopShaping_result:
   def __ne__(self, other):
     return not (self == other)
 
-class getCurrentShaping_args:
+class getCurrentShaping_args(object):
   """
   Attributes:
    - device
@@ -1081,7 +1080,7 @@ class getCurrentShaping_args:
   def __ne__(self, other):
     return not (self == other)
 
-class getCurrentShaping_result:
+class getCurrentShaping_result(object):
   """
   Attributes:
    - success
@@ -1154,7 +1153,7 @@ class getCurrentShaping_result:
   def __ne__(self, other):
     return not (self == other)
 
-class isShaped_args:
+class isShaped_args(object):
   """
   Attributes:
    - device
@@ -1215,7 +1214,7 @@ class isShaped_args:
   def __ne__(self, other):
     return not (self == other)
 
-class isShaped_result:
+class isShaped_result(object):
   """
   Attributes:
    - success
@@ -1287,7 +1286,7 @@ class isShaped_result:
   def __ne__(self, other):
     return not (self == other)
 
-class startPacketCapture_args:
+class startPacketCapture_args(object):
   """
   Attributes:
    - device
@@ -1360,7 +1359,7 @@ class startPacketCapture_args:
   def __ne__(self, other):
     return not (self == other)
 
-class startPacketCapture_result:
+class startPacketCapture_result(object):
   """
   Attributes:
    - success
@@ -1433,7 +1432,7 @@ class startPacketCapture_result:
   def __ne__(self, other):
     return not (self == other)
 
-class stopPacketCapture_args:
+class stopPacketCapture_args(object):
   """
   Attributes:
    - device
@@ -1494,7 +1493,7 @@ class stopPacketCapture_args:
   def __ne__(self, other):
     return not (self == other)
 
-class stopPacketCapture_result:
+class stopPacketCapture_result(object):
   """
   Attributes:
    - success
@@ -1567,7 +1566,7 @@ class stopPacketCapture_result:
   def __ne__(self, other):
     return not (self == other)
 
-class stopAllPacketCaptures_args:
+class stopAllPacketCaptures_args(object):
 
   thrift_spec = (
   )
@@ -1609,7 +1608,7 @@ class stopAllPacketCaptures_args:
   def __ne__(self, other):
     return not (self == other)
 
-class stopAllPacketCaptures_result:
+class stopAllPacketCaptures_result(object):
 
   thrift_spec = (
   )
@@ -1651,7 +1650,7 @@ class stopAllPacketCaptures_result:
   def __ne__(self, other):
     return not (self == other)
 
-class listPacketCaptures_args:
+class listPacketCaptures_args(object):
   """
   Attributes:
    - device
@@ -1712,7 +1711,7 @@ class listPacketCaptures_args:
   def __ne__(self, other):
     return not (self == other)
 
-class listPacketCaptures_result:
+class listPacketCaptures_result(object):
   """
   Attributes:
    - success
@@ -1793,7 +1792,7 @@ class listPacketCaptures_result:
   def __ne__(self, other):
     return not (self == other)
 
-class listRunningPacketCaptures_args:
+class listRunningPacketCaptures_args(object):
 
   thrift_spec = (
   )
@@ -1835,7 +1834,7 @@ class listRunningPacketCaptures_args:
   def __ne__(self, other):
     return not (self == other)
 
-class listRunningPacketCaptures_result:
+class listRunningPacketCaptures_result(object):
   """
   Attributes:
    - success
@@ -1903,7 +1902,7 @@ class listRunningPacketCaptures_result:
   def __ne__(self, other):
     return not (self == other)
 
-class getShapedDeviceCount_args:
+class getShapedDeviceCount_args(object):
 
   thrift_spec = (
   )
@@ -1945,7 +1944,7 @@ class getShapedDeviceCount_args:
   def __ne__(self, other):
     return not (self == other)
 
-class getShapedDeviceCount_result:
+class getShapedDeviceCount_result(object):
   """
   Attributes:
    - success
@@ -2004,7 +2003,7 @@ class getShapedDeviceCount_result:
   def __ne__(self, other):
     return not (self == other)
 
-class requestToken_args:
+class requestToken_args(object):
   """
   Attributes:
    - ip
@@ -2076,7 +2075,7 @@ class requestToken_args:
   def __ne__(self, other):
     return not (self == other)
 
-class requestToken_result:
+class requestToken_result(object):
   """
   Attributes:
    - success
@@ -2136,7 +2135,7 @@ class requestToken_result:
   def __ne__(self, other):
     return not (self == other)
 
-class requestRemoteControl_args:
+class requestRemoteControl_args(object):
   """
   Attributes:
    - device
@@ -2210,7 +2209,7 @@ class requestRemoteControl_args:
   def __ne__(self, other):
     return not (self == other)
 
-class requestRemoteControl_result:
+class requestRemoteControl_result(object):
   """
   Attributes:
    - success
@@ -2269,7 +2268,7 @@ class requestRemoteControl_result:
   def __ne__(self, other):
     return not (self == other)
 
-class getDevicesControlledBy_args:
+class getDevicesControlledBy_args(object):
   """
   Attributes:
    - ip
@@ -2329,7 +2328,7 @@ class getDevicesControlledBy_args:
   def __ne__(self, other):
     return not (self == other)
 
-class getDevicesControlledBy_result:
+class getDevicesControlledBy_result(object):
   """
   Attributes:
    - success
@@ -2397,7 +2396,7 @@ class getDevicesControlledBy_result:
   def __ne__(self, other):
     return not (self == other)
 
-class getDevicesControlling_args:
+class getDevicesControlling_args(object):
   """
   Attributes:
    - ip
@@ -2457,7 +2456,7 @@ class getDevicesControlling_args:
   def __ne__(self, other):
     return not (self == other)
 
-class getDevicesControlling_result:
+class getDevicesControlling_result(object):
   """
   Attributes:
    - success

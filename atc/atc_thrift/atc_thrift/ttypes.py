@@ -3,9 +3,8 @@
 #
 # DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 #
-#  options string: py
+#  options string: py:new_style
 #
-# @generated
 
 from thrift.Thrift import TType, TMessageType, TException, TApplicationException
 
@@ -17,7 +16,7 @@ except:
   fastbinary = None
 
 
-class ReturnCode:
+class ReturnCode(object):
   OK = 0
   INVALID_IP = 1
   INVALID_TIMEOUT = 2
@@ -71,7 +70,7 @@ class ReturnCode:
   }
 
 
-class Delay:
+class Delay(object):
   """
   Attributes:
    - delay
@@ -155,7 +154,7 @@ class Delay:
   def __ne__(self, other):
     return not (self == other)
 
-class Loss:
+class Loss(object):
   """
   Attributes:
    - percentage
@@ -227,7 +226,7 @@ class Loss:
   def __ne__(self, other):
     return not (self == other)
 
-class Reorder:
+class Reorder(object):
   """
   Attributes:
    - percentage
@@ -311,7 +310,7 @@ class Reorder:
   def __ne__(self, other):
     return not (self == other)
 
-class Corruption:
+class Corruption(object):
   """
   Attributes:
    - percentage
@@ -383,7 +382,7 @@ class Corruption:
   def __ne__(self, other):
     return not (self == other)
 
-class Shaping:
+class Shaping(object):
   """
   Attributes:
    - rate
@@ -539,7 +538,7 @@ class Shaping:
   def __ne__(self, other):
     return not (self == other)
 
-class TrafficControlSetting:
+class TrafficControlSetting(object):
   """
   Attributes:
    - up
@@ -613,7 +612,7 @@ class TrafficControlSetting:
   def __ne__(self, other):
     return not (self == other)
 
-class TrafficControlledDevice:
+class TrafficControlledDevice(object):
   """
   Attributes:
    - controlledIP
@@ -685,7 +684,7 @@ class TrafficControlledDevice:
   def __ne__(self, other):
     return not (self == other)
 
-class RemoteControlInstance:
+class RemoteControlInstance(object):
   """
   Attributes:
    - device
@@ -758,7 +757,7 @@ class RemoteControlInstance:
   def __ne__(self, other):
     return not (self == other)
 
-class TrafficControl:
+class TrafficControl(object):
   """
   Attributes:
    - settings
@@ -844,7 +843,7 @@ class TrafficControl:
   def __ne__(self, other):
     return not (self == other)
 
-class TrafficControlRc:
+class TrafficControlRc(object):
   """
   Attributes:
    - code
@@ -1054,7 +1053,7 @@ class PacketCaptureException(TException):
   def __ne__(self, other):
     return not (self == other)
 
-class PacketCaptureFile:
+class PacketCaptureFile(object):
   """
   Attributes:
    - name
@@ -1138,7 +1137,7 @@ class PacketCaptureFile:
   def __ne__(self, other):
     return not (self == other)
 
-class PacketCapture:
+class PacketCapture(object):
   """
   Attributes:
    - ip
@@ -1235,7 +1234,7 @@ class PacketCapture:
   def __ne__(self, other):
     return not (self == other)
 
-class AccessToken:
+class AccessToken(object):
   """
   Attributes:
    - token

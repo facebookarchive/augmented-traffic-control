@@ -9,7 +9,6 @@ external/
 collected_static/
 .vagrant
 .DS_Store
-Makefile
 Makefile.in
 aclocal.m4
 autom4te.cache/
