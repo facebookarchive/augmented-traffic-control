@@ -38,6 +38,7 @@ setup(
     author_email='chantra@fb.com',
     url='https://github.com/facebook/atc',
     packages=['atcd',
+              'atcd.backends',
               'atcd.scripts'],
     classifiers=['Programming Language :: Python', ],
     long_description=readme.read(),
