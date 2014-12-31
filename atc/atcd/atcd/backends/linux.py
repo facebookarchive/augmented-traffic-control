@@ -51,7 +51,7 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
         self._release_ipr()
 
     def _release_ipr(self):
-        self.ipr.release()
+        self.ipr.close()
 
     def _links_lookup(self):
         try:
