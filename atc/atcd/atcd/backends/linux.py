@@ -65,25 +65,30 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
             raise Exception(msg)
 
     def initialize_shaping_system(self):
-        '''Initialize Iptables and TC subsystems
+        """Initialize Iptables and TC subsystems
         Only call once as this will FLUSH all current
         shapings...
-        '''
+        """
         self.logger.info("Calling initialize_shaping_system")
         self._initialize_iptables()
         self._initialize_tc()
 
     def _initialize_iptables(self):
-        '''Initialize IPTables by flushing all rules in FORWARD chain
-        from mangle table'''
+        """Initialize IPTables by flushing all rules in FORWARD chain
+        from mangle table.
+        """
         cmd = "{0} -t mangle -F FORWARD".format(self.iptables)
         self.run_cmd(cmd)
 
     def _initialize_tc_for_interface(self, eth):
-        '''Initialize TC on a given interface
-            @param eth the interface to flush TC on
-            @return TrafficControlRc
-        '''
+        """Initialize TC on a given interface
+
+        Args:
+            eth: the interface to flush TC on.
+
+        Returns:
+            a TrafficControlRc containing details on success/failure.
+        """
         idx = 0x10000
         try:
             self.logger.info("deleting root QDisc on {0}".format(eth['name']))
@@ -122,8 +127,8 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
         return TrafficControlRc(code=ReturnCode.OK)
 
     def _initialize_tc(self):
-        '''Initialize TC root qdisc on both LAN and WAN interface
-        '''
+        """Initialize TC root qdisc on both LAN and WAN interface.
+        """
         tcrc = self._initialize_tc_for_interface(self.lan)
         if tcrc.code != ReturnCode.OK:
             self.logger.error(
@@ -140,6 +145,15 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
             )
 
     def _unset_htb_class(self, mark, eth):
+        """Given a mark and an interface, unset the HTB class.
+
+        Args:
+            mark: The mark based on which we delete the class.
+            eth: The interface on which to delete that class id.
+
+        Returns:
+            A TrafficControlRc containing information on success/failure.
+        """
         ifid = eth['id']
         idx = 0x10000 + mark
         try:
@@ -163,6 +177,16 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
         return TrafficControlRc(code=ReturnCode.OK)
 
     def _set_htb_class(self, mark, eth, shaping):
+        """Given a mark, an interface and shaping settings, set the HTB class.
+
+        Args:
+            mark: The mark based on which we create the class
+            eth: The interface on which to create that class id.
+            shaping: The shaping settings to set.
+
+        Returns:
+            A TrafficControlRc containing information on success/failure.
+        """
         ifid = eth['id']
         idx = 0x10000 + mark
         parent = 0x10000
@@ -192,11 +216,22 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
         return TrafficControlRc(code=ReturnCode.OK)
 
     def _unset_netem_qdisc(self, mark, eth):
-        '''this is not needed as deleting the HTB class is sufficient
-        to remove the netem qdisc'''
+        """This is not needed as deleting the HTB class is sufficient
+        to remove the netem qdisc"""
         pass
 
     def _set_netem_qdisc(self, mark, eth, shaping):
+        """Given a mark, interface and shaping settings, create the NetEm
+        Qdisc.
+
+        Args:
+            mark: The mark based on which we create the Qdisc.
+            eth: The interface on which we will create the Qdisc.
+            shaping: The shaping settings for that interface.
+
+        Returns:
+            A TrafficControlRc containing information on success/failure.
+        """
         ifid = eth['id']
         parent = 0x10000 + mark
         idx = 0  # automatically assign a handleid
@@ -236,6 +271,15 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
         return TrafficControlRc(code=ReturnCode.OK)
 
     def _unset_filter(self, mark, eth):
+        """Given a mark and an interface, delete the filter.
+
+        Args:
+            mark: The mark based on which we delete the filter.
+            eth: The interface on which we delete the filter.
+
+        Returns:
+            A TrafficControlRc containing information on success/failure.
+        """
         ifid = eth['id']
         parent = 0x10000
         self.logger.info(
@@ -262,6 +306,16 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
         return TrafficControlRc(code=ReturnCode.OK)
 
     def _set_filter(self, mark, eth, shaping):
+        """Given a mark, interface and shaping settings, create a TC filter.
+
+        Args:
+            mark: The mark based on which we create the filter.
+            eth: The interface on which we create the filter.
+            shaping: The shaping associated to this interface.
+
+        Returns:
+            A TrafficControlRc containing information on success/failure.
+        """
         ifid = eth['id']
         idx = 0x10000 + mark
         parent = 0x10000
@@ -295,6 +349,17 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
         return TrafficControlRc(code=ReturnCode.OK)
 
     def _unset_iptables(self, mark, eth, ip, options=None):
+        """Given a mark, interface, IP and options, clear iptables rules.
+
+        Args:
+            mark: The mark to delete.
+            eth: The interface on which to delete the mark.
+            ip: The IP address to shape.
+            options: An array of iptables options for more specific filtering.
+
+        Returns:
+            A TrafficControlRc containing information on success/failure.
+        """
         if options is None or len(options) == 0:
             options = ['']
         for opt in options:
@@ -306,6 +371,20 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
             self.run_cmd(cmd)
 
     def _set_iptables(self, mark, eth, ip, options=None):
+        """Given a mark, interface, IP and options, create iptables rules.
+
+        Those rules will mark packets which will be filtered by TC filter and
+        put in the right shaping bucket.
+
+        Args:
+            mark: The mark to delete.
+            eth: The interface on which to delete the mark.
+            ip: The IP address to shape.
+            options: An array of iptables options for more specific filtering.
+
+        Returns:
+            A TrafficControlRc containing information on success/failure.
+        """
         if options is None or len(options) == 0:
             options = ['']
         for opt in options:
@@ -317,6 +396,27 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
             self.run_cmd(cmd)
 
     def _shape_interface(self, mark, eth, ip, shaping):
+        """Shape the traffic for a given interface.
+
+        Shape the traffic for a given IP on a given interface, given the mark
+        and the shaping settings.
+        There is a few steps to shape the traffic of an IP:
+        1. Create an HTB class that limit the throughput.
+        2. Create a NetEm QDisc that adds corruption, loss, reordering, loss
+            and delay.
+        3. Create the TC filter that will bucket packets with a given mark in
+            the right HTB class.
+        4. Set an iptables rule that mark packets going to/coming from IP
+
+        Args:
+            mark: The mark to set on IP packets.
+            eth: The network interface.
+            ip: The IP to shape traffic for.
+            shaping: The shaping setting to set.
+
+        Returns:
+            A TrafficControlRc containing information on success/failure.
+        """
         self.logger.info(
             "Shaping ip {0} on interface {1}".format(ip, eth['name']))
         # HTB class
@@ -350,6 +450,25 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
         return TrafficControlRc(code=ReturnCode.OK)
 
     def _unshape_interface(self, mark, eth, ip, settings):
+        """Unshape the traffic for a given interface.
+
+        Unshape the traffic for a given IP on a given interface, given the mark
+        and the shaping settings.
+        There is a few steps to unshape the traffic of an IP:
+        1. Remove the iptables rule.
+        2. Remove the TC filter.
+        3. Remove the HTB class.
+
+        Args:
+            mark: The mark to set on IP packets.
+            eth: The network interface.
+            ip: The IP to shape traffic for.
+            shaping: The shaping setting to set.
+
+        Returns:
+            A TrafficControlRc containing information on success/failure.
+        """
+
         self.logger.info(
             "Unshaping ip {0} on interface {1}".format(ip, eth['name']))
         # iptables
