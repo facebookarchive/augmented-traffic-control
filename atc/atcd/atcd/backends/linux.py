@@ -81,48 +81,45 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
         self.run_cmd(cmd)
 
     def _initialize_tc_for_interface(self, eth):
-        """Initialize TC on a given interface
+        """Initialize TC on a given interface.
+
+        If an exception is thrown, it will be forwarded to the main loop
+        unless it can be ignored.
 
         Args:
             eth: the interface to flush TC on.
 
-        Returns:
-            a TrafficControlRc containing details on success/failure.
+        Raises:
+            NetlinkError: An error occured initializing TC subsystem.
+            Exception: Any other exception thrown during initialization.
         """
         idx = 0x10000
+        eth_name = eth['name']
+        eth_id = eth['id']
         try:
-            self.logger.info("deleting root QDisc on {0}".format(eth['name']))
-            self.ipr.tc(RTM_DELQDISC, None, eth['id'], 0, parent=TC_H_ROOT)
-        except NetlinkError as e:
+            self.logger.info("deleting root QDisc on {0}".format(eth_name))
+            self.ipr.tc(RTM_DELQDISC, None, eth_id, 0, parent=TC_H_ROOT)
+        except Exception as e:
             # a (2, 'No such file or directory') can be thrown if there is
             # nothing to delete. Ignore such error, return the error otherwise
-            if e.code == 2:
+            if isinstance(e, NetlinkError) and e.code == 2:
                 self.logger.warning(
                     "could not delete root QDisc. There might "
                     "have been nothing to delete")
             else:
-                return TrafficControlRc(
-                    code=ReturnCode.NETLINK_ERROR,
-                    message=str(e))
-        except Exception as e:
-            self.logger.exception('_initialize_tc_for_interface')
-            exc_info = sys.exc_info()
-            return TrafficControlRc(
-                code=ReturnCode.UNKNOWN_ERROR,
-                message=str(exc_info))
+                self.logger.exception(
+                    'Initializing root Qdisc for {0}'.format(eth_name)
+                )
+                raise
+
         try:
-            self.logger.info("setting root qdisc on {0}".format(eth['name']))
-            self.ipr.tc(RTM_NEWQDISC, "htb", eth['id'], idx, default=0)
-        except NetlinkError as e:
-            return TrafficControlRc(
-                code=ReturnCode.NETLINK_ERROR,
-                message=str(e))
+            self.logger.info("setting root qdisc on {0}".format(eth_name))
+            self.ipr.tc(RTM_NEWQDISC, "htb", eth_id, idx, default=0)
         except Exception as e:
-            self.logger.exception('_initialize_tc_for_interface')
-            exc_info = sys.exc_info()
-            return TrafficControlRc(
-                code=ReturnCode.UNKNOWN_ERROR,
-                message=str(exc_info))
+            self.logger.exception(
+                'Setting root Qdisc for {0}'.format(eth_name)
+            )
+            raise
 
         return TrafficControlRc(code=ReturnCode.OK)
 
@@ -130,13 +127,7 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
         """Initialize TC root qdisc on both LAN and WAN interface.
         """
         for netif in [self.lan, self.wan]:
-            tcrc = self._initialize_tc_for_interface(netif)
-            if tcrc.code != ReturnCode.OK:
-                self.logger.error(
-                    "initializing TC for interface {0[name]}: {1}".format(
-                        netif, tcrc.message
-                    )
-                )
+            self._initialize_tc_for_interface(netif)
 
     def _unset_htb_class(self, mark, eth):
         """Given a mark and an interface, unset the HTB class.
