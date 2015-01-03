@@ -129,20 +129,14 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
     def _initialize_tc(self):
         """Initialize TC root qdisc on both LAN and WAN interface.
         """
-        tcrc = self._initialize_tc_for_interface(self.lan)
-        if tcrc.code != ReturnCode.OK:
-            self.logger.error(
-                "initializing TC for interface {0[name]}: {1}".format(
-                    self.lan, tcrc.message
+        for netif in [self.lan, self.wan]:
+            tcrc = self._initialize_tc_for_interface(netif)
+            if tcrc.code != ReturnCode.OK:
+                self.logger.error(
+                    "initializing TC for interface {0[name]}: {1}".format(
+                        netif, tcrc.message
+                    )
                 )
-            )
-        tcrc = self._initialize_tc_for_interface(self.wan)
-        if tcrc.code != ReturnCode.OK:
-            self.logger.error(
-                "initializing TC for interface {0[name]}: {1}".format(
-                    self.lan, tcrc.message
-                )
-            )
 
     def _unset_htb_class(self, mark, eth):
         """Given a mark and an interface, unset the HTB class.
