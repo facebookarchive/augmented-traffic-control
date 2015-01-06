@@ -16,6 +16,7 @@ from atc_thrift.ttypes import TrafficControlledDevice
 from atc_thrift.ttypes import TrafficControlSetting
 
 from rest_framework import serializers
+from thrift.Thrift import TType
 
 import socket
 
@@ -28,105 +29,130 @@ def validate_ipaddr(ipaddr):
         return False
 
 
-class BaseShapingSettingSerializer(serializers.Serializer):
+class ThriftSerializer(serializers.Serializer):
+    # Should be set by the serializer to the concrete thrift class
+    # to be serialized.
+    _THRIFT_CLASS = None
+
+    # A map of renamed fields.
+    # Keys in the map are the names of thrift fields. Their values
+    # are the names of the serializer fields they coorespond to.
+    _THRIFT_RENAMED_FIELDS = {}
+
+    def create(self, attrs):
+        args = {}
+
+        for field_tuple in self._THRIFT_CLASS.thrift_spec:
+            if not field_tuple:
+                continue
+
+            _, thrift_type, arg_name, _, default = field_tuple
+
+            f_name = arg_name
+            if arg_name in self._THRIFT_RENAMED_FIELDS:
+                f_name = self._THRIFT_RENAMED_FIELDS[arg_name]
+
+            serializer = self.fields[f_name]
+
+            if f_name not in attrs:
+                args[arg_name] = default
+                continue
+
+            if thrift_type == TType.STRUCT:
+                args[arg_name] = serializer.create(attrs[f_name])
+            else:
+                # Primitive
+                args[arg_name] = attrs[f_name]
+
+        return self._THRIFT_CLASS(**args)
+
+
+class BaseShapingSettingSerializer(ThriftSerializer):
     percentage = serializers.FloatField(default=0)
     correlation = serializers.FloatField(default=0)
 
 
-class DelaySerializer(serializers.Serializer):
+class DelaySerializer(ThriftSerializer):
+    _THRIFT_CLASS = Delay
+
     delay = serializers.IntegerField(default=0)
     jitter = serializers.IntegerField(default=0)
     correlation = serializers.FloatField(default=0)
 
-    def restore_object(self, attrs, instance=None):
-        return Delay(**attrs)
-
 
 class LossSerializer(BaseShapingSettingSerializer):
-
-    def restore_object(self, attrs, instance=None):
-        return Loss(**attrs)
+    _THRIFT_CLASS = Loss
 
 
 class CorruptionSerializer(BaseShapingSettingSerializer):
-
-    def restore_object(self, attrs, instance=None):
-        return Corruption(**attrs)
+    _THRIFT_CLASS = Corruption
 
 
 class ReorderSerializer(BaseShapingSettingSerializer):
+    _THRIFT_CLASS = Reorder
+
     gap = serializers.IntegerField(default=0)
 
-    def restore_object(self, attrs, instance=None):
-        return Reorder(**attrs)
 
+class IptablesOptionsField(serializers.Field):
 
-class IptablesOptionsField(serializers.WritableField):
-
-    def from_native(self, data):
+    def to_representation(self, data):
         if isinstance(data, list):
             return data
         else:
             msg = self.error_messages['invalid']
             raise serializers.ValidationError(msg)
 
-    def to_native(self, obj):
+    def to_internal_value(self, obj):
         if obj:
             return obj
         else:
             return []
 
 
-class ShapingSerializer(serializers.Serializer):
-    rate = serializers.IntegerField(default=0, required=False)
-    loss = LossSerializer(required=False)
-    delay = DelaySerializer(required=False)
-    corruption = CorruptionSerializer(required=False)
-    reorder = ReorderSerializer(required=False)
+class ShapingSerializer(ThriftSerializer):
+    _THRIFT_CLASS = Shaping
+
+    rate = serializers.IntegerField(default=0, allow_null=True, required=False)
+    loss = LossSerializer(default=None, allow_null=True, required=False)
+    delay = DelaySerializer(default=None, allow_null=True, required=False)
+    corruption = CorruptionSerializer(
+        default=None, allow_null=True, required=False)
+    reorder = ReorderSerializer(default=None, allow_null=True, required=False)
     iptables_options = IptablesOptionsField(
-        required=False
-    )
-
-    def restore_object(self, attrs, instance=None):
-        return Shaping(**attrs)
+        default=None, allow_null=True, required=False)
 
 
-class SettingSerializer(serializers.Serializer):
+class SettingSerializer(ThriftSerializer):
+    _THRIFT_CLASS = TrafficControlSetting
+
     down = ShapingSerializer()
     up = ShapingSerializer()
 
-    def restore_object(self, attrs, instance=None):
-        return TrafficControlSetting(**attrs)
 
+class DeviceSerializer(ThriftSerializer):
+    _THRIFT_CLASS = TrafficControlledDevice
+    _THRIFT_RENAMED_FIELDS = {
+        'controllingIP': 'address',
+        'controlledIP': 'address'
+    }
 
-class DeviceSerializer(serializers.Serializer):
-    address = serializers.CharField(max_length=16, required=False)
+    address = serializers.CharField(
+        max_length=16,
+        allow_blank=True,
+        allow_null=True,
+        default=None,
+        required=False
+    )
 
-    def validate_address(self, attrs, source):
-        value = attrs.get(source, None)
+    def validate_address(self, value):
         # 'address' is optional, if not specified, we default to the
         # querying IP
-        if value is None:
-            return attrs
+        if value is None or (isinstance(value, str) and len(value) == 0):
+            value = self._get_client_ip()
         if not validate_ipaddr(value):
             raise serializers.ValidationError("Invalid IP address")
-        return attrs
-
-    def restore_object(self, attrs, instance=None):
-        return self._make_device(
-            self._get_address(attrs)
-        )
-
-    def _get_address(self, attrs):
-        '''
-            First we try to get the `address` from the context (URL),
-            then from the json payload (attrs)
-            and finally we default to the client IP
-        '''
-        return (
-            self.context.get('address') or
-            attrs.get('address', self._get_client_ip())
-        )
+        return value
 
     def _get_client_ip(self):
         '''Return the real IP of a client even when using a proxy'''
@@ -135,10 +161,3 @@ class DeviceSerializer(serializers.Serializer):
             return request.META['HTTP_X_REAL_IP']
         else:
             return request.META['REMOTE_ADDR']
-
-    def _make_device(self, address):
-        return TrafficControlledDevice(
-            controlledIP=address,
-            # FIXME: re-enable this once auth is fully operational
-            # controllingIP=_get_client_ip(request)
-        )
