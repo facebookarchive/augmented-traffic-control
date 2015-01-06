@@ -60,8 +60,9 @@ class AtcApi(APIView):
         if not device_serializer.is_valid():
             raise ParseError(detail=device_serializer.errors)
 
+        dev = device_serializer.save()
         try:
-            tc = service.getCurrentShaping(device_serializer.object)
+            tc = service.getCurrentShaping(dev)
         except TrafficControlException as e:
             return Response(
                 {'detail': e.message},
@@ -92,8 +93,9 @@ class AtcApi(APIView):
         if not device_serializer.is_valid():
             raise ParseError(detail=device_serializer.errors)
 
-        setting = setting_serializer.object
-        device = device_serializer.object
+        setting = setting_serializer.save()
+        device = device_serializer.save()
+
         tc = TrafficControl(
             device=device,
             settings=setting,
@@ -129,8 +131,10 @@ class AtcApi(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        device = device_serializer.save()
+
         try:
-            tcrc = service.stopShaping(device_serializer.object)
+            tcrc = service.stopShaping(device)
         except TrafficControlException as e:
             return Response(e.message, status=status.HTTP_401_UNAUTHORIZED)
 
