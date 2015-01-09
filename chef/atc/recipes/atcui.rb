@@ -65,9 +65,9 @@ template node['atc']['atcui']['config_file'] do
   notifies :restart, 'service[atcui]', :delayed
 end
 
-cookbook_file '/etc/init.d/atcui' do
-  source "init.d/atcui.#{node['platform_family']}"
-  mode 0755
+template '/etc/init/atcui.conf' do
+  source "upstart/atcui.conf.erb"
+  mode 0644
   owner 'root'
   group 'root'
   notifies :restart, 'service[atcui]', :delayed
