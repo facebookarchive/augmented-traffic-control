@@ -5,19 +5,19 @@ DFT_BOX = 'precise64'
 DFT_PRIV_NETWORK = '100.64.33.3'
 boxes = [
     {
-        :name => :atcubuntu,
+        :name => :precise,
         :box    => DFT_BOX,
         :box_url => 'http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-12.04_chef-provisionerless.box',
         :chef_version => :latest,
     },
     {
-        :name => :atccentos,
+        :name => :centos65,
         :box    => 'centos65',
         :box_url => 'http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_centos-6.5_chef-provisionerless.box',
         :chef_version => :latest,
     },
     {
-        :name => :atctrusty,
+        :name => :trusty,
         :box    => 'ubuntu/trusty64',
         :chef_version => :latest,
     }
