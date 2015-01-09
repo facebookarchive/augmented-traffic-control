@@ -21,7 +21,8 @@ end
 default['atc']['src_dir'] = src_dir
 default['atc']['packages'] = packages
 default['atc']['base_dir'] = base_dir
-default['atc']['user'] = 'root'
+default['atc']['user'] = 'atc'
+default['atc']['group'] = 'atc'
 default['atc']['venv']['interpreter'] = 'python2.7'
 default['atc']['venv']['path'] = File.join(base_dir, 'venv')
 default['atc']['venv']['atcd']['packages'] = {

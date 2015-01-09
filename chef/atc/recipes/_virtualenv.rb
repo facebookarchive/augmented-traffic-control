@@ -11,12 +11,13 @@
 # Cookbook Name:: atc
 # Recipe:: _virtualenv
 #
-user=node['atc']['user']
+atc_user=node['atc']['user']
+atc_group=node['atc']['group']
 
 directory node['atc']['base_dir'] do
-  owner user
-  group user
-  mode 00644
+  owner atc_user
+  group atc_group
+  mode 00755
   action :create
   recursive true
 end
@@ -33,7 +34,7 @@ end
  
 python_virtualenv node['atc']['venv']['path'] do
   interpreter node['atc']['venv']['interpreter']
-  owner user
-  group user
+  owner atc_user
+  group atc_group
   action :create
 end

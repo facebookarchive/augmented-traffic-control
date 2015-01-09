@@ -14,6 +14,9 @@
 include_recipe 'atc::_common_system'
 include_recipe 'atc::_virtualenv'
 
+atc_user=node['atc']['user']
+atc_group=node['atc']['group']
+
 # Set python environment.
 install_virtualenv_packages 'atcui_packages' do
     packages node['atc']['venv']['atcui']['packages']
@@ -24,23 +27,32 @@ django_root = File.dirname(node['atc']['atcui']['base_dir'])
 django_project = File.basename(node['atc']['atcui']['base_dir'])
 
 directory django_root do
-  user 'root'
-  group 'root'
+  owner atc_user
+  group atc_group
   mode 00755
+  recursive true
+end
+
+directory '/var/log/atc' do
+  owner atc_user
+  group atc_group
+  mode 00750
 end
 
 execute 'install django' do
   command "#{File.join(node['atc']['venv']['path'], 'bin', 'django-admin')} startproject #{django_project} ."
   cwd django_root
+  user atc_user
+  group atc_group
   not_if { ::File.exists?(File.join(django_root, 'manage.py')) }
 end
 
 %w{urls settings}.each do |file|
   template File.join(node['atc']['atcui']['base_dir'], "#{file}.py") do
     source "django/#{file}.py.erb"
-    mode 0755
-    owner 'root'
-    group 'root'
+    mode 0644
+    owner atc_user
+    group atc_group
     notifies :restart, 'service[atcui]', :delayed
   end
 end
@@ -48,8 +60,8 @@ end
 template node['atc']['atcui']['config_file'] do
   source 'config/atcui.erb'
   mode 0755
-  owner 'root'
-  group 'root'
+  owner atc_user
+  group atc_group
   notifies :restart, 'service[atcui]', :delayed
 end
 
@@ -69,8 +81,8 @@ end
 template '/usr/local/bin/atcui-setup' do
   source 'atcui-setup.erb'
   mode 0755
-  owner 'root'
-  group 'root'
+  owner atc_user
+  group atc_group
 end
 
 if node.vagrant?
