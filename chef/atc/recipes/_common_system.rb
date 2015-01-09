@@ -10,9 +10,31 @@
 # Cookbook Name:: atc
 # Recipe:: _common_system
 #
+
 case node['platform_family']
 when 'rhel'
   include_recipe 'yum-epel'
+end
+
+group node['atc']['group'] do
+    system
+end
+
+user node['atc']['user'] do
+	system
+    gid node['atc']['group']
+	shell "/sbin/nologin"
+end
+
+case node['platform_family']
+when 'rhel'
+	execute 'yum makecache'
+when 'debian'
+	execute 'apt-get update'
+else
+	log "Not updating package cache." do
+		level :warn
+	end
 end
 
 install_packages "p" do
