@@ -18,7 +18,8 @@ boxes = [
     },
     {
         :name => :trusty,
-        :box    => 'ubuntu/trusty64',
+        :box    => 'trusty64',
+        :box_url => 'http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-14.04_chef-provisionerless.box',
         :chef_version => :latest,
     }
 ]
