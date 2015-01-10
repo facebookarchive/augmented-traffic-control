@@ -16,13 +16,13 @@ when 'rhel'
   include_recipe 'yum-epel'
 end
 
-group node['atc']['group'] do
+group node['atc']['atcui']['group'] do
     system
 end
 
-user node['atc']['user'] do
+user node['atc']['atcui']['user'] do
 	system
-    gid node['atc']['group']
+    gid node['atc']['atcui']['group']
 	shell "/sbin/nologin"
 end
 

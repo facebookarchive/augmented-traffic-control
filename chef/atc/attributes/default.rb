@@ -21,8 +21,6 @@ end
 default['atc']['src_dir'] = src_dir
 default['atc']['packages'] = packages
 default['atc']['base_dir'] = base_dir
-default['atc']['user'] = 'atc'
-default['atc']['group'] = 'atc'
 default['atc']['venv']['interpreter'] = 'python2.7'
 default['atc']['venv']['path'] = File.join(base_dir, 'venv')
 default['atc']['venv']['atcd']['packages'] = {
@@ -50,6 +48,8 @@ default['atc']['atcui']['workers'] = 2
 default['atc']['atcui']['listen']['address'] = '0.0.0.0'
 default['atc']['atcui']['listen']['port'] = '8000'
 default['atc']['atcui']['base_dir'] = '/var/django/atc_ui'
+default['atc']['atcui']['user'] = 'atc'
+default['atc']['atcui']['group'] = 'atc'
 
 case node.platform_family
 when 'rhel'
