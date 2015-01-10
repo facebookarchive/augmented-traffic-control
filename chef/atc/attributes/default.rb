@@ -13,9 +13,9 @@ src_dir = '/usr/local/src/atc'
 
 case node.platform_family
 when 'rhel'
-  packages.concat(%w{yum-utils man wireshark openssh-clients nc})
+    packages.concat(%w{yum-utils man wireshark openssh-clients nc})
 when 'debian'
-  packages.concat(%w{tshark openssh-client netcat})
+    packages.concat(%w{tshark openssh-client netcat})
 end
 
 default['atc']['src_dir'] = src_dir
@@ -24,18 +24,18 @@ default['atc']['base_dir'] = base_dir
 default['atc']['venv']['interpreter'] = 'python2.7'
 default['atc']['venv']['path'] = File.join(base_dir, 'venv')
 default['atc']['venv']['atcd']['packages'] = {
-  "file://#{File.join(src_dir, 'atc/atc_thrift/')}" => {:action => :install, :options => '-e'},
-  "file://#{File.join(src_dir, 'atc/atcd/')}" => {:action => :install, :options => '-e'},
+    "file://#{File.join(src_dir, 'atc/atc_thrift/')}" => {:action => :install, :options => '-e'},
+    "file://#{File.join(src_dir, 'atc/atcd/')}" => {:action => :install, :options => '-e'},
 }
 
 #'pyroute2' => {:action => :upgrade, :version => "0.1.12"},
 default['atc']['venv']['atcui']['packages'] = {
-  'django' => {:version => "1.7"},
-  'gunicorn' => {},
-  "file://#{File.join(src_dir, 'atc/atc_thrift/')}" => {:action => :install, :options => '-e'},
-  "file://#{File.join(src_dir, 'atc/django-atc-api')}" => {:action => :install, :options => '-e'},
-  "file://#{File.join(src_dir, 'atc/django-atc-demo-ui')}" => {:action => :install, :options => '-e'},
-  'mock' => {},
+    'django' => {:version => "1.7"},
+    'gunicorn' => {},
+    "file://#{File.join(src_dir, 'atc/atc_thrift/')}" => {:action => :install, :options => '-e'},
+    "file://#{File.join(src_dir, 'atc/django-atc-api')}" => {:action => :install, :options => '-e'},
+    "file://#{File.join(src_dir, 'atc/django-atc-demo-ui')}" => {:action => :install, :options => '-e'},
+    'mock' => {},
 }
 
 default['atc']['atcd']['listen']['address'] = '0.0.0.0'
@@ -53,11 +53,11 @@ default['atc']['atcui']['group'] = 'atc'
 
 case node.platform_family
 when 'rhel'
-  default['atc']['atcui']['config_file'] = '/etc/sysconfig/atcui'
-  default['atc']['atcd']['config_file'] = '/etc/sysconfig/atcd'
+    default['atc']['atcui']['config_file'] = '/etc/sysconfig/atcui'
+    default['atc']['atcd']['config_file'] = '/etc/sysconfig/atcd'
 when 'debian'
-  default['atc']['atcui']['config_file'] = '/etc/default/atcui'
-  default['atc']['atcd']['config_file'] = '/etc/default/atcd'
+    default['atc']['atcui']['config_file'] = '/etc/default/atcui'
+    default['atc']['atcd']['config_file'] = '/etc/default/atcd'
 end
 
 

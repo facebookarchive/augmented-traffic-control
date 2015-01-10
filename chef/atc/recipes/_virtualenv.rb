@@ -15,11 +15,11 @@ atcui_user=node['atc']['atcui']['user']
 atcui_group=node['atc']['atcui']['group']
 
 directory node['atc']['base_dir'] do
-  owner atcui_user
-  group atcui_group
-  mode 00755
-  action :create
-  recursive true
+    owner atcui_user
+    group atcui_group
+    mode 00755
+    action :create
+    recursive true
 end
 
 # FIXME
@@ -29,12 +29,12 @@ end
 # STDERR: /usr/local/atc/venv/local/lib/python2.7/site-packages/pip/pep425tags.py:62: RuntimeWarning: invalid Python installation: unable to open /usr/atc/venv/lib/python2.7/config/Makefile (No such file or directory)
 #  warnings.warn("{0}".format(e), RuntimeWarning)
 link node['atc']['base_dir'].gsub('/usr/local', '/usr') do
-  to node['atc']['base_dir']
+    to node['atc']['base_dir']
 end
  
 python_virtualenv node['atc']['venv']['path'] do
-  interpreter node['atc']['venv']['interpreter']
-  owner atcui_user
-  group atcui_group
-  action :create
+    interpreter node['atc']['venv']['interpreter']
+    owner atcui_user
+    group atcui_group
+    action :create
 end
