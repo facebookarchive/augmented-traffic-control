@@ -42,7 +42,6 @@ if node.vagrant?
         lan_iface = 'eth1'
     end
 
-    puts "Using interfaces lan=>#{lan_iface}, wan=>#{wan_iface}"
     log "Using interfaces lan=>#{lan_iface}, wan=>#{wan_iface}"
 
     # NAT
