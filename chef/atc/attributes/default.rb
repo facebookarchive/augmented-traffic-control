@@ -60,6 +60,21 @@ when 'debian'
     default['atc']['atcd']['config_file'] = '/etc/default/atcd'
 end
 
-
 # django app settings
 default['atc']['atc_api']['default_timeout'] = 24 * 60 * 60
+
+# determine which init system and version we are using
+init_version = `/sbin/init --version`
+init_version = `/usr/lib/systemd/systemd --version` if $? != 0
+if init_version.include? "systemd"
+    default['atc']['init']['provider'] = "systemd"
+    default['atc']['init']['version'] = init_version.lines()[0].split()[1]
+elsif init_version.include? "upstart"
+    default['atc']['init']['provider'] = "upstart"
+    default['atc']['init']['version'] = init_version.lines()[0].split()[2][0..-2]
+else
+    default['atc']['init']['provider'] = 'unknown'
+    log "Unknown init system. Not installing an init script." do
+        level :warn
+    end
+end
