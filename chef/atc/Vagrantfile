@@ -18,8 +18,15 @@ boxes = [
         :box    => 'trusty64',
         :box_url => 'http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-14.04_chef-provisionerless.box',
         :chef_version => :latest,
+    },
+    {
+        :name => :centos7,
+        :box => 'centos7',
+        :box_url => 'http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_centos-7.0_chef-provisionerless.box',
+        :chef_version => :latest,
     }
 ]
+
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 
