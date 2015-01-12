@@ -1,0 +1,2 @@
+test:
+	rubocop chef/atc
