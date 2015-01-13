@@ -37,7 +37,7 @@ else
   end
 end
 
-install_packages 'p' do
+atc_install_packages 'p' do
   packages node['atc']['packages']
 end
 

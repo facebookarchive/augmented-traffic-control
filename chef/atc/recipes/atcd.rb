@@ -17,7 +17,7 @@ include_recipe 'atc::_virtualenv'
 # Set sysctl values.
 node.default['sysctl']['params']['net']['ipv4']['ip_forward'] = 1
 node.default['sysctl']['allow_sysctl_conf'] = true
-node.network.interfaces.keys.sort.each do |eth|
+node['network']['interfaces'].keys.sort.each do |eth|
   next unless eth.start_with?('eth')
   node.default['sysctl']['params']['net']['ipv4']['conf'][eth]\
     ['arp_ignore'] = 1
@@ -76,7 +76,7 @@ end
 include_recipe 'sysctl::apply'
 
 # Set python environment.
-install_virtualenv_packages 'atcd_packages' do
+atc_install_virtualenv_packages 'atcd_packages' do
   packages node['atc']['venv']['atcd']['packages']
   virtualenv node['atc']['venv']['path']
 end

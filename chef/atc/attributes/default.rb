@@ -13,7 +13,7 @@ packages = %w(
 base_dir = '/usr/local/atc'
 src_dir = '/usr/local/src/atc'
 
-case node.platform_family
+case node['platform_family']
 when 'rhel'
   packages.concat(%w(yum-utils man wireshark openssh-clients nc))
 when 'debian'
@@ -58,7 +58,7 @@ default['atc']['atcui']['base_dir'] = '/var/django/atc_ui'
 default['atc']['atcui']['user'] = 'atc'
 default['atc']['atcui']['group'] = 'atc'
 
-case node.platform_family
+case node['platform_family']
 when 'rhel'
   default['atc']['atcui']['config_file'] = '/etc/sysconfig/atcui'
   default['atc']['atcd']['config_file'] = '/etc/sysconfig/atcd'

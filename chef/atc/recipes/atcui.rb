@@ -18,7 +18,7 @@ atcui_user = node['atc']['atcui']['user']
 actui_group = node['atc']['atcui']['group']
 
 # Set python environment.
-install_virtualenv_packages 'atcui_packages' do
+atc_install_virtualenv_packages 'atcui_packages' do
   packages node['atc']['venv']['atcui']['packages']
   virtualenv node['atc']['venv']['path']
 end
@@ -93,15 +93,14 @@ template '/usr/local/bin/atcui-setup' do
   group actui_group
 end
 
-if node.vagrant?
-  # When running under vagrant, atcui depends on the mounts and will not start
-  # unless those are up. The mount is happening after the system is up.
-  # We can use udev to trigger starting/stopping atcui when amount/umount event
-  # happens.
-  template '/etc/udev/rules.d/50-vagrant-mount-atcui.rules' do
-    source 'mount-udev.rules.erb'
-    variables(
-      :service => 'atcui'
-    )
-  end
+# When running under vagrant, atcui depends on the mounts and will not start
+# unless those are up. The mount is happening after the system is up.
+# We can use udev to trigger starting/stopping atcui when amount/umount event
+# happens.
+template '/etc/udev/rules.d/50-vagrant-mount-atcui.rules' do
+  only_if { node.vagrant? }
+  source 'mount-udev.rules.erb'
+  variables(
+    :service => 'atcui'
+  )
 end

@@ -9,24 +9,24 @@
 #
 #
 # Cookbook Name:: atc
-# Definition:: install_packages
+# Provider:: install_virtualenv_packages
 #
 
-define :install_packages, :packages => [] do
-  params[:packages].each do |pkg|
-    package pkg do
-      action :install
-    end
-  end
-end
-
-define :install_virtualenv_packages, :packages => [], :virtualenv => nil do
-  params[:packages].each do |k, v|
+def handle_packages(packages, virtualenv)
+  packages.each do |k, v|
     python_pip k do
       version v[:version] if v.key?(:version)
       action v[:action] if v.key?(:action)
       options v[:options] if v.key?(:options)
-      virtualenv params[:virtualenv] unless  v.fetch(:global, false)
+      virtualenv virtualenv unless  v.fetch(:global, false)
     end
   end
+end
+
+action :install do
+  handle_packages(
+    new_resource.packages,
+    new_resource.virtualenv
+  )
+  new_resource.updated_by_last_action(true)
 end
