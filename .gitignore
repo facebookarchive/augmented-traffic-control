@@ -33,3 +33,4 @@ check_atc.trs
 pcap2har/
 internal
 .coverage
+.kitchen/

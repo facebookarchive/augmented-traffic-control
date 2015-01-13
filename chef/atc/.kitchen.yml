@@ -1,0 +1,28 @@
+---
+driver:
+    name: vagrant
+    synced_folders:
+        - ["../../atc", "/usr/local/src/atc/atc"]
+
+provisioner:
+    name: chef_solo
+
+driver_config:
+    network:
+        - ["private_network", {ip: "100.64.33.3"}]
+
+platforms:
+    - name: ubuntu-12.04
+    - name: ubuntu-14.04
+    - name: centos-6.6
+      attributes:
+        python:
+            install_method: "source"
+            distribute_install_py_version: "2.7"
+    - name: centos-7.0
+
+suites:
+    - name: default
+      run_list:
+        - recipe[python]
+        - recipe[atc::default]
