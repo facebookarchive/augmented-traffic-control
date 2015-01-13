@@ -8,11 +8,11 @@ start on (started networking)
 stop on (stopped networking)
 
 <%# FIXME find a better way to determine if using modern version of upstart (>=1.4)%>
-<% if node['platform'] == "ubuntu" %>
+<% if Gem::Version.new(node['atc']['init']['version']) > Gem::Version.new('1.4') %>
 setuid atc
 setgid atc
 <% else %>
-# setuid not supported for <%= node['platform'] %> <%= node['platform_version'] %>
+# setuid not supported for upstart <%= node['atc']['init']['version'] %>
 <% end %>
 chdir /var/django
 
