@@ -3,13 +3,11 @@ driver:
     name: vagrant
     synced_folders:
         - ["../../atc", "/usr/local/src/atc/atc"]
+    network:
+        - ["private_network", {type: "dhcp"}]
 
 provisioner:
     name: chef_solo
-
-driver_config:
-    network:
-        - ["private_network", {ip: "100.64.33.3"}]
 
 platforms:
     - name: ubuntu-12.04
