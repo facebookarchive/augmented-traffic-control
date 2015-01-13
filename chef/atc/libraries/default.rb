@@ -9,35 +9,34 @@
 #
 
 class Chef
+  # Some helper functions
   class Node
     def virtualized?
-      if self.key?('virtualization') and \
-        self.virtualization.key?('system')
+      if self.key?('virtualization') && \
+         virtualization.key?('system')
         return true
       end
-      return false
+      false
     end
 
     def vagrant?
-      return self.virtualized? && self.etc.passwd.key?('vagrant')
+      virtualized? && etc.passwd.key?('vagrant')
     end
 
-    def get_default_user
-      if self.vagrant?
-        return 'vagrant'
-      end
-      return 'root'
+    def default_user
+      return 'vagrant' if vagrant?
+      'root'
     end
 
-    def get_repo_basedir
-      return node['atc']['src_dir']
+    def repo_basedir
+      node['atc']['src_dir']
     end
 
     def selinux?
-        if File.exists?('/selinux/enforce')
-            return File.read('/selinux/enforce') == '1'
-        end
-        return false
+      if File.exist?('/selinux/enforce')
+        return File.read('/selinux/enforce') == '1'
+      end
+      false
     end
   end
 end

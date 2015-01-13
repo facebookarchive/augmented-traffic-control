@@ -14,95 +14,94 @@
 include_recipe 'atc::_common_system'
 include_recipe 'atc::_virtualenv'
 
-atcui_user=node['atc']['atcui']['user']
-actui_group=node['atc']['atcui']['group']
+atcui_user = node['atc']['atcui']['user']
+actui_group = node['atc']['atcui']['group']
 
 # Set python environment.
 install_virtualenv_packages 'atcui_packages' do
-    packages node['atc']['venv']['atcui']['packages']
-    virtualenv node['atc']['venv']['path']
+  packages node['atc']['venv']['atcui']['packages']
+  virtualenv node['atc']['venv']['path']
 end
 
 django_root = File.dirname(node['atc']['atcui']['base_dir'])
 django_project = File.basename(node['atc']['atcui']['base_dir'])
 
 directory django_root do
-    owner atcui_user
-    group actui_group
-    mode 00755
-    recursive true
+  owner atcui_user
+  group actui_group
+  mode 00755
+  recursive true
 end
 
 directory '/var/log/atc' do
-    owner atcui_user
-    group actui_group
-    mode 00750
+  owner atcui_user
+  group actui_group
+  mode 00750
 end
 
 execute 'install django' do
-    command "#{File.join(node['atc']['venv']['path'], 'bin', 'django-admin')} startproject #{django_project} ."
-    cwd django_root
-    user atcui_user
-    group actui_group
-    not_if { ::File.exists?(File.join(django_root, 'manage.py')) }
+  command "#{File.join(node['atc']['venv']['path'], 'bin', 'django-admin')} " \
+    "startproject #{django_project} ."
+  cwd django_root
+  user atcui_user
+  group actui_group
+  not_if { ::File.exist?(File.join(django_root, 'manage.py')) }
 end
 
-%w{urls settings}.each do |file|
-    template File.join(node['atc']['atcui']['base_dir'], "#{file}.py") do
-        source "django/#{file}.py.erb"
-        mode 0644
-        owner atcui_user
-        group actui_group
-        notifies :restart, 'service[atcui]', :delayed
-    end
-end
-
-template node['atc']['atcui']['config_file'] do
-    source 'config/atcui.erb'
-    mode 0755
+%w(urls settings).each do |file|
+  template File.join(node['atc']['atcui']['base_dir'], "#{file}.py") do
+    source "django/#{file}.py.erb"
+    mode 0644
     owner atcui_user
     group actui_group
     notifies :restart, 'service[atcui]', :delayed
+  end
+end
+
+template node['atc']['atcui']['config_file'] do
+  source 'config/atcui.erb'
+  mode 0755
+  owner atcui_user
+  group actui_group
+  notifies :restart, 'service[atcui]', :delayed
 end
 
 case node['atc']['init']['provider']
-when "upstart"
-    template '/etc/init/atcui.conf' do
-        source "upstart/atcui.conf.erb"
-        mode 0644
-        owner 'root'
-        group 'root'
-        notifies :restart, 'service[atcui]', :delayed
-    end
-when "systemd"
-    log "Systemd not currently supported." do
-        level :warn
-    end
+when 'upstart'
+  template '/etc/init/atcui.conf' do
+    source "upstart/atcui.conf.erb"
+    mode 0644
+    owner 'root'
+    group 'root'
+    notifies :restart, 'service[atcui]', :delayed
+  end
+when 'systemd'
+  log "Systemd not currently supported." do
+    level :warn
+  end
 end
 
 service 'atcui' do
-    supports :restart => true
-    action [:enable, :start]
+  supports :restart => true
+  action [:enable, :start]
 end
 
 template '/usr/local/bin/atcui-setup' do
-    source 'atcui-setup.erb'
-    mode 0755
-    owner atcui_user
-    group actui_group
+  source 'atcui-setup.erb'
+  mode 0755
+  owner atcui_user
+  group actui_group
 end
 
 if node.vagrant?
-    # When running under vagrant, atcui depends on the mounts and will not start
-    # unless those are up. The mount is happening after the system is up.
-    # We can use udev to trigger starting/stopping atcui when amount/umount event
-    # happens.
-    template '/etc/udev/rules.d/50-vagrant-mount-atcui.rules' do
-        source 'mount-udev.rules.erb'
-        variables({
-            :service => 'atcui'
-        })
-    end
+  # When running under vagrant, atcui depends on the mounts and will not start
+  # unless those are up. The mount is happening after the system is up.
+  # We can use udev to trigger starting/stopping atcui when amount/umount event
+  # happens.
+  template '/etc/udev/rules.d/50-vagrant-mount-atcui.rules' do
+    source 'mount-udev.rules.erb'
+    variables(
+      :service => 'atcui'
+    )
+  end
 end
-
-

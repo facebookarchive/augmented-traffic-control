@@ -18,10 +18,11 @@ include_recipe 'atc::_virtualenv'
 node.default['sysctl']['params']['net']['ipv4']['ip_forward'] = 1
 node.default['sysctl']['allow_sysctl_conf'] = true
 node.network.interfaces.keys.sort.each do |eth|
-  if eth.start_with?("eth")
-    node.default['sysctl']['params']['net']['ipv4']['conf'][eth]['arp_ignore'] = 1
-    node.default['sysctl']['params']['net']['ipv4']['conf'][eth]['arp_announce'] = 2
-  end
+  next unless eth.start_with?('eth')
+  node.default['sysctl']['params']['net']['ipv4']['conf'][eth]\
+    ['arp_ignore'] = 1
+  node.default['sysctl']['params']['net']['ipv4']['conf'][eth]\
+    ['arp_announce'] = 2
 end
 
 # If we're in a sandbox, i.e. vagrant, we want to set up NAT
@@ -46,9 +47,9 @@ if node.vagrant?
   node.default['dhcp']['interfaces'] = [eth]
   include_recipe 'dhcp::server'
 
-  ipv4 = node['network']['interfaces'][eth]['addresses'].select {
-    |k, v| v.family == 'inet'
-  }
+  ipv4 = node['network']['interfaces'][eth]['addresses'].select do
+    |_, v| v.family == 'inet'
+  end
   ip = ipv4.keys[0]
   ipaddr = IPAddr.new "#{ip}/#{ipv4[ip]['prefixlen']}"
   range_start = ipaddr | 100
@@ -66,18 +67,18 @@ if node.vagrant?
   # happens.
   template '/etc/udev/rules.d/50-vagrant-mount-atcd.rules' do
     source 'mount-udev.rules.erb'
-    variables({
+    variables(
       :service => 'atcd'
-    })
+    )
   end
 end
 
 include_recipe 'sysctl::apply'
 
 # Set python environment.
-install_virtualenv_packages "atcd_packages" do
-    packages node['atc']['venv']['atcd']['packages']
-    virtualenv node['atc']['venv']['path']
+install_virtualenv_packages 'atcd_packages' do
+  packages node['atc']['venv']['atcd']['packages']
+  virtualenv node['atc']['venv']['path']
 end
 
 # Ensure the Sqlite directory exists
@@ -96,15 +97,15 @@ template node['atc']['atcd']['config_file'] do
   notifies :restart, 'service[atcd]', :delayed
 end
 
-cookbook_file "/etc/init.d/atcd" do
+cookbook_file '/etc/init.d/atcd' do
   source "init.d/atcd.#{node['platform_family']}"
   mode 0755
-  owner "root"
-  group "root"
+  owner 'root'
+  group 'root'
   notifies :restart, 'service[atcd]', :delayed
 end
 
-service "atcd" do
+service 'atcd' do
   supports :restart => true
   action [:enable, :start]
 end

@@ -13,37 +13,37 @@
 
 case node['platform_family']
 when 'rhel'
-    include_recipe 'yum-epel'
+  include_recipe 'yum-epel'
 end
 
 group node['atc']['atcui']['group'] do
-    system
+  system
 end
 
 user node['atc']['atcui']['user'] do
-    system
-    gid node['atc']['atcui']['group']
-    shell "/sbin/nologin"
+  system
+  gid node['atc']['atcui']['group']
+  shell '/sbin/nologin'
 end
 
 case node['platform_family']
 when 'rhel'
-    execute 'yum makecache'
+  execute 'yum makecache'
 when 'debian'
-    execute 'apt-get update'
+  execute 'apt-get update'
 else
-    log "Not updating package cache." do
-        level :warn
-    end
+  log 'Not updating package cache.' do
+    level :warn
+  end
 end
 
-install_packages "p" do
-    packages node['atc']['packages']
+install_packages 'p' do
+  packages node['atc']['packages']
 end
 
 case node['platform_family']
-when "rhel"
-    service "ntpd" do
-        action [:enable, :start]
-    end
+when 'rhel'
+  service 'ntpd' do
+    action [:enable, :start]
+  end
 end

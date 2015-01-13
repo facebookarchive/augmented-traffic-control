@@ -24,13 +24,9 @@ define :install_virtualenv_packages, :packages => [], :virtualenv => nil do
   params[:packages].each do |k, v|
     python_pip k do
       version v[:version] if v.key?(:version)
-      if v.key?(:action)
-        action v[:action]
-      end
+      action v[:action] if v.key?(:action)
       options v[:options] if v.key?(:options)
-      if not v.fetch(:global, false)
-        virtualenv params[:virtualenv]
-      end
+      virtualenv params[:virtualenv] unless  v.fetch(:global, false)
     end
   end
 end
