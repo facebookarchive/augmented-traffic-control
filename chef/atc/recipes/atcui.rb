@@ -69,14 +69,14 @@ end
 case node['atc']['init']['provider']
 when 'upstart'
   template '/etc/init/atcui.conf' do
-    source "upstart/atcui.conf.erb"
+    source 'upstart/atcui.conf.erb'
     mode 0644
     owner 'root'
     group 'root'
     notifies :restart, 'service[atcui]', :delayed
   end
 when 'systemd'
-  log "Systemd not currently supported." do
+  log 'Systemd not currently supported.' do
     level :warn
   end
 end
