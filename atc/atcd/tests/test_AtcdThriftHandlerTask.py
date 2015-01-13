@@ -8,15 +8,11 @@
 #
 #
 import __builtin__
-import mock
 from mock import mock_open
-import pytest
 
 old_open = __builtin__.open
 __builtin__.open = mock_open(read_data='000003e8 00000040 000f4240 3b9aca00\n')
 
-from atcd import AtcdThriftHandlerTask
-from sparts.tests.base import SingleTaskTestCase
 
 '''
 class AtcdThriftHandlerTaskTest(SingleTaskTestCase):
