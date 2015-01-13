@@ -1,5 +1,5 @@
 AllCops:
-    Excludes:
+    Exclude:
         - '**/Berksfile'
         - '**/Vagrantfile'
         - '**/metadata.rb'
