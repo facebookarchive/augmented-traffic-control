@@ -17,7 +17,7 @@ platforms:
         python:
             install_method: "source"
             distribute_install_py_version: "2.7"
-    - name: centos-7.0
+#    - name: centos-7.0
 
 suites:
     - name: default

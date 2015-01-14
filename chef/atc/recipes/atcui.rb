@@ -66,8 +66,7 @@ template node['atc']['atcui']['config_file'] do
   notifies :restart, 'service[atcui]', :delayed
 end
 
-case node['atc']['init']['provider']
-when 'upstart'
+if Chef::Platform::ServiceHelpers.service_resource_providers.include? :upstart
   template '/etc/init/atcui.conf' do
     source 'upstart/atcui.conf.erb'
     mode 0644
@@ -75,8 +74,14 @@ when 'upstart'
     group 'root'
     notifies :restart, 'service[atcui]', :delayed
   end
-when 'systemd'
-  log 'Systemd not currently supported.' do
+elsif Chef::Platform::ServiceHelpers.service_resource_providers.include? \
+    :systemd
+  log 'systemd not currently supported.' do
+    level :warn
+  end
+else
+  log 'Unsupported init system: ' +
+    Chef::Platform::ServiceHelpers.service_resource_providers.to_s do
     level :warn
   end
 end

@@ -7,12 +7,11 @@ description "Air Traffic Control User Interface"
 start on (started networking)
 stop on (stopped networking)
 
-<%# FIXME find a better way to determine if using modern version of upstart (>=1.4)%>
-<% if Gem::Version.new(node['atc']['init']['version']) > Gem::Version.new('1.4') %>
-setuid atc
-setgid atc
-<% else %>
-# setuid not supported for upstart <%= node['atc']['init']['version'] %>
+<% if node['atc']['atcui']['user'] != 'root' %>
+setuid <%= node['atc']['atcui']['user'] %>
+<% end %>
+<% if node['atc']['atcui']['group'] != 'root' %>
+setgid <%= node['atc']['atcui']['group'] %>
 <% end %>
 chdir /var/django
 

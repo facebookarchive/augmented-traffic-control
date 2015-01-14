@@ -17,7 +17,7 @@ include_recipe 'atc::_virtualenv'
 # Set sysctl values.
 node.default['sysctl']['params']['net']['ipv4']['ip_forward'] = 1
 node.default['sysctl']['allow_sysctl_conf'] = true
-node.network.interfaces.each do |name, eth|
+node['network']['interfaces'].each do |name, eth|
   next if eth.encapsulation != 'Ethernet'
   node.default['sysctl']['params']['net']['ipv4']['conf']\
     [name]['arp_ignore'] = 1
@@ -33,8 +33,8 @@ if node.vagrant?
 
   # Try to guess the correct interfaces.
   lan_iface = ''
-  wan_iface = node.network.default_interface
-  node.network.interfaces.each do |name, eth|
+  wan_iface = node['network']['default_interface']
+  node['network']['interfaces'].each do |name, eth|
     next if (eth.encapsulation != 'Ethernet') || (name == wan_iface)
     lan_iface = name
     break
