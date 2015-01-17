@@ -8,17 +8,10 @@
 #
 #
 packages = %w(
-  unzip ntp ntpdate tcpdump vim nmap traceroute tmux git strace lsof
+  git
 )
 base_dir = '/usr/local/atc'
 src_dir = '/usr/local/src/atc'
-
-case node['platform_family']
-when 'rhel'
-  packages.concat(%w(yum-utils man wireshark openssh-clients nc))
-when 'debian'
-  packages.concat(%w(tshark openssh-client netcat))
-end
 
 default['atc']['src_dir'] = src_dir
 default['atc']['packages'] = packages
