@@ -147,7 +147,7 @@ class TestAccessManager():
                 _make_device('1.1.1.1', '2.2.2.1'),
                 _make_token('12344'),
             )
-        assert excinfo.value.message == 'Access denied for device pair'
+        assert str(excinfo.value) == 'Access denied for device pair'
 
     # FIXME, this is not really handling expiration properly
     def test_validate_token_expired_valid(self, fake_am, fail_verify):
@@ -156,7 +156,7 @@ class TestAccessManager():
                 _make_device('1.1.1.2', '2.2.2.2'),
                 _make_token('12345'),
             )
-        assert excinfo.value.message == 'Access denied for device pair'
+        assert str(excinfo.value) == 'Access denied for device pair'
 
     # FIXME, this is not really handling expiration properly
     def test_validate_token_expired_invalid(self, fake_am, fail_verify):
@@ -165,7 +165,7 @@ class TestAccessManager():
                 _make_device('1.1.1.2', '2.2.2.2'),
                 _make_token('12344'),
             )
-        assert excinfo.value.message == 'Access denied for device pair'
+        assert str(excinfo.value) == 'Access denied for device pair'
 
     def test_validate_token_non_existent(self, fake_am):
         with pytest.raises(AccessTokenException) as excinfo:
@@ -173,5 +173,5 @@ class TestAccessManager():
                 _make_device('1.1.1.2', '2.2.2.0'),
                 _make_token('12344'),
             )
-        assert excinfo.value.message == \
+        assert str(excinfo.value) == \
             '''That remote device hasn't generated a code yet'''
