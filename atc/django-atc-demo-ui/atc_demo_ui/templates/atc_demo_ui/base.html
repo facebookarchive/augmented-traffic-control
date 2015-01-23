@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 {% load staticfiles %}
+{% load bootstrap_themes %}
     <head>
     <title>{{ atc_demo_ui_settings.SHORT_TILE }}</title>
     <meta charset="utf-8" />
@@ -17,16 +18,10 @@
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="{% static 'js/jquery.js' %}"></script>
 
-    <!-- Bootstrap {{ atc_demo_ui_settings.BOOTSTRAP_VERSION }} -->
-    <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/{{ atc_demo_ui_settings.BOOTSTRAP_VERSION }}/css/bootstrap.min.css">
-
-    <!-- Optional theme -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/{{ atc_demo_ui_settings.BOOTSTRAP_VERSION }}/css/bootstrap-theme.min.css">
-
-    <!-- Latest compiled and minified JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/{{ atc_demo_ui_settings.BOOTSTRAP_VERSION }}/js/bootstrap.min.js"></script>
-
+    <!-- Bootstrap CSS -->
+    {% bootstrap_styles theme='default' type='min.css' %}
+    <!-- Bootstrap JS -->
+    {% bootstrap_script use_min=True %}
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
