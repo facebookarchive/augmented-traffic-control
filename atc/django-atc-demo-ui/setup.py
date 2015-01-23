@@ -17,6 +17,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
 
 install_requires = [
     'django-atc-api',
+    'django-jquery==1.9.1',
 ]
 
 setup(
