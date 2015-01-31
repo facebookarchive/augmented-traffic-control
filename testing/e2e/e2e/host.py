@@ -86,6 +86,8 @@ class Process(object):
 
     def kill(self):
         self.channel.close()
+        # FIXME: channel.close() will close the socket, but not kill the
+        # remote process. This is a simple workaround, and won't work in all cases.
         self.host.cmd('killall ' + self.commandName)
 
     def __enter__(self):
