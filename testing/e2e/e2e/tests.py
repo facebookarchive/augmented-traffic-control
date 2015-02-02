@@ -1,9 +1,8 @@
 import unittest
-import sys
 
 from e2e.vagrant import Vagrant
 from e2e.vms import speedBetween, shape, unshape
-from e2e.speed import Kilobit, Megabit
+from e2e.speed import Kilobit
 
 
 class TestAtcdE2E(unittest.TestCase):
@@ -29,9 +28,9 @@ class TestAtcdE2E(unittest.TestCase):
 
             if self.ShapedSpeed.withinMargin(self.Margin, before):
                 self.fail(
-                    "Actual speed (" + str(before) +
-                    ") is too slow for shape testing. " +
-                    "(is it already being shaped?)")
+                    'Actual speed (' + str(before) +
+                    ') is too slow for shape testing. ' +
+                    '(is it already being shaped?)')
 
             shape(gateway, client, self.ShapedSpeed)
 
@@ -39,8 +38,8 @@ class TestAtcdE2E(unittest.TestCase):
 
             if not self.ShapedSpeed.withinMargin(self.Margin, during):
                 self.fail(
-                    "Actual speed (" + str(during) +
-                    ") did not change during shaping.")
+                    'Actual speed (' + str(during) +
+                    ') did not change during shaping.')
 
             unshape(gateway, client)
 
@@ -48,13 +47,13 @@ class TestAtcdE2E(unittest.TestCase):
 
             if self.ShapedSpeed.withinMargin(self.Margin, after):
                 self.fail(
-                    "Actual speed (" + str(after) +
-                    ") did not change after shaping.")
+                    'Actual speed (' + str(after) +
+                    ') did not change after shaping.')
 
             if not before.withinMargin(self.Margin, after):
                 self.fail(
-                    "Actual speed (" + str(after) +
-                    ") did not change after shaping.")
+                    'Actual speed (' + str(after) +
+                    ') did not change after shaping.')
 
     def test_dropsPackets(self):
         pass

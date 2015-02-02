@@ -27,12 +27,12 @@ class Speed(object):
             i += 1
             value = value / 1024
         if i == 0:
-            return str(value) + " bits/sec"
+            return str(value) + ' bits/sec'
         if i == 1:
-            return str(value) + " Kbits/sec"
+            return str(value) + ' Kbits/sec'
         if i == 2:
-            return str(value) + " Mbits/sec"
-        return str(value) + " Gbits/sec"
+            return str(value) + ' Mbits/sec'
+        return str(value) + ' Gbits/sec'
 
     def __add__(self, other):
         if isinstance(other, Speed):
@@ -71,12 +71,12 @@ def parseIPerfSpeed(s):
     except:
         print 'Invalid speed line: ' + repr(s)
         raise
-    if unit == "bits/sec":
+    if unit == 'bits/sec':
         return Speed(speed)
-    if unit == "Kbits/sec":
+    if unit == 'Kbits/sec':
         return Speed(speed, KILOBITS)
-    if unit == "Mbits/sec":
+    if unit == 'Mbits/sec':
         return Speed(speed, MEGABITS)
-    if unit == "Gbits/sec":
+    if unit == 'Gbits/sec':
         return Speed(speed, GIGABITS)
-    raise ValueError("Unknown unit for network speed: " + unit)
+    raise ValueError('Unknown unit for network speed: ' + unit)

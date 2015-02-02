@@ -5,7 +5,7 @@ import logging
 BUFFER_SIZE = 1024 * 1024
 
 # reduce paramiko logging spew
-logging.getLogger("paramiko").setLevel(logging.WARNING)
+logging.getLogger('paramiko').setLevel(logging.WARNING)
 
 
 # A class which does nothing
@@ -37,7 +37,7 @@ class Host(paramiko.SSHClient):
 
     def getIp(self, prefix='192.168.'):
         # ip addr | grep 'inet' | awk '{print $2}' \
-        #    | awk -F/ '{print $1}' | grep 192
+        #    | awk -F/ '{print $1}' | fgrep '192.168.' | head -n1
         out = self.cmd('ip addr')
         for line in out.splitlines():
             line = line.strip()
@@ -86,8 +86,9 @@ class Process(object):
 
     def kill(self):
         self.channel.close()
-        # FIXME: channel.close() will close the socket, but not kill the
-        # remote process. This is a simple workaround, and won't work in all cases.
+        # FIXME: channel.close() will close the socket,
+        # but not kill the remote process.
+        # This is a simple workaround, but won't work in all cases.
         self.host.cmd('killall ' + self.commandName)
 
     def __enter__(self):
