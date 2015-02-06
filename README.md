@@ -1,6 +1,6 @@
-# Air Traffic Control
+# Augmented Traffic Control
 
-Air Traffic Control (ATC) is a tool to allow controlling the connection that a device has to the internet. Aspects of the connection that can be controlled include:
+Augmented Traffic Control (ATC) is a tool to allow controlling the connection that a device has to the internet. Aspects of the connection that can be controlled include:
 
 * bandwidth
 * latency
@@ -98,7 +98,7 @@ You will need to install VirtualBox, Vagrant and a couple of plugins:
 * Install some vagrant plugins:
  * vagrant plugin install vagrant-berkshelf --plugin-version '>= 2.0.1'
  * vagrant plugin install vagrant-omnibus
-* Clone this repo: git clone git@github.com:facebook/air-traffic-control.git atc
+* Clone this repo: git clone git@github.com:facebook/augmented-traffic-control.git atc
 
 ### Running ATC
 

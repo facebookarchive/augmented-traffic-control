@@ -19,7 +19,7 @@ setup(
     description='ATC Thrift Library',
     author='Emmanuel Bretelle',
     author_email='chantra@fb.com',
-    url='https://github.com/facebook/atc',
+    url='https://github.com/facebook/augmented-traffic-control',
     packages=['atc_thrift'],
     classifiers=['Programming Language :: Python', ],
     long_description=readme.read(),

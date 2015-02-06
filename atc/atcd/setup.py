@@ -36,7 +36,7 @@ setup(
     description='ATC Daemon',
     author='Emmanuel Bretelle',
     author_email='chantra@fb.com',
-    url='https://github.com/facebook/atc',
+    url='https://github.com/facebook/augmented-traffic-control',
     packages=['atcd',
               'atcd.backends',
               'atcd.scripts'],

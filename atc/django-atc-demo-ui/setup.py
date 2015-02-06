@@ -27,7 +27,7 @@ setup(
     description='Demo Web UI for ATC',
     author='Emmanuel Bretelle',
     author_email='chantra@fb.com',
-    url='https://github.com/facebook/air-traffic-control',
+    url='https://github.com/facebook/augmented-traffic-control',
     packages=['atc_demo_ui'],
     classifiers=['Programming Language :: Python', ],
     long_description=README,

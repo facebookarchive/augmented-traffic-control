@@ -1,10 +1,10 @@
-# Contributing to Air Traffic Control
+# Contributing to Augmented Traffic Control
 We want to make contributing to this project as easy and transparent as
 possible.
 
 ## Our Development Process
 
-Air Traffic Control is maintained and developed on github. It is designed to be
+Augmented Traffic Control is maintained and developed on github. It is designed to be
 easily extensible and contain API that can be reused by external
 services/frontends.
 
@@ -40,5 +40,5 @@ outlined on that page and do not file a public issue.
 * General pyFlakes compliance (e.g., no * imports)
 
 ## License
-By contributing to Air Traffic Control, you agree that your contributions will be licensed
+By contributing to Augmented Traffic Control, you agree that your contributions will be licensed
 under its BSD license.

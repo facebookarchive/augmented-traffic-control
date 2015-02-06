@@ -26,7 +26,7 @@ test_ipaddr = '10.01.10.01'
 @pytest.fixture
 def atc_db_file():
     """return a NamedTemporyFile (tempfile.NamedTemportFile) for use
-    with testing AirTrafficControl's SQLite DB features
+    with testing ATC's SQLite DB features
     """
     return tempfile.NamedTemporaryFile(
         suffix='.db',

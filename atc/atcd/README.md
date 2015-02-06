@@ -1,4 +1,4 @@
 ATCD
 ====
 
-ATCD is `Air Traffic Control` (ATC) Daemon 
+ATCD is `Augmented Traffic Control` (ATC) Daemon

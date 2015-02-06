@@ -13,7 +13,7 @@ For example your project's `settings.py` file might look like this:
 
 ATC_DEMO_UI = {
     'SHORT_TITLE': 'ATC Demo UI',
-    'TITLE': 'Air Traffic Control Demo UI',
+    'TITLE': 'Augmented Traffic Control Demo UI',
     'EMAIL': 'atc@example.com',
     'INFO_MESSAGE': '',
     'REST_ENDPOINT': '/api/v1/',
@@ -31,7 +31,7 @@ USER_SETTINGS = getattr(settings, 'ATC_DEMO_UI', None)
 
 DEFAULTS = {
     'SHORT_TITLE': 'ATC Demo UI',
-    'TITLE': 'Air Traffic Control Demo UI',
+    'TITLE': 'Augmented Traffic Control Demo UI',
     'EMAIL': 'atc@example.com',
     'INFO_MESSAGE': '',
     'REST_ENDPOINT': '/api/v1/',
