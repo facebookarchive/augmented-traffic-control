@@ -10,6 +10,7 @@ boxes = [
         :name => :centos6,
         :box    => 'chef/centos-6.6',
         :chef_version => :latest,
+        :python_from_source => true,
     },
     {
         :name => :trusty,
@@ -42,7 +43,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                     "recipe[python]",
                     "recipe[atc::default]"
                 ]
-                if box.vm.box == 'centos65'
+                if opts.fetch(:python_from_source, false)
                     chef.json = {
                         "python" => {
                           "install_method" => "source",
