@@ -1,11 +1,10 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-DFT_BOX = 'precise64'
+DFT_BOX = 'chef/ubuntu-12.04'
 TOTAL_BOXES = 5
 box = {
     :box    => DFT_BOX,
-    :box_url => 'http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-12.04_chef-provisionerless.box',
     :chef_version => :latest,
 }
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
@@ -15,7 +14,6 @@ def make_vm(config, opts, number)
     name = "atcclient0#{number}"
     config.vm.define name do |box|
         box.vm.box = opts.fetch(:box, DFT_BOX)
-        box.vm.box_url = opts.fetch(:box_url) if opts.key?(:box_url)
         box.vm.synced_folder '../../atc', '/vagrant_data/atc'
         # Chef install
         box.omnibus.chef_version = opts.fetch(:chef_version, :latest)
