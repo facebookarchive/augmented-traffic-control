@@ -76,7 +76,7 @@ class AtcApi(APIView):
         )
 
     @serviced
-    def post(self, request, service, format=None):
+    def post(self, request, service, address=None, format=None):
         ''''
         Set shaping for an IP. If address is None, defaults to
         the client IP
@@ -85,7 +85,7 @@ class AtcApi(APIView):
         setting_serializer = SettingSerializer(data=request.DATA)
         device_serializer = DeviceSerializer(
             data=request.DATA,
-            context={'request': request},
+            context={'request': request, 'address': address},
         )
         if not setting_serializer.is_valid():
             raise ParseError(detail=setting_serializer.errors)

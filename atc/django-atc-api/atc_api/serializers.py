@@ -148,8 +148,15 @@ class DeviceSerializer(ThriftSerializer):
     def validate_address(self, value):
         # 'address' is optional, if not specified, we default to the
         # querying IP
+        # `address` can be specified in 2 places: the URL or within the payload
+        # The payload has priority and will be accessible through `value`
+        # The value passed in the URL is accessible through the context
+
         if value is None or (isinstance(value, str) and len(value) == 0):
-            value = self._get_client_ip()
+            if self.context.get('address'):
+                value = self.context['address']
+            else:
+                value = self._get_client_ip()
         if not validate_ipaddr(value):
             raise serializers.ValidationError("Invalid IP address")
         return value
