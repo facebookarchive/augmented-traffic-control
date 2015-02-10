@@ -40,10 +40,3 @@ end
 atc_install_packages 'p' do
   packages node['atc']['packages']
 end
-
-case node['platform_family']
-when 'rhel'
-  service 'ntpd' do
-    action [:enable, :start]
-  end
-end
