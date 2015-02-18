@@ -2,8 +2,7 @@
 # vi: set ft=ruby :
 
 boxinfo = {
-    :name => 'precise64',
-    :url => 'http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-12.04_chef-provisionerless.box',
+    :box => 'chef/ubuntu-12.04',
     :usbehci => 'on',
 }
 
@@ -12,8 +11,7 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.define 'gateway' do |box|
-        box.vm.box = boxinfo[:name].to_s
-        box.vm.box_url = boxinfo[:url].to_s
+        box.vm.box = boxinfo[:box]
         box.vm.synced_folder '../../atc', '/usr/local/src/atc/atc'
         box.vm.hostname = 'gateway'
         box.vm.provider "virtualbox" do |v|
@@ -48,8 +46,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
 
     config.vm.define 'client' do |box|
-        box.vm.box = boxinfo[:name].to_s
-        box.vm.box_url = boxinfo[:url].to_s
+        box.vm.box = boxinfo[:box]
         box.vm.hostname = 'client'
         box.vm.provider "virtualbox" do |v|
             v.customize ["modifyvm", :id, "--usbehci", boxinfo.fetch(:usbehci, "on")]
@@ -63,8 +60,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
 
     config.vm.define 'server' do |box|
-        box.vm.box = boxinfo[:name].to_s
-        box.vm.box_url = boxinfo[:url].to_s
+        box.vm.box = boxinfo[:box]
         box.vm.hostname = 'server'
         box.vm.provider "virtualbox" do |v|
             v.customize ["modifyvm", :id, "--usbehci", boxinfo.fetch(:usbehci, "on")]
