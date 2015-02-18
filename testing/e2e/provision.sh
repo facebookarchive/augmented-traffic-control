@@ -3,6 +3,8 @@
 if [[ "$(hostname)" == "gateway" ]] ; then
     sed -i -e 's/ATCD_WAN=eth[012]/ATCD_WAN=eth1/' -e 's/ATCD_LAN=eth[012]/ATCD_LAN=eth2/' /etc/default/atcd
 
+    /etc/init.d/atcd restart
+
     /usr/local/bin/atcui-setup
 else
     if [[ "$(hostname)" == "client" ]] ; then

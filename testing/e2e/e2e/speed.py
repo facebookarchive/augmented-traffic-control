@@ -8,7 +8,7 @@ class Speed(object):
     value = 0
 
     def __init__(self, value, unit=BITS):
-        self.value = value * unit
+        self.value = long(value * unit)
 
     def faster(self, other):
         return self.value > other.value
@@ -16,9 +16,8 @@ class Speed(object):
     def slower(self, other):
         return self.value < other.value
 
-    def withinMargin(self, margin, other):
-        return other.slower(self * (1.0 + margin)) and \
-            other.faster(self * (1.0 - margin))
+    def kbps(self):
+        return int(self.value / KILOBITS)
 
     def __str__(self):
         i = 0
@@ -67,16 +66,23 @@ Gigabit = Speed(1, GIGABITS)
 def parseIPerfSpeed(s):
     speeds, unit = s.split()[-2:]
     try:
-        speed = int(speeds)
+        speed = float(speeds)
     except:
         print 'Invalid speed line: ' + repr(s)
         raise
+    if speed > GIGABITS:
+        # something is likely fishy with this value.
+        # Print it incase the test fails.
+        print 'bad iperf speed(?):', str(s)
     if unit == 'bits/sec':
         return Speed(speed)
+    if unit == 'Bytes/sec':
+        return Speed(speed, 8)
     if unit == 'Kbits/sec':
         return Speed(speed, KILOBITS)
     if unit == 'Mbits/sec':
         return Speed(speed, MEGABITS)
     if unit == 'Gbits/sec':
         return Speed(speed, GIGABITS)
+    print 'Invalid speed line: ' + repr(s)
     raise ValueError('Unknown unit for network speed: ' + unit)

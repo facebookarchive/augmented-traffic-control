@@ -1,6 +1,6 @@
 .PHONY: test
 test: e2e/*.py
-	nosetests
+	nosetests -s
 
 lint:
 	flake8 e2e/

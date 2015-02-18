@@ -2,58 +2,64 @@ import unittest
 
 from e2e.vagrant import Vagrant
 from e2e.vms import speedBetween, shape, unshape
-from e2e.speed import Kilobit
+from e2e.speed import Megabit
+
+
+IPERF_OPTS = {
+    'udp': False,
+    'time': 30
+}
 
 
 class TestAtcdE2E(unittest.TestCase):
-    ShapedSpeed = Kilobit * 52
-
-    # If two network speeds are within this margin (%)
-    # from one another they are considered the same.
-    Margin = 0.15
 
     def test_shapesBandwidth(self):
         '''
         Tests that bandwidth shaping works.
 
         Examines the network speed before, during, and after shaping.
-        Fails if:
-            - Speed before or after shaping is being shaped.
-            - Speed during shaping is not being shaped.
+
+        Fails if the network speeds do not reflect expected results.
         '''
         with Vagrant.ssh('gateway', 'client', 'server') as machines:
             gateway, client, server = machines
 
-            before = speedBetween(client, server)
+            before = speedBetween(client, server, **IPERF_OPTS)
 
-            if self.ShapedSpeed.withinMargin(self.Margin, before):
-                self.fail(
-                    'Actual speed (' + str(before) +
-                    ') is too slow for shape testing. ' +
-                    '(is it already being shaped?)')
+            print 'Actual speed before shaping:', before
 
-            shape(gateway, client, self.ShapedSpeed)
+            shapedSpeed = before / 1024
 
-            during = speedBetween(client, server)
+            print 'Desired shaping speed:', shapedSpeed
 
-            if not self.ShapedSpeed.withinMargin(self.Margin, during):
-                self.fail(
-                    'Actual speed (' + str(during) +
-                    ') did not change during shaping.')
+            shape(gateway, client, shapedSpeed)
+
+            during = speedBetween(client, server, **IPERF_OPTS)
+
+            print 'Actual speed during shaping:', during
 
             unshape(gateway, client)
 
-            after = speedBetween(client, server)
+            after = speedBetween(client, server, **IPERF_OPTS)
 
-            if self.ShapedSpeed.withinMargin(self.Margin, after):
+            print 'Actual speed after shaping:', after
+
+            if before.slower(Megabit):
                 self.fail(
-                    'Actual speed (' + str(after) +
-                    ') did not change after shaping.')
+                    'Actual speed before shaping is too slow for shape'
+                    ' testing. (is it already being shaped?)')
 
-            if not before.withinMargin(self.Margin, after):
+            if during.faster(shapedSpeed):
                 self.fail(
-                    'Actual speed (' + str(after) +
-                    ') did not change after shaping.')
+                    'Actual speed during shaping exceeded'
+                    ' shaping speed.')
 
-    def test_dropsPackets(self):
-        pass
+            if after.slower(shapedSpeed * 2):
+                self.fail(
+                    'Actual speed after shaping appears'
+                    ' to still be shaped.')
+
+            if after.slower(before * 0.7):
+                self.fail(
+                    'Actual speed after shaping did not return'
+                    ' to normal value after shaping.')
