@@ -35,6 +35,8 @@ default['atc']['venv']['atcui']['packages'] = {
     { :action => :install, :options => '-e' },
   "file://#{File.join(src_dir, 'atc/django-atc-demo-ui')}" =>
     { :action => :install, :options => '-e' },
+  "file://#{File.join(src_dir, 'atc/django-atc-profile-storage')}" =>
+    { :action => :install, :options => '-e' },
   'mock' => {}
 }
 

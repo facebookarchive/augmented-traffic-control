@@ -214,6 +214,39 @@ var ShapingSettings = React.createClass({
 });
 
 
+var Profile = React.createClass({
+    render: function () {
+        return (
+            <li class="list-group-item">{this.props.name}</li>
+        );
+    }
+});
+
+
+var ProfileList = React.createClass({
+    render: function () {
+        var profileNodes = this.props.data.map(function (profile) {
+            return (
+                <li className="list-group-item">
+                    {profile.name}
+                </li>
+            );
+        });
+        return (
+            <div className="profileList">
+            <div className="col-md-4 text-center"></div>
+            <div className="col-md-4 text-center">
+                <ul className="list-group">
+                    {profileNodes}
+                </ul>
+            </div>
+                <div className="col-md-4 text-center"></div>
+            </div>
+        );
+    }
+});
+
+
 var ErrorBox = React.createClass({
     render: function () {
         var errors = this.props.error.detail;
@@ -410,6 +443,9 @@ var Atc = React.createClass({
                     <ShapingButton id="shaping_button" status={this.state.status} onClick={this.handleClick} />
                     {err_msg}
                 </div>
+            </div>
+            <div className="row">
+                <ProfileList data={[{'name': 'foo'}, {'name': 'bar'}]} />
             </div>
             <div className="row">
                 <ShapingSettings link_state={link_state} />
