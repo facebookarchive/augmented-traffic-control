@@ -12,7 +12,7 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.define 'gateway' do |box|
         box.vm.box = boxinfo[:box]
-        box.vm.synced_folder '../../atc', '/usr/local/src/atc/atc'
+        box.vm.synced_folder '../atc', '/usr/local/src/atc/atc'
         box.vm.hostname = 'gateway'
         box.vm.provider "virtualbox" do |v|
             v.customize ["modifyvm", :id, "--usbehci", boxinfo.fetch(:usbehci, "on")]
@@ -20,7 +20,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
         # Chef / Berkshelf
         box.omnibus.chef_version = :latest
-        box.berkshelf.berksfile_path = "../../chef/atc/Berksfile"
+        box.berkshelf.berksfile_path = "../chef/atc/Berksfile"
         box.berkshelf.enabled = true
         box.vm.provision :chef_solo do |chef|
             chef.run_list = [
@@ -36,7 +36,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                 }
             end
         end
-        box.vm.provision 'shell', path: 'provision.sh'
+        box.vm.provision 'shell', path: 'e2e/provision.sh'
 
         # Networking
         # Not sure if forwarded port is necessary or not
@@ -53,7 +53,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         end
 
         # Provisioner
-        box.vm.provision 'shell', path: 'provision.sh'
+        box.vm.provision 'shell', path: 'e2e/provision.sh'
 
         # Networking
         box.vm.network :private_network, ip: '192.168.20.10'
@@ -67,7 +67,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         end
 
         # Provisioner
-        box.vm.provision 'shell', path: 'provision.sh'
+        box.vm.provision 'shell', path: 'e2e/provision.sh'
 
         # Networking
         box.vm.network :private_network, ip: '192.168.10.10'

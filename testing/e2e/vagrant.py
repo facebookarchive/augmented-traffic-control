@@ -68,13 +68,3 @@ class _vagrant(object):
 
 
 Vagrant = _vagrant()
-
-
-def setUpModule():
-    # make sure these VMs are running.
-    # defined in Vagrantfile
-    pass  # Vagrant.up('client', 'server', 'gateway')
-
-
-def tearDownModule():
-    pass
