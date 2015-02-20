@@ -37,6 +37,9 @@ def profile_list(request):
             return JSONResponse(serializer.data, status=201)
         return JSONResponse(serializer.errors, status=400)
 
+    else:
+        return HttpResponse(status=405)
+
 
 @csrf_exempt
 def profile_detail(request, pk):
@@ -60,3 +63,6 @@ def profile_detail(request, pk):
     elif request.method == 'DELETE':
         profile.delete()
         return HttpResponse(status=204)
+
+    else:
+        return HttpResponse(status=405)

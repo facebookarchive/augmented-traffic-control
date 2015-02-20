@@ -280,6 +280,7 @@ var Atc = React.createClass({
             current_settings: new AtcSettings().getDefaultSettings(),
             status: atc_status.OFFLINE,
             error_msg: "",
+            profiles: [{'name': 'foo'}, {'name': 'bar'}],
         };
     },
 
@@ -289,6 +290,7 @@ var Atc = React.createClass({
          * current_settings === settings.... let's be smarter than that.
          */
         this.getCurrentShaping();
+        this.getProfiles();
     },
 
     handleClick: function(e) {
@@ -347,6 +349,24 @@ var Atc = React.createClass({
             return x.toString() === y.toString();
         }
         return !objectEquals(this.state.settings, this.state.current_settings);
+    },
+
+    getProfiles: function() {
+        this.state.client.get_profiles(function (result) {
+            if (result.status >= 200 && result.status < 300) {
+                console.log('getProfiles result:');
+                console.log(result);
+                this.setState({
+                    error_msg: '',
+                    profiles: result.json,
+                });
+            } else {
+                this.setState({
+                    profiles: [],
+                    error_msg: result.json,
+                });
+            }
+        }.bind(this));
     },
 
     getCurrentShaping: function() {
@@ -445,7 +465,7 @@ var Atc = React.createClass({
                 </div>
             </div>
             <div className="row">
-                <ProfileList data={[{'name': 'foo'}, {'name': 'bar'}]} />
+                <ProfileList data={this.state.profiles} />
             </div>
             <div className="row">
                 <ShapingSettings link_state={link_state} />
