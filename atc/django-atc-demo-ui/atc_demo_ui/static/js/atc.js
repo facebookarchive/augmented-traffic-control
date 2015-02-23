@@ -283,10 +283,16 @@ var ProfileList = React.createClass({
     },
 
     newProfile: function() {
+        var settings = this.props.link_state('settings').value;
+        if (settings.down.rate == null &&
+            settings.up.rate == null) {
+            this.props.link_state('errorMsg').requestChange({detail:"Enter your settings below then click New to save them as a profile."});
+            return;
+        }
         this.setState({
             pending_profile: {
                 name: "",
-                content: this.props.link_state('settings').value,
+                content: settings,
             },
         });
     },
@@ -369,7 +375,7 @@ var Atc = React.createClass({
             settings: new AtcSettings().getDefaultSettings(),
             current_settings: new AtcSettings().getDefaultSettings(),
             status: atc_status.OFFLINE,
-            error_msg: "",
+            errorMsg: "",
             profiles: [],
         };
     },
@@ -445,13 +451,13 @@ var Atc = React.createClass({
         this.state.client.get_profiles(function (result) {
             if (result.status >= 200 && result.status < 300) {
                 this.setState({
-                    error_msg: '',
+                    errorMsg: '',
                     profiles: result.json,
                 });
             } else {
                 this.setState({
                     profiles: [],
-                    error_msg: result.json,
+                    errorMsg: result.json,
                 });
             }
         }.bind(this));
@@ -463,21 +469,21 @@ var Atc = React.createClass({
             if (result.status == 404) {
                 this.setState({
                     status: atc_status.INACTIVE,
-                    error_msg: '',
+                    errorMsg: '',
                     settings: new AtcSettings().getDefaultSettings(),
                     current_settings: new AtcSettings().getDefaultSettings(),
                 });
             } else if (result.status >= 200 && result.status < 300) {
                 this.setState({
                     status: atc_status.ACTIVE,
-                    error_msg: '',
+                    errorMsg: '',
                     settings: result.json,
                     current_settings: this.state.settings,
                 });
             } else {
                 this.setState({
                     status: atc_status.OFFLINE,
-                    error_msg: result.json,
+                    errorMsg: result.json,
                     settings: new AtcSettings().getDefaultSettings(),
                 });
             }
@@ -496,7 +502,7 @@ var Atc = React.createClass({
             } else if (result.status >= 500) {
                 this.setState({
                     status: atc_status.OFFLINE,
-                    error_msg: result.json,
+                    errorMsg: result.json,
                 });
             }
         }.bind(this));
@@ -509,7 +515,7 @@ var Atc = React.createClass({
             if (result.status >= 200 && result.status < 300) {
                 this.setState({
                     status: atc_status.ACTIVE,
-                    error_msg: '',
+                    errorMsg: '',
                     settings: result.json,
                     current_settings: {down: this.state.settings.down, up: this.state.settings.up},
                 });
@@ -521,12 +527,12 @@ var Atc = React.createClass({
                     }));
                 }
                 this.setState({
-                    error_msg: errors,
+                    errorMsg: errors,
                 });
             } else if (result.status >= 500) {
                 this.setState({
                     status: atc_status.OFFLINE,
-                    error_msg: result.json,
+                    errorMsg: result.json,
                 });
             }
 
@@ -537,8 +543,8 @@ var Atc = React.createClass({
         link_state = this.linkState;
         var err_msg = "";
         var update_button = false;
-        if (this.state.error_msg != "") {
-            err_msg = <ErrorBox error={this.state.error_msg} />
+        if (this.state.errorMsg != "") {
+            err_msg = <ErrorBox error={this.state.errorMsg} />
         }
         if (this.hasChanged()) {
             update_button = <ShapingButton id="update_button" status={atc_status.OUTDATED} onClick={this.updateClick} />
