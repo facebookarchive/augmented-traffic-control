@@ -10,13 +10,6 @@ import json
 
 class JSONResponse(HttpResponse):
     def __init__(self, data, **kwargs):
-        if data and isinstance(data, dict) and data.get('content', None):
-            # fixme: this seems unnecessary
-            data['content'] = json.loads(
-                json.dumps(
-                    ast.literal_eval(data['content'])
-                )
-            )
         content = JSONRenderer().render(data)
         kwargs['content_type'] = 'application/json'
         super(JSONResponse, self).__init__(content, **kwargs)

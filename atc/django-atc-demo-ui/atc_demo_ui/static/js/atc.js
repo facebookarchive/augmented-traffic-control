@@ -151,6 +151,7 @@ var CollapseableInputGroup = React.createClass({
                         {this.props.children}
                     </div>
                 </div>
+                <br/>
             </div>
         );
     }
@@ -202,12 +203,12 @@ var ShapingSettings = React.createClass({
     render: function () {
         return (
             <div>
-            <div className="col-md-6">
-                <LinkShapingSettings direction="up" link_state={this.props.link_state} />
-            </div>
-            <div className="col-md-6">
-                <LinkShapingSettings direction="down" link_state={this.props.link_state} />
-            </div>
+                <div className="col-md-6">
+                    <LinkShapingSettings direction="up" link_state={this.props.link_state} />
+                </div>
+                <div className="col-md-6">
+                    <LinkShapingSettings direction="down" link_state={this.props.link_state} />
+                </div>
             </div>
         );
     }
@@ -215,32 +216,121 @@ var ShapingSettings = React.createClass({
 
 
 var Profile = React.createClass({
+    getInitialState: function() {
+        return {
+            name: "",
+        };
+    },
+
+    handleClick: function() {
+        this.props.link_state("settings").requestChange(new AtcSettings().mergeWithDefaultSettings(this.props.profile.content));
+    },
+
+    updateName: function(event) {
+        this.setState({name: event.target.value});
+    },
+
+    removeProfile: function() {
+        var removeProfile = function() {
+            // Remove profiles from the ATC instance's profile list so that it isn't rendered anymore.
+            this.props.refreshProfiles();
+        }.bind(this);
+
+        this.props.link_state("client").value.delete_profile(removeProfile, this.props.profile.id);
+    },
+
+    saveProfile: function() {
+        var addProfile = function() {
+            this.props.trashPending();
+            this.props.refreshProfiles();
+        }.bind(this);
+        var profile = this.props.profile;
+        profile.name = this.state.name;
+        this.props.link_state("client").value.new_profile(addProfile, this.props.profile);
+    },
+
     render: function () {
-        return (
-            <li class="list-group-item">{this.props.name}</li>
-        );
+        link_state = this.props.link_state("settings");
+        urate = this.props.profile.content.up.rate;
+        drate = this.props.profile.content.down.rate
+        confirm_btn = false
+        select_field = <button className="btn btn-primary" onClick={this.handleClick}>{this.props.profile.name}</button>
+        if (this.props.action == "create") {
+            confirm_btn = <span>
+                <button className="btn btn-info" onClick={this.saveProfile}>Save</button>
+                <button className="btn btn-danger" onClick={this.props.trashPending}>Cancel</button>
+            </span>
+            select_field = <input className="form-control" type="text" onChange={this.updateName} />;
+        } else if (this.props.action == "delete") {
+            confirm_btn = <button className="btn btn-danger" onClick={this.removeProfile}>Delete</button>
+        }
+        return <tr>
+                <td>{select_field}</td>
+                <td>{urate}</td>
+                <td>{drate}</td>
+                <td>{confirm_btn}</td>
+            </tr>;
     }
 });
 
 
 var ProfileList = React.createClass({
-    render: function () {
-        var profileNodes = this.props.data.map(function (profile) {
-            return (
-                <li className="list-group-item">
-                    {profile.name}
-                </li>
-            );
+    getInitialState: function() {
+        return {
+            pending_profile: null,
+            profiles: [],
+        };
+    },
+
+    newProfile: function() {
+        this.setState({
+            pending_profile: {
+                name: "",
+                content: this.props.link_state('settings').value,
+            },
         });
+    },
+
+    trashPending: function() {
+        this.setState({
+            pending_profile: null,
+        })
+    },
+
+    render: function () {
+        var profileNodes = this.props.profiles.map(function (profile) {
+            return (
+                <Profile refreshProfiles={this.props.refreshProfiles} link_state={this.props.link_state} action='delete' profile={profile} />
+            );
+        }.bind(this));
+
+        pending_profile = false;
+
+        if (this.state.pending_profile != null) {
+            pending_profile = <Profile refreshProfiles={this.props.refreshProfiles} link_state={this.props.link_state} action='create' trashPending={this.trashPending} profile={this.state.pending_profile} />
+        }
+
         return (
-            <div className="profileList">
-            <div className="col-md-4 text-center"></div>
-            <div className="col-md-4 text-center">
-                <ul className="list-group">
-                    {profileNodes}
-                </ul>
-            </div>
-                <div className="col-md-4 text-center"></div>
+            <div className="panel panel-default">
+                <div className="panel-heading">
+                    <h3 className="panel-title">Profiles</h3>
+                </div>
+
+                <table className="table">
+                    <tbody>
+                        <tr>
+                            <th>Name</th>
+                            <th>Up Rate (Kb/s)</th>
+                            <th>Down Rate (Kb/s)</th>
+                            <th>
+                                <button className="btn btn-default" onClick={this.newProfile}>New</button>
+                            </th>
+                        </tr>
+
+                        {profileNodes}
+                        {pending_profile}
+                    </tbody>
+                </table>
             </div>
         );
     }
@@ -280,7 +370,7 @@ var Atc = React.createClass({
             current_settings: new AtcSettings().getDefaultSettings(),
             status: atc_status.OFFLINE,
             error_msg: "",
-            profiles: [{'name': 'foo'}, {'name': 'bar'}],
+            profiles: [],
         };
     },
 
@@ -354,8 +444,6 @@ var Atc = React.createClass({
     getProfiles: function() {
         this.state.client.get_profiles(function (result) {
             if (result.status >= 200 && result.status < 300) {
-                console.log('getProfiles result:');
-                console.log(result);
                 this.setState({
                     error_msg: '',
                     profiles: result.json,
@@ -448,7 +536,7 @@ var Atc = React.createClass({
     render: function () {
         link_state = this.linkState;
         var err_msg = "";
-        var update_button = "";
+        var update_button = false;
         if (this.state.error_msg != "") {
             err_msg = <ErrorBox error={this.state.error_msg} />
         }
@@ -465,7 +553,7 @@ var Atc = React.createClass({
                 </div>
             </div>
             <div className="row">
-                <ProfileList data={this.state.profiles} />
+                <ProfileList refreshProfiles={this.getProfiles} link_state={link_state} profiles={this.state.profiles} />
             </div>
             <div className="row">
                 <ShapingSettings link_state={link_state} />
