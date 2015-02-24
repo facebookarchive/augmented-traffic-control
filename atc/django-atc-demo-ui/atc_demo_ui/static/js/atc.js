@@ -151,7 +151,6 @@ var CollapseableInputGroup = React.createClass({
                         {this.props.children}
                     </div>
                 </div>
-                <br/>
             </div>
         );
     }
@@ -223,7 +222,9 @@ var Profile = React.createClass({
     },
 
     handleClick: function() {
-        this.props.link_state("settings").requestChange(new AtcSettings().mergeWithDefaultSettings(this.props.profile.content));
+        this.props.link_state("settings").requestChange(
+            new AtcSettings().mergeWithDefaultSettings(this.props.profile.content)
+        );
     },
 
     updateName: function(event) {
