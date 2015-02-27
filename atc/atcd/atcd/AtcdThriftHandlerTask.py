@@ -121,6 +121,7 @@ class AtcdThriftHandlerTask(ThriftHandlerTask):
     DEFAULT_PCAP_DIR = '/tmp'
     DEFAULT_PCAP_URL_BASE = 'http://localhost:80'
     DEFAULT_BURST_SIZE = 12000
+    DEFAULT_MODE = 'secure'
 
     OPT_PREFIX = 'atcd'
 
@@ -166,6 +167,12 @@ class AtcdThriftHandlerTask(ThriftHandlerTask):
     fresh_start = option(
         action='store_true',
         help='Bypass saved shapings from a previous run [%(default)s]',
+    )
+
+    mode = option(
+        choices=['secure', 'unsecure'],
+        default=DEFAULT_MODE,
+        help='In which mode should atcd run? [%(default)s]',
     )
 
     @staticmethod
@@ -224,7 +231,7 @@ class AtcdThriftHandlerTask(ThriftHandlerTask):
         # {'10.0.0.1': {'tc': TrafficControl(...), 'timeout': 1234567890.1234}}
         self._current_shapings = {}
 
-        self.access_manager = AccessManager()
+        self.access_manager = AccessManager(secure=self.mode != 'unsecure')
         if not self.fresh_start:
             self.logger.info('Restoring shaped connection from DB')
             self._restore_saved_shapings()
@@ -267,7 +274,20 @@ class AtcdThriftHandlerTask(ThriftHandlerTask):
             timeout = float(result['timeout'])
             if timeout > time.time():
                 tc.timeout = timeout - time.time()
-                self.startShaping(tc)
+                try:
+                    self.startShaping(tc)
+                except TrafficControlException as e:
+                    # We have a shaping set in database that is denied
+                    # probably because it was set in unsecure mode, passing
+                    if (
+                            e.code == ReturnCode.ACCESS_DENIED
+                            and self.mode == 'secure'):
+                        self.logger.warn(
+                            'Shaping Denied in secure mode, passing:'
+                            ' {0}'.format(e.message)
+                        )
+                        continue
+                    raise
             else:
                 self.db_task.queue.put(
                     (tc.device.controlledIP, 'remove_shaping')
