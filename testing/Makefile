@@ -12,12 +12,12 @@ test:
 
 .PHONY: vup
 vup:
-	vagrant up ${VMS}
+	VAGRANT_CWD=./e2e/ vagrant up ${VMS}
 
 
 .PHONY: vdown
 vdown:
-	vagrant destroy -f ${VMS}
+	VAGRANT_CWD=./e2e/ vagrant destroy -f ${VMS}
 
 
 .PHONY: lint

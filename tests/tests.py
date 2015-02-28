@@ -1,8 +1,8 @@
 import unittest
 
-from e2e.vagrant import Vagrant
-from e2e.vms import speedBetween, shape, unshape
-from e2e.speed import Megabit
+from vagrant import Vagrant
+from vms import speedBetween, shape, unshape
+from speed import Megabit
 
 
 IPERF_OPTS = {

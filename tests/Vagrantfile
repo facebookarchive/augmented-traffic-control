@@ -36,7 +36,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                 }
             end
         end
-        box.vm.provision 'shell', path: 'e2e/provision.sh'
+        box.vm.provision 'shell', path: 'provision.sh'
 
         # Networking
         # Not sure if forwarded port is necessary or not
@@ -53,7 +53,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         end
 
         # Provisioner
-        box.vm.provision 'shell', path: 'e2e/provision.sh'
+        box.vm.provision 'shell', path: 'provision.sh'
 
         # Networking
         box.vm.network :private_network, ip: '192.168.20.10'
@@ -67,7 +67,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         end
 
         # Provisioner
-        box.vm.provision 'shell', path: 'e2e/provision.sh'
+        box.vm.provision 'shell', path: 'provision.sh'
 
         # Networking
         box.vm.network :private_network, ip: '192.168.10.10'
