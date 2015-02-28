@@ -1,4 +1,4 @@
-from e2e.speed import parseIPerfSpeed
+from speed import parseIPerfSpeed
 import httplib
 import json
 import time

@@ -1,7 +1,7 @@
 from subprocess import call, Popen, PIPE
 import paramiko
 
-from e2e.host import Host
+from host import Host
 
 
 # For use with the 'with' python feature.
@@ -33,18 +33,6 @@ class _sshGroup(object):
 class _vagrant(object):
     vms = []
 
-    def up(self, *names):
-        for name in names:
-            if name not in self.vms:
-                r = call(['vagrant', 'up', name])
-                if r != 0:
-                    raise RuntimeError('Could not bring up vagrant vm '+name)
-
-    def destroy(self, name):
-        r = call(['vagrant', 'destroy', '-f', name])
-        if r != 0:
-            raise RuntimeError('Could not destroy vagrant vm '+name)
-
     def ssh(self, *names):
         clients = _sshGroup()
         for name in names:
@@ -56,7 +44,8 @@ class _vagrant(object):
         p = Popen(['vagrant', 'ssh-config', name],
                   stdout=PIPE,
                   stderr=None,
-                  stdin=None
+                  stdin=None,
+                  cwd='tests/',
                   )
         p.wait()
         if p.returncode != 0:
