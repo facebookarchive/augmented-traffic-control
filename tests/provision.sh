@@ -15,7 +15,7 @@ if [[ "$(hostname)" == "gateway" ]] ; then
 
     /etc/init.d/atcd restart
 
-    /usr/local/bin/atcui-setup
+    su -s '/bin/bash' -c '/usr/local/bin/atcui-setup' - atc
 else
     if [[ "$(hostname)" == "client" ]] ; then
         ip route add 192.168.10.0/24 via 192.168.20.2
