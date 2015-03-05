@@ -1,26 +1,34 @@
 #!/bin/bash
 
+RED="\e[0;31m"
 GREEN="\e[0;32m"
 NC="\e[00m"
+
+if [[ "$EUID" != "0" ]] ; then
+    echo -e "${RED}$0 must be run as root.${NC}"
+    exit 1
+fi
+
+VENV="<%= File.join(node['atc']['venv']['path'], 'bin', 'activate') %>"
+USER="<%= node['atc']['atcui']['user'] %>"
 
 function p() {
     echo -e "${GREEN}${1}${NC}"
 }
 
-# source virtualenvironment
-. <%= File.join(node['atc']['venv']['path'], 'bin', 'activate') %>
-
-cd /var/django
+function managepy() {
+    C="cd /var/django && . \"$VENV\" && python manage.py $@"
+    sudo -u "$USER" /bin/bash -c "$C"
+}
 
 p "Syncing DB"
-python manage.py syncdb
+managepy syncdb
 
 p "Migrating DB"
-python ./manage.py migrate
+managepy migrate
 
 p "Loading Samples"
-python ./manage.py loaddata sample
+managepy loaddata sample
 
 p "Generating static files"
-python ./manage.py collectstatic --noinput
-
+managepy collectstatic --noinput
