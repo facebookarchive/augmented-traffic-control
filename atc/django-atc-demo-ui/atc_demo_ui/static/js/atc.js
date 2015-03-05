@@ -232,112 +232,119 @@ var Profile = React.createClass({
     },
 
     removeProfile: function() {
-        var removeProfile = function() {
-            // Remove profiles from the ATC instance's profile list so that it isn't rendered anymore.
-            this.props.refreshProfiles();
-        }.bind(this);
-
-        this.props.link_state("client").value.delete_profile(removeProfile, this.props.profile.id);
-    },
-
-    saveProfile: function() {
-        var addProfile = function() {
-            this.props.trashPending();
-            this.props.refreshProfiles();
-        }.bind(this);
-        var profile = this.props.profile;
-        profile.name = this.state.name;
-        this.props.link_state("client").value.new_profile(addProfile, this.props.profile);
+        this.props.link_state("client").value.delete_profile(this.props.refreshProfiles, this.props.profile.id);
     },
 
     render: function () {
-        link_state = this.props.link_state("settings");
-        urate = this.props.profile.content.up.rate;
-        drate = this.props.profile.content.down.rate
-        confirm_btn = false
-        select_field = <button className="btn btn-primary" onClick={this.handleClick}>{this.props.profile.name}</button>
-        if (this.props.action == "create") {
-            confirm_btn = <span>
-                <button className="btn btn-info" onClick={this.saveProfile}>Save</button>
-                <button className="btn btn-danger" onClick={this.props.trashPending}>Cancel</button>
-            </span>
-            select_field = <input className="form-control" type="text" onChange={this.updateName} />;
-        } else if (this.props.action == "delete") {
-            confirm_btn = <button className="btn btn-danger" onClick={this.removeProfile}>Delete</button>
-        }
-        return <tr>
-                <td>{select_field}</td>
-                <td>{urate}</td>
-                <td>{drate}</td>
-                <td>{confirm_btn}</td>
-            </tr>;
+        return (
+            <div className="list-group-item row">
+                <span className="col-sm-6 text-center vcenter"><kbd>{this.props.profile.name}</kbd></span>
+                <span className="col-sm-2 text-center vcenter">{this.props.profile.content.up.rate} kbps</span>
+                <span className="col-sm-2 text-center vcenter">{this.props.profile.content.down.rate} kbps</span>
+                <button className="col-sm-1 btn btn-info vcenter" onClick={this.handleClick}>Select</button>
+                <button className="col-sm-1 btn btn-danger vcenter" onClick={this.removeProfile}>Delete</button>
+            </div>);
     }
 });
 
 
 var ProfileList = React.createClass({
-    getInitialState: function() {
-        return {
-            pending_profile: null,
-            profiles: [],
-        };
-    },
-
-    newProfile: function() {
-        var settings = this.props.link_state('settings').value;
-        if (settings.down.rate == null &&
-            settings.up.rate == null) {
-            this.props.link_state('errorMsg').requestChange({detail:"Enter your settings below then click New to save them as a profile."});
-            return;
+    render: function() {
+        if (this.props.profiles.length == 0) {
+            return false;
         }
-        this.setState({
-            pending_profile: {
-                name: "",
-                content: settings,
-            },
-        });
-    },
 
-    trashPending: function() {
-        this.setState({
-            pending_profile: null,
-        })
-    },
-
-    render: function () {
         var profileNodes = this.props.profiles.map(function (profile) {
             return (
                 <Profile refreshProfiles={this.props.refreshProfiles} link_state={this.props.link_state} action='delete' profile={profile} />
             );
         }.bind(this));
 
-        pending_profile = false;
+        return (
+            <div>
+                <h3>Existing Profiles</h3>
+                <p>
+                    Select a profile from the list below to use it.
+                </p>
+                <div className="list-group">
+                    <div className="list-group-item row">
+                        <span className="col-sm-6 text-center vcenter"><b>Name</b></span>
+                        <span className="col-sm-2 text-center vcenter"><b>Up Rate</b></span>
+                        <span className="col-sm-2 text-center vcenter"><b>Down Rate</b></span>
+                        <span className="col-sm-1 text-center vcenter"></span>
+                        <span className="col-sm-1 text-center vcenter"></span>
+                    </div>
 
-        if (this.state.pending_profile != null) {
-            pending_profile = <Profile refreshProfiles={this.props.refreshProfiles} link_state={this.props.link_state} action='create' trashPending={this.trashPending} profile={this.state.pending_profile} />
+                    {profileNodes}
+                </div>
+            </div>
+        );
+    }
+});
+
+
+var CreateProfileWidget = React.createClass({
+    getInitialState: function() {
+        return {
+            name: ""
+        };
+    },
+
+    updateName: function() {
+        this.setState({name: event.target.value});
+    },
+
+    newProfile: function() {
+        var settings = this.props.link_state('settings').value;
+        if (settings.down.rate == null &&
+            settings.up.rate == null) {
+            this.props.link_state('errorMsg').requestChange({detail:"Enter your settings below and click Create to save the profile."});
+            return;
+        }
+        if (this.state.name == "") {
+            this.props.link_state('errorMsg').requestChange({detail:"You must give this new profile a name."});
+            return;
         }
 
+        var addProfile = function() {
+            this.setState({
+                name: "",
+            });
+            this.props.refreshProfiles();
+        }.bind(this);
+
+        var profile = {
+            name: this.state.name,
+            content: settings
+        };
+        console.log("Creating profile " + profile.name);
+        this.props.link_state("client").value.new_profile(addProfile, profile);
+    },
+
+    render: function() {
+        return (
+            <div>
+                <h3>New Profile</h3>
+                <p>
+                    Enter a name and click "Create" to save a new profile.
+                </p>
+                <input type="text" className="form-control" placeholder="Profile Name" onChange={this.updateName}/>
+                <button className="col-sm-2 btn btn-success" onClick={this.newProfile}>Create</button>
+            </div>
+        );
+    },
+});
+
+
+var ProfilePanel = React.createClass({
+    render: function () {
         return (
             <div className="panel panel-default">
-                <div className="panel-heading">
-                    <h3 className="panel-title">Profiles</h3>
+                <div className="panel-body">
+                    <ProfileList refreshProfiles={this.props.refreshProfiles} link_state={this.props.link_state} profiles={this.props.profiles}/>
+
+                    <CreateProfileWidget refreshProfiles={this.props.refreshProfiles} link_state={this.props.link_state}/>
                 </div>
-
-                <table className="table">
-                    <tbody>
-                        <tr>
-                            <th>Name</th>
-                            <th>Up Rate (Kb/s)</th>
-                            <th>Down Rate (Kb/s)</th>
-                            <th>
-                                <button className="btn btn-default" onClick={this.newProfile}>New</button>
-                            </th>
-                        </tr>
-
-                        {profileNodes}
-                        {pending_profile}
-                    </tbody>
-                </table>
             </div>
         );
     }
@@ -560,8 +567,9 @@ var Atc = React.createClass({
                 </div>
             </div>
             <div className="row">
-                <ProfileList refreshProfiles={this.getProfiles} link_state={link_state} profiles={this.state.profiles} />
+                <ProfilePanel refreshProfiles={this.getProfiles} link_state={link_state} profiles={this.state.profiles} />
             </div>
+
             <div className="row">
                 <ShapingSettings link_state={link_state} />
             </div>
