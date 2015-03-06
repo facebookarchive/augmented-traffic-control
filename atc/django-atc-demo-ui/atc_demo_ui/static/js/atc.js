@@ -59,6 +59,46 @@ var atc_status = {
 };
 
 
+function handleAPI(link_state, callback) {
+    return function(rc) {
+        /* 2XX error codes are OK */
+        if (rc.status < 300 && rc.status >= 200) {
+            if (callback !== undefined) {
+                callback(rc);
+            }    
+        } else {
+            err = false;
+            t = typeof rc.json;
+            if (t === 'undefined') {
+                err = {
+                    detail: "Could not complete request due to server error.",
+                }
+            } else if (t === 'string') {
+                s = rc.json
+
+                /* trim off the first line */
+                s = s.trim().substring(s.length, s.indexOf('\n'))
+
+                /* take the second line as the error message */
+                s = s.trim().substring(0, s.indexOf('\n'))
+
+                err = {
+                    detail: s,
+                };
+            } else if (t === 'object') {
+                err = rc.json;
+            }
+
+            if (err) {
+                link_state('errorMsg').requestChange(err);
+            } else {
+                console.log("Not sure what to do with error value " + t + " '" + rc.json + "'");
+            }
+        }
+    }
+}
+
+
 var ShapingButton = React.createClass({
     render: function () {
         button_values = [
@@ -232,7 +272,7 @@ var Profile = React.createClass({
     },
 
     removeProfile: function() {
-        this.props.link_state("client").value.delete_profile(this.props.refreshProfiles, this.props.profile.id);
+        this.props.link_state("client").value.delete_profile(handleAPI(this.props.link_state, this.props.refreshProfiles), this.props.profile.id);
     },
 
     render: function () {
@@ -318,7 +358,7 @@ var CreateProfileWidget = React.createClass({
             content: settings
         };
         console.log("Creating profile " + profile.name);
-        this.props.link_state("client").value.new_profile(addProfile, profile);
+        this.props.link_state("client").value.new_profile(handleAPI(this.props.link_state, addProfile), profile);
     },
 
     render: function() {
