@@ -55,9 +55,10 @@ class AtcdTOTP(pyotp.TOTP):
 class AccessManager(object):
     ACCESS_TOKEN_INTERVAL = 60
 
-    def __init__(self):
+    def __init__(self, secure=True):
         self._ip_to_totp_map = {}
         self._control_allowed = {}
+        self.secure = secure
 
     def generate_token(self, ip, duration):
         """
@@ -122,8 +123,11 @@ class AccessManager(object):
         dev.controlledIP
         @returns boolean
         """
-        # FIXME: we should not validate access if controllingIP is None
-        if dev.controllingIP in (None, dev.controlledIP):
+        # Non secure mode, access granted everytime
+        if not self.secure:
+            return True
+
+        if dev.controllingIP == dev.controlledIP:
             return True
         dev_tuple = _dev_to_tuple(dev)
         timeout = self._control_allowed.get(dev_tuple)
