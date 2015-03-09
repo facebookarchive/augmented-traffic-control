@@ -11,7 +11,7 @@
 
 from distutils.core import setup
 
-readme = open("README.md", "r")
+readme = open('README.md', 'r')
 
 setup(
     name='atc_thrift',
