@@ -26,6 +26,7 @@ ATCD_VENV=
 ATCD_SQLITE=/var/lib/atc/atcd.db
 ATCD_WAN=eth0
 ATCD_LAN=eth1
+ATCD_MODE=secure
 
 sysconfig="/etc/default/${name}"
 lockfile="/var/lock/${name}"
@@ -38,7 +39,7 @@ start() {
     atcd="$(which ${name})"
     [ -x $atcd ] || exit 5
     echo -n "Starting $name: "
-    start-stop-daemon --start --pidfile $pidfile --exec $atcd -- --pidfile $pidfile --daemon --thrift-host ${ATCD_LISTEN_ADDRESS} --thrift-port ${ATCD_LISTEN_PORT} --sqlite-file ${ATCD_SQLITE} --atcd-lan ${ATCD_LAN} --atcd-wan ${ATCD_WAN}
+    start-stop-daemon --start --pidfile $pidfile --exec $atcd -- --pidfile $pidfile --daemon --thrift-host ${ATCD_LISTEN_ADDRESS} --thrift-port ${ATCD_LISTEN_PORT} --sqlite-file ${ATCD_SQLITE} --atcd-lan ${ATCD_LAN} --atcd-wan ${ATCD_WAN} --atcd-mode ${ATCD_MODE}
     retval=$?
     echo
     [ $retval -eq 0 ] && touch $lockfile

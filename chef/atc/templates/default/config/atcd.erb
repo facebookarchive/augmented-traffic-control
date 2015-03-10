@@ -16,3 +16,6 @@ ATCD_WAN=<%= node['atc']['atcd']['interface']['wan'] %>
 <% if node['atc']['atcd']['interface']['lan'] %>
 ATCD_LAN=<%= node['atc']['atcd']['interface']['lan'] %>
 <% end %>
+<% if node['atc']['atcd']['mode'] %>
+ATCD_MODE=<%= node['atc']['atcd']['mode'] %>
+<% end %>
