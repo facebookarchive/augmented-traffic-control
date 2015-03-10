@@ -51,6 +51,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                         }
                     }
                 end
+                chef.json.update(
+                  {
+                    "atc" => {
+                      "atcd" => {
+                        "mode" => "unsecure"
+                      }
+                    }
+                  }
+                )
             end
             # port forwarding
             box.vm.network :forwarded_port, guest: 8000, host: 8080, auto_correct: true
