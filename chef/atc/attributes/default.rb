@@ -45,6 +45,7 @@ default['atc']['atcd']['listen']['port'] = '9090'
 default['atc']['atcd']['sqlite'] = '/var/lib/atc/atcd.db'
 default['atc']['atcd']['interface']['wan'] = 'eth0'
 default['atc']['atcd']['interface']['lan'] = 'eth1'
+default['atc']['atcd']['mode'] = 'secure'
 
 default['atc']['atcui']['workers'] = 2
 default['atc']['atcui']['listen']['address'] = '0.0.0.0'
