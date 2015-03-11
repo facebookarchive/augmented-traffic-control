@@ -18,7 +18,7 @@ install_requires = [
     'pyroute2==0.3.3',
     'pyotp==1.4.1',
     'sparts==0.7.1',
-    'thrift'
+    'atc_thrift'
 ]
 
 tests_require = install_requires + [
@@ -44,7 +44,6 @@ setup(
     classifiers=['Programming Language :: Python', ],
     long_description=readme.read(),
     scripts=scripts,
-    # FIXME: add atc_thrift dependency once package is published to pip
     install_requires=install_requires,
     tests_require=tests_require,
 )
