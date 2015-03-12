@@ -1,0 +1,41 @@
+---
+---
+{% include header.html %}
+    <div class="section_title">About</div>
+    <p>
+    <a href="{{ site.data.config.project_github }}">{{ site.data.config.project_fullname }}</a> (aka <strong>{{ site.data.config.project_name}}</strong>) is a project that allow to control the connection that a device has to the internet. Aspects that can be controlled by ATC include:
+    <ul>
+      <li>Bandwith</li>
+      <li>Latency</li>
+      <li>Packet loss</li>
+      <li>Packet corruption</li>
+      <li>Packet reordering</li>
+    </ul>
+    </p>
+    <div class="section_title">Architecture</div>
+    <div class="section_subtitle">Overview</div>
+    <p>
+    <code>{{ site.data.config.project_fullname }}</code> is made of a set of applications that inter-operate together. At the core of it is <a href="{{ site.data.config.project_github }}/tree/master/atc/atcd">atcd</a>, the ATC daemon, that is responsible for setting shaping characteristics.
+<em>atcd</em> provides a <a href="https://thrift.apache.org/" target="_blank">Thrift</a> interface in order to be interact with it.
+    </p>
+    <p>
+    A django REST API, <a href="{{ site.data.config.project_github }}/tree/master/atc/django-atc-api">django-atc-api</a>, is also provided in order to make it easier to build web applications that can interact with <em>atcd</em> using the well known REST paradigm.
+    </p>
+    <p>
+    To make <em>{{ site.data.config.project_name }}</em> directly comsumable by any devices that support HTTP, a minimalistic Web UI is provided: <a href="{{ site.data.config.project_github }}/tree/master/atc/django-atc-demo-ui">django-atc-demo-ui</a>.
+    </p>
+    <img src="{{ site.baseurl }}/images/atc_overview.png" />
+
+    <div class="section_title">Contributions</div>
+    <p>Use <a href="{{ site.data.config.project_github }}/issues">Github issues</a> for requests.</p>
+    <p>We actively welcome pull requests; learn how to <a href="{{ site.data.config.project_github }}/blob/master/CONTRIBUTING.md">contribute</a>.</p>
+
+    <div class="section_title">Changelog</div>
+    <p>Changes are tracked as <a href="{{ site.data.config.project_github }}/releases">Github releases</a>.</p>
+
+
+    <div class="section_title">License</div>
+    <p><code>{{ site.data.config.project_fullname }}</code> is <a href="{{ site.data.config.project_github }}/blob/master/LICENSE">{{ site.data.config.project_license }}-licensed</a>. We also provide an additional <a href="{{ site.data.config.project_github }}/blob/master/PATENTS">patent grant</a>.</p>
+
+  </div>
+{% include footer.html %}

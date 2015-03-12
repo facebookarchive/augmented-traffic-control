@@ -1,0 +1,18 @@
+---
+---
+{% include header.html %}
+	<div class="section_title">Need help?</div>
+    <p>
+    If you're having trouble or otherwise have questions about {{ site.data.config.project_fullname }}, you can try reaching out using the following channels:
+    </p>
+    {% if site.data.config.project_irc %}
+    <div class="section_subtitle">IRC</div>
+    <p>
+    Developers and users idle on Freenode.net's IRC network in <a href="irc://chat.freenode.net/{{ site.data.config.project_irc }}" target="_">#{{ site.data.config.project_irc }}</a>.
+    </p>
+    {% endif %}
+    <div class="section_subtitle">Bugs?</div>
+    <p>
+    Found a bug? Please report an <a href="{{ site.data.config.project_github }}/issues/new" target="_">issue</a>.
+    </p>
+{% include footer.html %}

@@ -1,0 +1,14 @@
+project_name: ATC
+project_fullname: Augmented Traffic Control
+project_description: A tool to simulate network conditions
+project_github: &project_github https://github.com/facebook/augmented-traffic-control
+project_license: BSD
+project_irc: atc
+navigation:
+ - text: docs
+   url: /docs/install.html
+ - text: support
+   url: /docs/support.html
+ - text: github
+   url: *project_github
+

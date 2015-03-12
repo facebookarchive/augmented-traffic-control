@@ -1,0 +1,48 @@
+---
+---
+{% include header.html %}
+	<div class="section_title">Getting Started</div>
+    <div class="code">
+    {% highlight bash %}
+    git clone {{ site.data.config.project_github }}
+virtualenv ~/atc_venv
+source ~/atc_venv/bin/activate
+cd augmented-traffic-control/atc
+for i in atc_thrift atcd django-atc-api django-atc-demo-ui django-atc-profile-storage
+do
+  pushd $i
+  pip install .
+  popd
+done
+cd ~/
+django-admin startproject atcui
+cd atcui
+<<follow readmes from READMEs>>
+Add:
+    # Django ATC API
+    'rest_framework',
+    'atc_api',
+    # Django ATC Demo UI
+    'bootstrap_themes',
+    'django_static_jquery',
+    'atc_demo_ui',
+    # Django ATC Profile Storage
+    'atc_profile_storage',
+
+to INSTALLED_APPS in atcui/settings.py
+
+Add:
+   # Django ATC API
+   url(r'^api/v1/', include('atc_api.urls')),
+   # Django ATC Demo UI
+   url(r'^atc_demo/', include('atc_demo_ui.urls')),
+   # Django ATC profile storage
+   url(r'^api/v1/profiles/', include('atc_profile_storage.urls')),
+
+in atcui/urls.py
+
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8000
+    {% endhighlight %}
+    </div>
+{% include footer.html %}

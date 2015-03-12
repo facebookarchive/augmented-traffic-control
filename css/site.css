@@ -1,0 +1,193 @@
+html, body {
+  height: 100%;
+}
+
+* {
+  font-family: 'Roboto', sans-serif;
+}
+
+a {
+  border-bottom: 1px dotted #A400AB;
+  color: #A400AB;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.title {
+    font-weight: 300;
+    font-size: 48px;
+}
+
+.subtitle {
+  font-weight: 300;
+  font-size: 16px;
+  margin-top: 48px;
+}
+
+.section_title {
+  font-weight: 400;
+  font-size: 24px;
+  margin-top: 48px;
+}
+
+.section_subtitle {
+  font-weight: 400;
+  font-size: 16px;
+  margin-top: 20px;
+}
+
+.section_sub_subtitle {
+  font-weight: 400;
+  font-size: 14px;
+  margin-top: 15px;
+}
+
+.content {
+  width: 600px;
+  margin: auto;
+  padding: 20px;
+  padding-top: 50px;
+  padding-bottom: 60px;
+  position: relative;
+}
+
+code {
+  color: #B65EC5;
+}
+
+.code {
+  padding-left: 20px;
+}
+
+.code * {
+  font-size: 14px;
+  font-family: 'Droid Sans Mono', sans-serif;
+  font-weight: normal;
+}
+
+p {
+  font-weight: 300;
+  font-size: 16px;
+  color: #333;
+}
+
+.download_link {
+  margin: 20px 0;
+  background: #A400AB;
+  border-radius: 12px;
+  -moz-border-radius: 12px;
+  -webkit-border-radius: 12px;
+  -o-border-radius: 12px;
+  color: #fff;
+  padding: 15px;
+  display: block;
+  font-size:18px;
+  width: 180px;
+  text-align: center;
+}
+
+.header {
+  padding-left: 0px;
+  position: relative;
+}
+
+.logo.project_name {
+  background-image: url(../images/logo_project.png);
+  width: 155px;
+  height: 70px;
+  display: block;
+  background-size: 155px auto;
+  background-color: white;
+  background-repeat: no-repeat;
+  position: relative;
+  top: 7px;
+}
+
+
+.navbar {
+  color: #A400AB;
+  background-color: #efefef;
+  border-bottom: 1px solid #ccc;
+}
+.navbar a {
+  border-bottom: none;
+  color: #A400AB;
+  text-decoration: none;
+}
+
+.navbar li {
+  margin: 0;
+}
+
+.navbar a {
+  padding: 0 8px;
+  text-transform: capitalize;
+  letter-spacing: 1px;
+  line-height: 50px;
+  display: inline-block;
+  height: 50px;
+}
+
+.navbar a.active {
+  color: #fafafa;
+  border-bottom: 3px solid #B65EC5;
+  background: #A400AB;
+}
+
+.navbar a:hover {
+  color: #B65EC5;
+}
+
+.navbar-brand {
+  font-size: 24px;
+  line-height: 50px;
+}
+
+.navbar ul {
+  display: inline;
+}
+
+.navbar li {
+  display: inline;
+}
+
+.btn-dropnav .icon-bar {
+    background-color: #F5F5F5;
+  -webkit-box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  -moz-box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25); 
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+    display: block;
+    height: 2px;
+    width: 18px;
+}
+.btn-dropnav .icon-bar + .icon-bar {
+    margin-top: 3px;
+}
+
+#wrapper {
+  min-height: 100%;
+  height: auto !important;
+  height: 100%;
+  margin: 0 auto -137px;
+}
+
+.push {
+  height: 130px;
+}
+
+#footer {
+  background-color: #efefef;
+  border-top: 1px solid #ccc;
+  min-height: 130px;
+  padding: 20px 0;
+}
+
+#footer a{
+  border-bottom: none;
+}
+
+#footer ul{
+  list-style: none outside none;
+  margin: 0;
+  padding: 0;
+}
