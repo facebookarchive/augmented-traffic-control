@@ -18,7 +18,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'content')
 
     def to_representation(self, instance):
-        ret = super(serializers.ModelSerializer, self).to_representation(
-            instance)
+        sup = super(serializers.ModelSerializer, self)
+        ret = sup.to_representation(instance)
         ret['content'] = ast.literal_eval(ret['content'])
         return ret

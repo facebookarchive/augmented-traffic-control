@@ -10,8 +10,8 @@
 from atc_api.atcd_client import atcdClient
 from atc_api.serializers import SettingSerializer, DeviceSerializer
 from atc_api.settings import atc_api_settings
-from atc_thrift.ttypes import TrafficControlException
-from atc_thrift.ttypes import TrafficControl
+from atc_thrift.ttypes import TrafficControlException, TrafficControl
+from atc_thrift.ttypes import TrafficControlledDevice, AccessToken
 
 from functools import wraps
 from rest_framework.exceptions import APIException
@@ -142,3 +142,108 @@ class AtcApi(APIView):
         if tcrc.code:
             raise ParseError(detail=result)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AuthApi(APIView):
+
+    @serviced
+    def get(self, request, service, address=None):
+        '''
+        Returns the addresses that the provided address is allowed to shape.
+        '''
+        if address is None:
+            address = _get_client_ip(request)
+
+        controlled_ips = []
+
+        for addr in service.getDevicesControlledBy(address):
+            if addr is None:
+                break
+            controlled_ips.append({
+                'controlled_ip': addr.device.controlledIP,
+                'valid_until': addr.timeout,
+            })
+
+        data = {
+            'address': address,
+            'controlled_ips': controlled_ips,
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    @serviced
+    def post(self, request, service, address=None):
+        '''
+        Authorizes one address to shape another address,
+        based on the provided auth token.
+        '''
+        if address is None:
+            return Response(
+                {'details': 'no address provided'},
+                status=status.HTTP_400_BAD_REQUEST
+                )
+        controlled_ip = address
+
+        controlling_ip = _get_client_ip(request)
+
+        if 'token' not in request.data:
+            token = None
+        else:
+            token = AccessToken(token=request.data['token'])
+
+        dev = TrafficControlledDevice(
+            controlledIP=controlled_ip,
+            controllingIP=controlling_ip
+            )
+
+        worked = service.requestRemoteControl(dev, token)
+
+        if not worked:
+            return Response(
+                {'details': 'invalid token provided'},
+                status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+        print 'Worked:', worked
+
+        data = {
+            'controlling_ip': controlling_ip,
+            'controlled_ip': controlled_ip,
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class TokenApi(APIView):
+
+    @serviced
+    def get(self, request, service):
+        '''
+        Returns the current authorization token for the provided address.
+        '''
+        # default duration...
+        # 3 days in seconds
+        duration = 3 * 24 * 60 * 60
+
+        if 'duration' in request.query_params:
+            duration = int(request.query_params['duration'])
+
+        address = _get_client_ip(request)
+
+        stuff = service.requestToken(address, duration)
+
+        data = {
+            'token': stuff.token,
+            'interval': stuff.interval,
+            'valid_until': stuff.valid_until,
+            'address': address,
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
+def _get_client_ip(request):
+    '''Return the real IP of a client even when using a proxy'''
+    if 'HTTP_X_REAL_IP' in request.META:
+        return request.META['HTTP_X_REAL_IP']
+    else:
+        return request.META['REMOTE_ADDR']

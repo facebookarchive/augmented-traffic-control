@@ -9,7 +9,7 @@
 #
 from django.conf.urls import patterns
 from django.conf.urls import url
-from atc_api.views import AtcApi
+from atc_api.views import AtcApi, AuthApi, TokenApi
 
 urlpatterns = patterns(
     '',
@@ -18,4 +18,9 @@ urlpatterns = patterns(
         '(?P<address>[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/$',
         AtcApi.as_view()
         ),
+    url('^auth/$', AuthApi.as_view()),
+    url('^auth/'
+        '(?P<address>[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/$',
+        AuthApi.as_view()),
+    url('^token/$', TokenApi.as_view()),
 )
