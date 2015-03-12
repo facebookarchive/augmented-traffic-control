@@ -1,11 +1,18 @@
+#
+#  Copyright (c) 2014, Facebook, Inc.
+#  All rights reserved.
+#
+#  This source code is licensed under the BSD-style license found in the
+#  LICENSE file in the root directory of this source tree. An additional grant
+#  of patent rights can be found in the PATENTS file in the same directory.
+#
+#
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 from atc_profile_storage.models import Profile
 from atc_profile_storage.serializers import ProfileSerializer
-import ast
-import json
 
 
 class JSONResponse(HttpResponse):
@@ -15,7 +22,7 @@ class JSONResponse(HttpResponse):
         super(JSONResponse, self).__init__(content, **kwargs)
 
 
-@csrf_exempt 
+@csrf_exempt
 def profile_list(request):
     if request.method == 'GET':
         profiles = Profile.objects.all()
