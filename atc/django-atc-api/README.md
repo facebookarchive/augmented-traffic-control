@@ -12,7 +12,7 @@ ATC API is a Django app that allow to bridge a REST API to ATCD's thrift API.
 
 ## Installation
 
-```
+```python
 $ cd path/to/django-atc-api
 pip install .
 ```
@@ -20,17 +20,21 @@ pip install .
 ## Configuration
 
 1. Edit your Django project's settings.py and add "atc_api" to your INSTALLED_APPS::
-```
+
+```python
     INSTALLED_APPS = (
         ...
         'atc_api',
         'rest_framework',
     )
 ```
+
 2. Include the atc_api URLconf in your Django project urls.py like this::
-```
+
+```python
     url(r'^api/v1/', include('atc_api.urls')),
 ```
+
 3. Start the development server
 
 4. Visit http://127.0.0.1:8000/api/v1/shape/ to set/unset shaping.
@@ -38,7 +42,7 @@ pip install .
 
 Some settings like the `ATCD_HOST` and `ATCD_PORT` can be changes in your Django projects'settinggs.py::
 
-```
+```python
 ATC_API = {
     'ATCD_HOST': 'localhost',
     'ATCD_PORT': 9090,
@@ -67,7 +71,8 @@ If the device is not being shaped, HTTP will return code 404.
 Examples:
 
 * Check if I am being shaped (device not being shaped, HTTP code 404):
-```
+
+```sh
 $ curl -H 'Accept: application/json; indent=2' http://127.0.0.1:8080/api/v1/shape/
 {
   "detail": "This IP (10.0.2.2) is not being shaped"
@@ -75,7 +80,8 @@ $ curl -H 'Accept: application/json; indent=2' http://127.0.0.1:8080/api/v1/shap
 ```
 
 * Check if I am being shaped (device being shaped, HTTP code 200):
-```
+
+```sh
 $ curl -H 'Accept: application/json; indent=2' http://127.0.0.1:8080/api/v1/shape/
 {
   "down": {
@@ -124,7 +130,8 @@ $ curl -H 'Accept: application/json; indent=2' http://127.0.0.1:8080/api/v1/shap
 ```
 
 * Check if 1.1.1.1 is being shaped (device not being shaped, HTTP code 404):
-```
+
+```sh
 $ curl -H 'Accept: application/json; indent=2' http://127.0.0.1:8080/api/v1/shape/1.1.1.1/
 {
   "detail": "This IP (1.1.1.1) is not being shaped"
@@ -143,7 +150,7 @@ This will always retun HTTP code 201 on success. If the device was already being
 
 Mind the (Ctrl-D)
 
-```
+```sh
 $ curl -X POST -d '@-' -D - -H 'Content-Type: application/json' -H 'Accept: application/json; indent=2' http://127.0.0.1:8080/api/v1/shape/
 {
     "down": {
@@ -247,7 +254,7 @@ Allow: GET, POST, DELETE, HEAD, OPTIONS
 
 or... more simply:
 
-```
+```sh
 $ curl -H 'Accept: application/json; indent=2' http://127.0.0.1:8080/api/v1/shape/
 {
     "down": {
@@ -287,7 +294,7 @@ Examples:
 
 * Unshape myself (device being shaped, HTTP code 204)
 
-```
+```sh
 $ curl -X DELETE -D - -H 'Accept: application/json; indent=2' http://127.0.0.1:8080/api/v1/shape/
 HTTP/1.1 204 NO CONTENT
 Server: gunicorn/19.2.1
@@ -301,7 +308,7 @@ Allow: GET, POST, DELETE, HEAD, OPTIONS
 
 * Unshape myself (device not being shaped, HTTP code 400):
 
-```
+```sh
 $ curl -X DELETE -D - -H 'Accept: application/json; indent=2' http://127.0.0.1:8080/api/v1/shape/
 HTTP/1.1 400 BAD REQUEST
 Server: gunicorn/19.2.1
@@ -319,7 +326,7 @@ Allow: GET, POST, DELETE, HEAD, OPTIONS
 
 * Unshape 1.1.1.1 (device not being shaped, HTTP code 400):
 
-```
+```sh
  curl -X DELETE -D - -H 'Accept: application/json; indent=2' http://127.0.0.1:8080/api/v1/shape/1.1.1.1/
 HTTP/1.1 400 BAD REQUEST
 Server: gunicorn/19.2.1
