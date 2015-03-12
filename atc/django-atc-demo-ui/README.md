@@ -9,15 +9,17 @@ Quick start
 -----------
 
 1. Add "atc_demo_ui" to your INSTALLED_APPS setting like this::
-
+```
     INSTALLED_APPS = (
         ...
+        'bootstrap_themes',
+        'django_static_jquery',
         'atc_demo_ui',
     )
-
+```
 2. Include the atc URLconf in your project urls.py like this::
 
-    url(r'^atc_demo/', include('atc_demo.urls')),
+    url(r'^atc_demo/', include('atc_demo_ui.urls')),
 
 3. Start the development server
 
