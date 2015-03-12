@@ -18,8 +18,8 @@ Quick start
 
 2. Include the atc_profile_storage URLconf in your project urls.py like this::
 
-    url(r'^api/v1/profile', include('atc_profile_storage.urls')),
+    url(r'^api/v1/profiles/', include('atc_profile_storage.urls')),
 
 3. Start the development server
 
-4. Visit http://127.0.0.1:8000/api/v1/profile .
+4. Visit http://127.0.0.1:8000/api/v1/profiles .
