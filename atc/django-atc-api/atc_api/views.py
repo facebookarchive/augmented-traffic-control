@@ -154,19 +154,19 @@ class AuthApi(APIView):
         if address is None:
             address = _get_client_ip(request)
 
-        controlled_addrs = []
+        controlled_ips = []
 
         for addr in service.getDevicesControlledBy(address):
             if addr is None:
                 break
-            controlled_addrs.append({
-                'controlled_addr': addr.device.controlledIP,
+            controlled_ips.append({
+                'controlled_ip': addr.device.controlledIP,
                 'valid_until': addr.timeout,
             })
 
         data = {
             'address': address,
-            'controlled_addrs': controlled_addrs,
+            'controlled_ips': controlled_ips,
         }
         return Response(data, status=status.HTTP_200_OK)
 
@@ -176,18 +176,14 @@ class AuthApi(APIView):
         Authorizes one address to shape another address,
         based on the provided auth token.
         '''
-        # prefer address passed through json
-        if 'address' not in request.data:
-            if address is None:
-                return Response(
-                    {'details': 'no address provided'},
-                    status=status.HTTP_400_BAD_REQUEST
-                    )
-            controlledAddr = address
-        else:
-            controlledAddr = request.data['address']
+        if address is None:
+            return Response(
+                {'details': 'no address provided'},
+                status=status.HTTP_400_BAD_REQUEST
+                )
+        controlled_ip = address
 
-        controllingAddr = _get_client_ip(request)
+        controlling_ip = _get_client_ip(request)
 
         if 'token' not in request.data:
             token = None
@@ -195,8 +191,8 @@ class AuthApi(APIView):
             token = AccessToken(token=request.data['token'])
 
         dev = TrafficControlledDevice(
-            controlledIP=controlledAddr,
-            controllingIP=controllingAddr
+            controlledIP=controlled_ip,
+            controllingIP=controlling_ip
             )
 
         worked = service.requestRemoteControl(dev, token)
@@ -210,8 +206,8 @@ class AuthApi(APIView):
         print 'Worked:', worked
 
         data = {
-            'controlling_addr': controllingAddr,
-            'controlled_addr': controlledAddr,
+            'controlling_ip': controlling_ip,
+            'controlled_ip': controlled_ip,
         }
 
         return Response(data, status=status.HTTP_200_OK)
