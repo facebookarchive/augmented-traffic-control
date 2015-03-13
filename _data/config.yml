@@ -4,6 +4,7 @@ project_description: A tool to simulate network conditions
 project_github: &project_github https://github.com/facebook/augmented-traffic-control
 project_license: BSD
 project_irc: atc
+project_pip: true
 navigation:
  - text: docs
    url: /docs/install.html
