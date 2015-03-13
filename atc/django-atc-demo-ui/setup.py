@@ -9,17 +9,28 @@
 #
 #
 import os
+import re
+import sys
 
 from distutils.core import setup
 
 with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
     README = readme.read()
 
+
 install_requires = [
     'django-atc-api',
     'django-static-jquery==1.11.1',
     'django-bootstrap-themes==3.1.2',
 ]
+
+
+def get_version(package):
+    """
+    Return package version as listed in `__version__` in `init.py`.
+    """
+    init_py = open(os.path.join(package, '__init__.py')).read()
+    return re.search("__version__ = ['\"]([^'\"]+)['\"]", init_py).group(1)
 
 
 def get_packages(package):
@@ -46,9 +57,26 @@ def get_package_data(package):
                           for filename in filenames])
     return {package: filepaths}
 
+version = get_version('atc_demo_ui')
+
+if sys.argv[-1] == 'publish':
+    if os.system("pip freeze | grep wheel"):
+        print("wheel not installed.\nUse `pip install wheel`.\nExiting.")
+        sys.exit()
+    if os.system("pip freeze | grep twine"):
+        print("twine not installed.\nUse `pip install twine`.\nExiting.")
+        sys.exit()
+    os.system("python setup.py sdist bdist_wheel")
+    os.system("twine upload dist/*")
+    print("You probably want to also tag the version now:")
+    print("  git tag -a %s -m 'version %s'" % (version, version))
+    print("  git push --tags")
+    sys.exit()
+
+
 setup(
     name='django-atc-demo-ui',
-    version='0.0.1',
+    version=version,
     description='Demo Web UI for ATC',
     author='Emmanuel Bretelle',
     author_email='chantra@fb.com',
