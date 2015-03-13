@@ -21,6 +21,8 @@ libtool
 m4/
 .deps/
 .libs/
+**/build/
+**/dist/
 *.egg-info
 *.lo
 *.o

@@ -8,9 +8,11 @@
 #  of patent rights can be found in the PATENTS file in the same directory.
 #
 #
+import os
+import re
 import sys
 
-from distutils.core import setup
+from setuptools import setup
 
 readme = open("README.md", "r")
 
@@ -30,9 +32,33 @@ if sys.version < '3.3':
 
 scripts = ['bin/atcd']
 
+
+def get_version(package):
+    """
+    Return package version as listed in `__version__` in `init.py`.
+    """
+    init_py = open(os.path.join(package, '__init__.py')).read()
+    return re.search("__version__ = ['\"]([^'\"]+)['\"]", init_py).group(1)
+
+version = get_version('atcd')
+
+if sys.argv[-1] == 'publish':
+    if os.system("pip freeze | grep wheel"):
+        print("wheel not installed.\nUse `pip install wheel`.\nExiting.")
+        sys.exit()
+    if os.system("pip freeze | grep twine"):
+        print("twine not installed.\nUse `pip install twine`.\nExiting.")
+        sys.exit()
+    os.system("python setup.py sdist bdist_wheel")
+    os.system("twine upload dist/*")
+    print("You probably want to also tag the version now:")
+    print("  git tag -a %s -m 'version %s'" % (version, version))
+    print("  git push --tags")
+    sys.exit()
+
 setup(
     name='atcd',
-    version='0.0.1',
+    version=version,
     description='ATC Daemon',
     author='Emmanuel Bretelle',
     author_email='chantra@fb.com',
