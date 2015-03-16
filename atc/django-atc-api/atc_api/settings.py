@@ -31,6 +31,7 @@ DEFAULTS = {
     'ATCD_PORT': 9090,
     # Default timeout is a day in seconds
     'DEFAULT_TC_TIMEOUT': 24 * 60 * 60,
+    'PROXY_IPS': '127.0.0.1',
 }
 
 
