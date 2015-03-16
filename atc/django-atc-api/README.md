@@ -154,7 +154,6 @@ Mind the (Ctrl-D)
 $ curl -X POST -d '@-' -i -H 'Content-Type: application/json' -H 'Accept: application/json; indent=2' http://127.0.0.1:8080/api/v1/shape/
 {
     "down": {
-    "down": {
         "rate": 400,
         "loss": {
             "percentage": 5.0,
@@ -385,7 +384,7 @@ Once you have the token, authorize the controlling device using the `/api/v1/aut
 Note the `Ctrl-D`
 
 ```sh
-$ curl -i -XPOST -d '@-' -H 'Content-Type: application/json; indent=2' http://127.0.0.1:8080/api/v1/token/
+$ curl -i -XPOST -d '@-' -H 'Content-Type: application/json; indent=2' http://127.0.0.1:8080/api/v1/auth/10.0.2.2/
 {
     "token": 186032
 }
@@ -410,6 +409,9 @@ If you are using an HTTP proxy such as [nginx](http://nginx.org/), make sure it 
 One security implication of using the `HTTP_X_REAL_IP` field to determine the client address is that the client can
 manipulate this field to obtain a token for an arbitrary address. For example, `curl -H 'X_REAL_IP: 1.2.3.4'`.
 
-To prevent this, ATC has a whitelist of clients which are allowed to set this field. By default this whitelist contains
-only the IP `127.0.0.1` to allow local connections only. If you are using an HTTP proxy on a different host, you should
-reconfigure ATC with the IP address of the proxy.
+To prevent this, ATC restricts which clients are allowed to set the `HTTP_X_REAL_IP` request header.
+This is done by use of the `PROXY_IPS` field of the `ATC_API` dict in the django settings file:
+
+    ATC_API = {
+        'PROXY_IPS': ['1.2.3.4', '2.3.4.5'],
+    }
