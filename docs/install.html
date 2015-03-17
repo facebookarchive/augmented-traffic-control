@@ -132,7 +132,7 @@ python manage.py migrate
 <div class="code">
 {% highlight bash %}
 test -z $VIRTUAL_ENV && source {{ atc_root }}/venv/bin/activate
-sudo atcd --sqlite-file {{ atc_root }}/atcd.db
+sudo atcd
 {% endhighlight %}
 </div>
 
