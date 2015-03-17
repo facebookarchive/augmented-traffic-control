@@ -17,12 +17,12 @@ class AtcdDBQueueTask(QueueTask):
     OPT_PREFIX = 'sqlite'
     workers = 1
 
-    DEFAULT_SQLITE_FILE = '/var/lib/atc/atcd.db'
+    DEFAULT_SQLITE_FILE = '/var/lib/atcd.db'
 
     sqlite_file = option(
         default=DEFAULT_SQLITE_FILE,
         metavar='SQLITE_FILE',
-        help='Location to store the sqlite3 db',
+        help='Location to store the sqlite3 db [%(default)s]',
         name='file',
     )
 
