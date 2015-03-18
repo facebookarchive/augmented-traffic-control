@@ -91,13 +91,26 @@ service 'atcui' do
   action [:enable, :start]
 end
 
-template '/usr/local/bin/atcui-setup' do
+atcui_setup_file = '/usr/local/bin/atcui-setup'
+template atcui_setup_file do
   source 'atcui-setup.erb'
   mode 0755
   owner atcui_user
   group actui_group
 end
 
+# Setup atcui if it is the first time it is installed
+atcui_configured_file = '/.atcui_configured'
+unless File.exist?(atcui_configured_file)
+  execute 'atcui setup' do
+    command atcui_setup_file
+    user atcui_user
+    group actui_group
+  end
+  file atcui_configured_file do
+    action :touch
+  end
+end
 # When running under vagrant, atcui depends on the mounts and will not start
 # unless those are up. The mount is happening after the system is up.
 # We can use udev to trigger starting/stopping atcui when amount/umount event
