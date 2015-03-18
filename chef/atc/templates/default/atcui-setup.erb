@@ -9,7 +9,7 @@ USER="<%= node['atc']['atcui']['user'] %>"
 # Allow either $USER or root to run this script.
 if [ "$(whoami)" == "$USER" ] ; then
     USER=""
-elif [ "$EUID" == "0" ] ; then
+elif [ "$EUID" != "0" ] ; then
    echo -e "${RED}$0 must be run as root or $USER.${NC}"
    exit 1
 fi
@@ -28,9 +28,6 @@ function managepy() {
         sudo -u "$USER" /bin/bash -c "$C"
     fi
 }
-
-p "Syncing DB"
-managepy syncdb
 
 p "Migrating DB"
 managepy migrate
