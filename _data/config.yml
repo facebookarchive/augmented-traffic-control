@@ -8,6 +8,8 @@ project_pip: true
 navigation:
  - text: docs
    url: /docs/install.html
+ - text: contributing
+   url: /docs/contributing.html
  - text: support
    url: /docs/support.html
  - text: github

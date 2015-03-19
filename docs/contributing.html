@@ -1,0 +1,85 @@
+---
+---
+{% assign atc_root = '~/dev/atc' %}
+{% include header.html %}
+  <h2>Contributing</h2>
+<p>
+In order to test {{ site.data.config.project_name }}, one would need to have a host with at least 2 network interfaces, routing traffic through it.... To make it easy to develop on {{ site.data.config.project_name }}, a set of <a href="https://www.vagrantup.com/" target="_">Vagrant</a> configs are available in <code>chef/atc</code>.
+</p>
+<h3>Requirements</h3>
+<p>
+To be able to run the <em>atc</em> virtual machines, the following softwares need to be installed:
+<ul>
+<li><a href="https://www.virtualbox.org/wiki/Downloads" target="_">VirtualBox</a>: The virtualization software used to run the <em>ATC</em> virtual machines.</li>
+<li><a href="https://www.vagrantup.com/downloads.html" target="_">Vagrant</a>: The application used to provision virtual the <em>ATC</em>machines.</li>
+<li><a href="https://downloads.chef.io/chef-dk/" target="_">Chef DK</a>: more precisely <a href="http://berkshelf.com/" target="_">Berkshelf</a>, used to fetch and vendor the <em>atc</em>'s cookbook dependencies.</li>
+</ul>
+</p>
+<p>
+Once the softwares mentioned above are installed, we will also need to install some plugins for <code>Vagrant</code>:
+</p>
+<div class="code">
+{% highlight bash %}
+for plugin in vagrant-berkshelf vagrant-omnibus
+do
+  vagrant plugin install $plugin
+done
+{% endhighlight %}
+</div>
+<h3>Deployment</h3>
+<p>
+You can now bring up an <em>atc</em> VM by going to <code>chef/atc</code> and running:
+</p>
+<div class="code">
+{% highlight bash %}
+vagrant up trusty
+{% endhighlight %}
+</div>
+<p>It will take a bit of time to provision the VM, but <em>vagrant</em> will take care of everything: create the VM, boot it up, run chef. Once the VM is up, you will be able to access ATC UI at http://localhost:8080/atc_demo_ui/ .</p>
+<p> From now on you can edit the source locally on your host, and the changes will take place in the VM.</p>
+<h3>Running your changes</h3>
+<p>When the VM comes up, it will start running <em>atcd</em> and the <em>ATC UI</em>. As you make changes, those will not be picked up until you restart the services.</p>
+<p>Log in the VM and stop <em>atcui</em>:</p>
+<div class="code">
+{% highlight bash %}
+vagrant ssh trusty
+sudo service atcui stop
+{% endhighlight %}
+</div>
+<h4>ATC UI</h4>
+<p>sudo as <em>atc</em> user and set your environment:</p>
+<div class="code">
+{% highlight bash %}
+sudo su -s /bin/bash - atc
+source /usr/local/atc/venv/bin/activate
+{% endhighlight %}
+</div>
+<p>Now, you can run django:</p>
+<div class="code">
+{% highlight bash %}
+cd /var/django
+python manage.py runserver 0.0.0.0:8000
+{% endhighlight %}
+</div>
+<p>Now any changes you make that affects the django interface will be automatically picked up the next time you reload the page.</p>
+<h4>ATCD</h4>
+<p><em>atcd</em> runs as root. To run it from the command line, you will need to sudo as root, stop the running instance of <em>atcd</em> and set up your environment:</p>
+<div class="code">
+{% highlight bash %}
+sudo su -
+service atcd stop
+source /usr/local/atc/venv/bin/activate
+{% endhighlight %}
+</div>
+<p>Now you can start <em>atcd</em> manually with:</p>
+<div class="code">
+{% highlight bash %}
+atcd
+{% endhighlight %}
+</div>
+<p>If you make changes to the <em>atcd</em> code, you will need to terminate the process and restart it in order to have the change take effect.</p>
+
+<h3>Contributing changes</h3>
+<p>We use <a href="{{ site.data.config.project_github }}" target="_">Github</a>. Please refer to <a href="{{ site.data.config.project_github }}/blob/master/CONTRIBUTING.md" target="_">CONTRIBUTING.md</a> for more details on how to contribute.</p>
+
+{% include footer.html %}
