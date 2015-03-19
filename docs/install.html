@@ -35,8 +35,6 @@ source {{ atc_root }}/venv/bin/activate
 
   <h4>Package installation</h4>
 
-{% if site.data.config.project_pip %}
-  <h5>Using pip package repository</h5>
 <p>New realeases are published to <a href="https://pypi.python.org/pypi" target="_">PyPI</a> package repository. If you do not need features/bug fixes that are not yet released, you should use those packages.</p>
 <p>Provided that you are in your virtual environment, you can install all the required packages using:</p>
 <div class="code">
@@ -48,24 +46,6 @@ do
 done
 {% endhighlight %}
 </div>
-{% endif %}
-
-  <h5>From source</h5>
-<p>If you want to install straight out the latest sources available:</p>
-<div class="code">
-{% highlight bash %}
-git clone {{ site.data.config.project_github }}
-cd augmented-traffic-control/atc
-for pkg in atc_thrift atcd \
-  django-atc-api django-atc-demo-ui django-atc-profile-storage
-do
-  pushd $pkg
-  pip install .
-  popd
-done
-{% endhighlight %}
-</div>
-
   <h3>Configuration</h3>
 <p>Now that we have all the required packages, we have to create a django project to run our UI:</p>
 <div class="code">
