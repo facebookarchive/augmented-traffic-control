@@ -26,11 +26,11 @@ all: lint fulltest
 
 .PHONY: install
 install:
-	cd atc/atc_thrift && pip install .
-	cd atc/atcd && pip install .
-	cd atc/django-atc-api && pip install .
-	cd atc/django-atc-demo-ui && pip install .
-	cd atc/django-atc-profile-storage && pip install .
+	cd atc/atc_thrift && pip install --force-reinstall .
+	cd atc/atcd && pip install --force-reinstall .
+	cd atc/django-atc-api && pip install --force-reinstall .
+	cd atc/django-atc-demo-ui && pip install --force-reinstall .
+	cd atc/django-atc-profile-storage && pip install --force-reinstall .
 
 
 # Lint the various sources that ATC includes:
