@@ -24,6 +24,15 @@ default: lint
 all: lint fulltest
 
 
+.PHONY: install
+install:
+	cd atc/atc_thrift && pip install .
+	cd atc/atcd && pip install .
+	cd atc/django-atc-api && pip install .
+	cd atc/django-atc-demo-ui && pip install .
+	cd atc/django-atc-profile-storage && pip install .
+
+
 # Lint the various sources that ATC includes:
 #  chef/  - chef cookbooks
 #  atc/   - ATC source code
