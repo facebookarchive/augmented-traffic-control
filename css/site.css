@@ -13,6 +13,10 @@ a {
   text-decoration: none;
 }
 
+a:hover {
+  color: #B65EC5;
+}
+
 .title {
     font-weight: 300;
     font-size: 48px;
@@ -132,10 +136,6 @@ p {
   color: #fafafa;
   border-bottom: 3px solid #B65EC5;
   background: #A400AB;
-}
-
-.navbar a:hover {
-  color: #B65EC5;
 }
 
 .navbar-brand {
