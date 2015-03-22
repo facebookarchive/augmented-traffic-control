@@ -1,6 +1,10 @@
 # Augmented Traffic Control
 
-Augmented Traffic Control (ATC) is a tool to allow controlling the connection that a device has to the internet. Aspects of the connection that can be controlled include:
+Full documentation for the project is available at [http://facebook.github.io/augmented-traffic-control/](http://facebook.github.io/augmented-traffic-control/).
+
+## Overview
+
+Augmented Traffic Control (ATC) is a tool to simulate network conditions. It allows controlling the connection that a device has to the internet. Aspects of the connection that can be controlled include:
 
 * bandwidth
 * latency
@@ -8,48 +12,117 @@ Augmented Traffic Control (ATC) is a tool to allow controlling the connection th
 * corrupted packets
 * packets ordering
 
+In order to be able to shape the network traffic, ATC must be running on a device that routes the traffic and sees the real IP address of the device, like your network gateway for instance.
+
+ATC is made of multiple components that interact together:
+* [`atcd`](atc/atcd): The ATC daemon which is responsible for setting/unsetting traffic shaping. `atcd` exposes a [Thrift](https://thrift.apache.org/) interface to interact with it.
+* [`django-atc-api`](atc/django-atc-api): A [Django](https://www.djangoproject.com/) app based on [Django Rest Framework](http://www.django-rest-framework.org/) that provides a RESTful interface to `atcd`.
+* [`django-atc-demo-ui`](atc/django-atc-demo-ui): A Django app that provides a simple Web UI to use `atc` from a mobile phone.
+* [`django-atc-profile-storage`](atc/django-atc-profile-storage): A Django app that can be used to save shaping profiles, making it easier to re-use them later without manually re-entering those settings.
+
+By splitting `ATC` in sub-components, it make it easier to hack on it or build on top of it. While `django-atc-demo-ui` is shipped as part of `ATC`'s main repository to allow people to be able to use `ATC` out of the box, by providing a REST API to `atcd`, it makes it relatively easy to interact with `atcd` via the command line and opens the path for the community to be able to build creative command line tools, web UI or mobile apps that interact with `ATC`.
+
+![ATC architecture][atc_architecture]
+
+## Requirements
+
+Most requirements are handled automatically by [pip](https://pip.pypa.io), the packaging system used by ATC, and each `ATC` package may have different requirements and the README.md files of the respective packages should be checked for more details. Anyhow, some requirements apply to the overall codebase:
+
+* Python 2.7+
+* Django 1.7+
+
+
 ## Installing ATC
 
-`TODO / Improve`
+The fact that `ATC` is splitted in multiple packages allows for multiple deployment scenarii. However, deploying all the packages on the same host is the simplest and most likely fitting most use cases.
 
-ATC components can be installed via `pip`.
+To get more details on how to install/configure each packages, please refer to the packages'respective READMEs.
 
-To install the ATC daemon `atcd`:
+### Packages
 
-<code>pip install atcd</code>
+The easiest way to install `ATC` is by using `pip`.
+``` bash
+for pkg in \
+    atc_thrift atcd django-atc-api \
+    django-atc-demo-ui django-atc-profile-storage
+do
+    pip install $pkg
+done
+```
 
+### Django
 
-Both the `django-atc-api` and `django-atc-demo-ui` requires you to have a [Django](https://www.djangoproject.com/) project set up. Once you have the django project set, you can install the modules and enable them by adding them to the `INSTALLED_APPS` in your project' `settings.py`.
+Now that we have all the packages installed, we need to create a new Django project in which we will use our Django app.
 
-To install the REST API app:
+``` bash
+django-admin startproject atcui
+cd atcui
+```
 
-<code>pip install django-atc-api</code>
+Now that we have our django project, we need to configure it to use our apps and we need to tell it how to route to our apps.
 
-And add:
+Open `atcui/settings.py` and enable the `ATC` apps by adding to `INSTALLED_APPS`:
 
-        'atc_api',
-        'rest_framework',
+``` python
+INSTALLED_APPS = (
+    ...
+    # Django ATC API
+    'rest_framework',
+    'atc_api',
+    # Django ATC Demo UI
+    'bootstrap_themes',
+    'django_static_jquery',
+    'atc_demo_ui',
+    # Django ATC Profile Storage
+    'atc_profile_storage',
+)
+```
 
-to `INSTALLED_APPS` .
+Now, open `atcui/urls.py` and enable routing to the `ATC` apps by adding the routes to `urlpatterns`:
+``` python
+...
+...
+from django.views.generic.base import RedirectView
 
+urlpatterns = patterns('',
+    ...
+    # Django ATC API
+    url(r'^api/v1/', include('atc_api.urls')),
+    # Django ATC Demo UI
+    url(r'^atc_demo_ui/', include('atc_demo_ui.urls')),
+    # Django ATC profile storage
+    url(r'^api/v1/profiles/', include('atc_profile_storage.urls')),
+    url(r'^$', RedirectView.as_view(url='/atc_demo_ui/', permanent=False)),
+)
+```
 
-For the Demo UI app:
+Finally, let's update the Django DB:
+``` bash
+python manage.py migrate
+```
 
-<code>pip install django-atc-demo-ui</code>
+## Running ATC
 
-And add:
+All require packages should now be installed and configured. We now need to run the daemon and the UI interface. While we will run `ATC` straight from the command line in this example, you can refer to example [sysvinit](chef/atc/files/default/init.d) and [upstart](chef/atc/templates/default/upstart) scripts.
 
-        'atc_demo_ui',
+### atcd
 
+`atcd` modifies network related settings and as such needs to run in privileged mode:
 
-to `INSTALLED_APPS`.
+``` bash
+sudo atcd
+```
+Supposing `eth0` is your interface to connect to the internet and `eth1`, your interface to connec to your lan, this should just work. If your setting is slightly different, use the command line arguments `--atcd-wan` and `--atcd-lan` to adapt to your configuration.
 
-You will also need to route the queries to those apps by adding something along the line of:
+### ATC UI
 
-        url(r'^api/v1/', include('atc_api.urls')),
-        url(r'^atc_demo_ui/', include('atc_demo_ui.urls')),
+The UI on the other hand is a standard Django Web app and can be run as a normal user. Make sure you are in the directory that was created when you ran `django-admin startproject atcui` and run:
 
-in your project's `urls.py`.
+``` bash
+python manage.py runserver 0.0.0.0:8000
+```
+
+You should now be able to access the web UI at http://localhost:8000
 
 ## ATC Code Structure
 
@@ -59,6 +132,7 @@ ATC source code is available under the [atc](atc/) directory, it is currently co
 * [atcd](atc/atcd) the ATC daemon that runs on the router doing the traffic shaping
 * [django-atc-api](atc/django-atc-api) A django app that provides a RESTful interface to `atcd`
 * [django-atc-demo-ui](atc/django-atc-demo-ui) A django app that provides a simple demo UI leveraging the RESTful API
+* [django-atc-profile-storage](atc/django-atc-profile-storage) A django app that allows saving shaping profiles to DB allowing users to select their favorite profile from a list instead of re-entering all the profile details every time.
 
 
 The [chef](chef/) directory contains 2 chef cookbooks:
@@ -80,7 +154,11 @@ The [chef](chef/) directory contains 2 chef cookbooks:
 
 ### django-atc-demo-ui
 
-`django-atc-demo-ui` is a simple Web UI to enable/disable traffic shaping.
+`django-atc-demo-ui` is a simple Web UI to enable/disable traffic shaping. The UI is mostly written in [React](http://facebook.github.io/react/)
+
+### django-atc-profile-storage
+
+`django-atc-profile-storage` allows saving profiles to DB. A typical use case will be to save a list of predefined/often used shaping settings that you want to be able to accessing in just a few clicks/taps.
 
 ## Developing on ATC
 
@@ -104,17 +182,17 @@ You will need to install VirtualBox, Vagrant and a couple of plugins:
 
 Once in the repo, go to the `chef/atc` directory and run:
 
-<code>vagrant up atccentos</code>
+``` bash
+vagrant up trusty
+```
 
 This will take some time before it completes, once the VM is provision, SSH into it:
 
-<code>vagrant ssh atccentos</code>
+``` bash
+vagrant ssh trusty
+```
 
-And initialize the django application:
-
-<code>sudo /usr/local/bin/atcui-setup</code>
-
-You should now be able to access ATC at: http://localhost:8080/atc/
+You should now be able to access ATC at: http://localhost:8080/
 
 ### Hacking on the code
 
@@ -124,8 +202,9 @@ Both `atcd` and `atcui` have their python libraries installed in a *python virtu
 
 The *virtualenv* is installed in */usr/local/atc/venv/bin/activate* .
 
-<code>source /usr/local/atc/venv/bin/activate</code>
-
+``` bash
+source /usr/local/atc/venv/bin/activate
+```
 
 #### Running the daemon
 
@@ -133,21 +212,26 @@ The `atcd` daemon is running under the root user privileges, all operations belo
 
 To run the daemon manually, first make sure it is not running in the background:
 
-<code>/etc/init.d/atcd stop</code>
+``` bash
+service atcd stop
+```
 
 And run the daemon:
 
-<code>atcd</code>
+``` bash
+atcd
+```
 
 Once you are happy with your changes and you want to test them, you will need to kill the daemon and restart it in order to apply the changes.
 
 #### Running the API/UI
 
-The `atc_api` and `atc ui` are currently run with root privileges. This is a django project and, when running the django built-in HTTP server, will detect code changes and reload automatically.
+This is a django project and, when running the django built-in HTTP server, will detect code changes and reload automatically.
 
 To run the HTTP REST API and UI:
 
-<code>
+``` bash
 cd /var/django && python manage.py runserver 0.0.0.0:8000
-</code>
+```
 
+[atc_architecture]: https://facebook.github.io/augmented-traffic-control/images/atc_overview.png
