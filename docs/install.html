@@ -84,14 +84,19 @@ INSTALLED_APPS = (
 <p>Now, we need to route requests to the right django app. this is done by editing <code>atcui/urls.py</code> and adding the routes to <code>urlpatterns</code>:</p>
 <div class="code">
 {% highlight python %}
+...
+from django.views.generic.base import RedirectView
+
+
 urlpatterns = patterns('',
     ...
     # Django ATC API
     url(r'^api/v1/', include('atc_api.urls')),
     # Django ATC Demo UI
-    url(r'^atc_demo/', include('atc_demo_ui.urls')),
+    url(r'^atc_demo_ui/', include('atc_demo_ui.urls')),
     # Django ATC profile storage
     url(r'^api/v1/profiles/', include('atc_profile_storage.urls')),
+    url(r'^$', RedirectView.as_view(url='/atc_demo_ui/', permanent=False)),
 )
 {% endhighlight %}
 </div>
@@ -125,6 +130,6 @@ python manage.py runserver 0.0.0.0:8000
 {% endhighlight %}
 </div>
 
-<p>You should now be able to access the UI at the following address: <a href="http://localhost:8000/atc_demo/" target="_">http://localhost:8000/atc_demo/</a> and get the following page:</p>
+<p>You should now be able to access the UI at the following address: <a href="http://localhost:8000/atc_demo_ui/" target="_">http://localhost:8000/atc_demo_ui/</a> and get the following page:</p>
 <img src="{{ site.baseurl }}/images/atc_demo_ui.png" />
 {% include footer.html %}
