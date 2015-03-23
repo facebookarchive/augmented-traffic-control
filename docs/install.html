@@ -1,0 +1,130 @@
+---
+---
+{% assign atc_root = '~/dev/atc' %}
+{% include header.html %}
+  <h2>Getting Started</h2>
+<p>
+{{ site.data.config.project_name }} is made of different components, making the whole stack modular and allowing to separate each pieces of the stack. For the purpose of getting started installing {{ site.data.config.project_name }}, we will install everything on the same host.
+</p>
+  <h3>Requirements</h3>
+  <h4>Architecture</h4>
+<p>In order to be able to shape traffic, <em>atcd</em> must be running on a router that forward the packets to the internet. Because shaping is done at the networking layer level, <em>atcd</em> must be able to see the real IP of the devices being shaped. If the devices are behing a NAT, all traffic will be shaped for all devices as if they were one.
+</p>
+  <h4>Software</h4>
+<p>
+Currently, {{ site.data.config.project_name }} requires python 2.7. Each {{ site.data.config.project_name }} module have its own set of depencies that will be automatically installed via pip.
+<br />
+On top of this, <em>atcd</em> only supports Linux operating system.</em>
+</p>
+<p>
+The API and UI components are django apps and have been tested with django 1.7.
+</p>
+  <h3>Installation</h3>
+<p>
+  To keep our install isolated in its own environment, we will use <a href="https://pypi.python.org/pypi/virtualenv" target="_">virtualenv</a>. How to install <em>virtualenv</em> is out of the scope of this document, but there is plenty of documentation out there explaining how to install it on your favorite distro.
+</p>
+  <h4>Virtual Environment</h4>
+<p>We will install the environment under {{ atc_root }}:</p>
+<div class="code">
+{% highlight bash %}
+mkdir -p {{ atc_root }}
+virtualenv {{ atc_root }}/venv
+source {{ atc_root }}/venv/bin/activate
+{% endhighlight %}
+</div>
+
+  <h4>Package installation</h4>
+
+<p>New realeases are published to <a href="https://pypi.python.org/pypi" target="_">PyPI</a> package repository. If you do not need features/bug fixes that are not yet released, you should use those packages.</p>
+<p>Provided that you are in your virtual environment, you can install all the required packages using:</p>
+<div class="code">
+{% highlight bash %}
+for pkg in atc_thrift atcd \
+  django-atc-api django-atc-demo-ui django-atc-profile-storage
+do
+  pip install $pkg
+done
+{% endhighlight %}
+</div>
+  <h3>Configuration</h3>
+<p>Now that we have all the required packages, we have to create a django project to run our UI:</p>
+<div class="code">
+{% highlight bash %}
+cd {{ atc_root }}
+django-admin startproject atcui
+cd atcui
+{% endhighlight %}
+</div>
+
+<p>At this stage, we have a brand new django project that needs to be configured.</p>
+<p>First, let's enable our django apps by editing <code>atcui/settings.py</code> and adding the following apps to <code>INSTALLED_APPS</code>:</p>
+{% assign django_apps = 'rest_framework|atc_api|bootstrap_themes|django_static_jquery|atc_demo_ui|atc_profile_storage' | split: "|" %}
+<ul>
+{% for django_app in django_apps %}
+<li>{{ django_app }}</li>
+{% endfor %}
+</ul>
+<div class="code">
+{% highlight python %}
+INSTALLED_APPS = (
+    ...
+    # Django ATC API
+    'rest_framework',
+    'atc_api',
+    # Django ATC Demo UI
+    'bootstrap_themes',
+    'django_static_jquery',
+    'atc_demo_ui',
+    # Django ATC Profile Storage
+    'atc_profile_storage',
+)
+{% endhighlight %}
+</div>
+
+<p>Now, we need to route requests to the right django app. this is done by editing <code>atcui/urls.py</code> and adding the routes to <code>urlpatterns</code>:</p>
+<div class="code">
+{% highlight python %}
+urlpatterns = patterns('',
+    ...
+    # Django ATC API
+    url(r'^api/v1/', include('atc_api.urls')),
+    # Django ATC Demo UI
+    url(r'^atc_demo/', include('atc_demo_ui.urls')),
+    # Django ATC profile storage
+    url(r'^api/v1/profiles/', include('atc_profile_storage.urls')),
+)
+{% endhighlight %}
+</div>
+
+<p>Finally, <code>migrate</code> the django DB amd run the server locally:</p>
+<div class="code">
+{% highlight python %}
+python manage.py migrate
+{% endhighlight %}
+</div>
+
+<p>That is it, the UI should be set up. Now let's run it!</p>
+<h3>Running it</h3>
+<p>Now that we have configured the UI, let's run the <code>atcd</code> service and run the UI.</p>
+<p>You need to make sure that you are using your virtual environment.</p>
+<h4>Starting atcd</h4>
+<p>First, let's start the <code>atcd</code> service. <code>atcd</code> needs to be run as root.</p>
+<div class="code">
+{% highlight bash %}
+test -z $VIRTUAL_ENV && source {{ atc_root }}/venv/bin/activate
+sudo atcd
+{% endhighlight %}
+</div>
+
+<h4>Start atc demo ui</h4>
+<div class="code">
+{% highlight bash %}
+test -z $VIRTUAL_ENV && source {{ atc_root }}/venv/bin/activate
+cd {{ atc_root }}/atcui
+python manage.py runserver 0.0.0.0:8000
+{% endhighlight %}
+</div>
+
+<p>You should now be able to access the UI at the following address: <a href="http://localhost:8000/atc_demo/" target="_">http://localhost:8000/atc_demo/</a> and get the following page:</p>
+<img src="{{ site.baseurl }}/images/atc_demo_ui.png" />
+{% include footer.html %}

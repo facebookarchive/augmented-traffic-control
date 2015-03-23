@@ -1,0 +1,63 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>{{ site.data.config.project_name }} - {{ site.data.config.project_description }}</title>
+  <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono|Roboto:400,300,700' rel='stylesheet' type='text/css'>
+  <link rel="icon" href="{{ site.baseurl }}/images/favicon.png" type="image/x-icon">
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+
+  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+  <link rel="stylesheet" href="{{ site.baseurl }}/css/syntax.css" type="text/css" media="screen" charset="utf-8">
+  <link rel="stylesheet" href="{{ site.baseurl }}/css/site.css" type="text/css" media="screen" charset="utf-8">
+</head>
+<body>
+<div id="wrapper">
+  <nav class="navbar navbar-fixed-top" role="navigation">
+    <div class="container">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="{{ site.baseurl }}/">{{ site.data.config.project_fullname }}</a>
+        <button type="button" class="navbar-toggle collapsed btn btn-dropnav" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
+      <div class="collapse navbar-collapse">
+        <ul class="nav navbar-nav navbar-right">
+          {% assign url = page.url %}
+          {% for link in site.data.config.navigation %}
+            {% assign truncated_url = link.url | truncate:4, '' %}
+            <li><a href="{% if truncated_url != 'http' %}{{ site.baseurl }}{% endif %}{{ link.url }}" {% if url == link.url %}class="active"{% endif %}>{{ link.text }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div class="content">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="header">
+            <a href="{{ site.baseurl }}/">
+            <div class="logo project_name"></div>
+            </a>
+            <div class="subtitle">{{ site.data.config.project_description }}.</div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+
+
