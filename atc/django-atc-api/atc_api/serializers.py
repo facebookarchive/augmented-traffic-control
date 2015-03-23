@@ -36,7 +36,7 @@ class ThriftSerializer(serializers.Serializer):
 
     # A map of renamed fields.
     # Keys in the map are the names of thrift fields. Their values
-    # are the names of the serializer fields they coorespond to.
+    # are the names of the serializer fields they correspond to.
     _THRIFT_RENAMED_FIELDS = {}
 
     def create(self, attrs):
@@ -133,11 +133,18 @@ class SettingSerializer(ThriftSerializer):
 class DeviceSerializer(ThriftSerializer):
     _THRIFT_CLASS = TrafficControlledDevice
     _THRIFT_RENAMED_FIELDS = {
-        'controllingIP': 'address',
+        'controllingIP': 'client',
         'controlledIP': 'address'
     }
 
     address = serializers.CharField(
+        max_length=16,
+        allow_blank=True,
+        allow_null=True,
+        default=None,
+        required=False
+    )
+    client = serializers.CharField(
         max_length=16,
         allow_blank=True,
         allow_null=True,
@@ -160,6 +167,12 @@ class DeviceSerializer(ThriftSerializer):
         if not validate_ipaddr(value):
             raise serializers.ValidationError("Invalid IP address")
         return value
+
+    def validate_client(self, value):
+        # 'client' should not be provided by the payload.
+        # It should always be the client IP as we get it from _get_client_ip()
+        # This is merely here so we can use the serializer.
+        return self._get_client_ip()
 
     def _get_client_ip(self):
         '''Return the real IP of a client even when using a proxy'''
