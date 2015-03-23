@@ -12,14 +12,22 @@ ATC API is a Django app that allow to bridge a REST API to ATCD's thrift API.
 
 ## Installation
 
-```python
+The easiest way to install `django-atc-api` is to install it directly from [pip](https://pypi.python.org/pypi).
+
+### From pip
+```bash
+pip install django-atc-api
+```
+### From source
+
+```bash
 $ cd path/to/django-atc-api
 pip install .
 ```
 
 ## Configuration
 
-1. Edit your Django project's settings.py and add "atc_api" to your INSTALLED_APPS::
+1. Edit your Django project's `settings.py` and add `atc_api` and `rest_framework` to your `INSTALLED_APPS`:
 
 ```python
     INSTALLED_APPS = (
@@ -29,7 +37,7 @@ pip install .
     )
 ```
 
-2. Include the atc_api URLconf in your Django project urls.py like this::
+2. Include the `atc_api` URLconf in your Django project urls.py like this:
 
 ```python
     url(r'^api/v1/', include('atc_api.urls')),
@@ -37,10 +45,14 @@ pip install .
 
 3. Start the development server
 
+```bash
+python manage.py runserver 0.0.0.0:8000
+```
+
 4. Visit http://127.0.0.1:8000/api/v1/shape/ to set/unset shaping.
 
 
-Some settings like the `ATCD_HOST` and `ATCD_PORT` can be changes in your Django projects'settinggs.py::
+Some settings like the `ATCD_HOST` and `ATCD_PORT` can be changes in your Django project'settings.py:
 
 ```python
 ATC_API = {
@@ -49,7 +61,7 @@ ATC_API = {
 }
 ```
 
-see [ATC api settings](atc_api/settings.py)
+see [ATC api settings](atc_api/settings.py) for more details.
 
 
 # API usage
@@ -350,9 +362,9 @@ To use this system, the controlled device must ask for a token from ATC. Once a 
 
 the controlling device can post this token to ATC to authorize itself to shape the device.
 
-### Retreiving a Token
+### Retrieving a Token
 
-Use the `/api/v1/token/` endpoint to retreive a token.
+Use the `/api/v1/token/` endpoint to retrieve a token.
 
 This endpoint will use the HTTP Header `HTTP_X_REAL_IP` to generate the token.
 
@@ -401,7 +413,7 @@ Allow: GET, POST, HEAD, OPTIONS
 ```
 
 
-### Proxy Security
+### <a name="proxy-security"></a>Proxy Security
 
 If you are using an HTTP proxy such as [nginx](http://nginx.org/), make sure it is configured to set the
 `HTTP_X_REAL_IP` header, or token generation will not work.

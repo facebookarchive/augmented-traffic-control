@@ -5,8 +5,7 @@ possible.
 ## Our Development Process
 
 Augmented Traffic Control is maintained and developed on github. It is designed to be
-easily extensible and contain API that can be reused by external
-services/frontends.
+easily extensible and contain API that can be reused by external services/frontends.
 
 Send us your pull requests, and we'd be happy to provide feedback and merge
 as appropriate.
@@ -16,9 +15,8 @@ We actively welcome your pull requests.
 1. Fork the repo and create your branch from `master`.
 2. If you've added code that should be tested, add tests
 3. If you've changed APIs, update the documentation.
-4. Ensure the test suite passes.
-5. Make sure your code lints (e.g., pyflakes, PEP8, etc).
-6. If you haven't already, complete the Contributor License Agreement ("CLA").
+4. Make sure your code lints (e.g., pyflakes, PEP8, etc).46. If you haven't already, complete the Contributor License Agreement ("CLA").
+5. If you haven't already, complete the Contributor License Agreement ("CLA").
 
 ## Contributor License Agreement ("CLA")
 In order to accept your pull request, we need you to submit a CLA. You only need
