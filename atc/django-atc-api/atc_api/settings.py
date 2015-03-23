@@ -15,6 +15,7 @@ ATC_API = {
     'ATCD_HOST': 'localhost',
     'ATCD_PORT': 9090,
     'DEFAULT_TC_TIMEOUT': 24 * 60 * 60,
+    'PROXY_IPS': ['127.0.0.1'],
 }
 
 This module provides the `atc_api_settings` object, that is used to access
@@ -31,7 +32,7 @@ DEFAULTS = {
     'ATCD_PORT': 9090,
     # Default timeout is a day in seconds
     'DEFAULT_TC_TIMEOUT': 24 * 60 * 60,
-    'PROXY_IPS': '127.0.0.1',
+    'PROXY_IPS': ['127.0.0.1'],
 }
 
 
