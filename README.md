@@ -42,12 +42,7 @@ To get more details on how to install/configure each packages, please refer to t
 
 The easiest way to install `ATC` is by using `pip`.
 ``` bash
-for pkg in \
-    atc_thrift atcd django-atc-api \
-    django-atc-demo-ui django-atc-profile-storage
-do
-    pip install $pkg
-done
+pip install atc_thrift atcd django-atc-api django-atc-demo-ui django-atc-profile-storage
 ```
 
 ### Django
