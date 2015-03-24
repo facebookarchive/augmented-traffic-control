@@ -75,7 +75,7 @@ if Chef::Platform::ServiceHelpers.service_resource_providers.include? :upstart
     notifies :restart, 'service[atcui]', :delayed
   end
 elsif Chef::Platform::ServiceHelpers.service_resource_providers.include? \
-    :systemd
+  :systemd
   log 'systemd not currently supported.' do
     level :warn
   end
