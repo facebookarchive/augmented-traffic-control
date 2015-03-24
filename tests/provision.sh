@@ -11,7 +11,8 @@
 #
 
 if [[ "$(hostname)" == "gateway" ]] ; then
-    sed -i -e 's/ATCD_WAN=eth[012]/ATCD_WAN=eth1/' -e 's/ATCD_LAN=eth[012]/ATCD_LAN=eth2/' /etc/default/atcd
+    # change interfaces, and put atcd in insecure mode
+    sed -i -e 's/ATCD_WAN=eth[012]/ATCD_WAN=eth1/' -e 's/ATCD_LAN=eth[012]/ATCD_LAN=eth2/' -e 's/ATCD_MODE=secure/ATCD_MODE=unsecure/g' /etc/default/atcd
 
     /etc/init.d/atcd restart
 
