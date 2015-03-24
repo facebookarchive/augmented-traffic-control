@@ -8,7 +8,7 @@
 #
 #
 
-from subprocess import call, Popen, PIPE
+from subprocess import Popen, PIPE
 import paramiko
 
 from host import Host

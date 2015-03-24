@@ -495,7 +495,8 @@ class AtcdThriftHandlerTask(ThriftHandlerTask):
         return dev.controlledIP in self._ip_to_id_map
 
     def getCurrentShaping(self, dev):
-        """Get the TrafficControl object used to shape a TrafficControlledDevice.
+        """Get the TrafficControl object used to shape a
+            TrafficControlledDevice.
 
         Args:
             dev: a TrafficControlledDevice.
