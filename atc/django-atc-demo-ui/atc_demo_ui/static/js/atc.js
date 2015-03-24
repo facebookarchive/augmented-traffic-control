@@ -340,7 +340,7 @@ var CreateProfileWidget = React.createClass({
         };
     },
 
-    updateName: function() {
+    updateName: function(event) {
         this.setState({name: event.target.value});
     },
 
