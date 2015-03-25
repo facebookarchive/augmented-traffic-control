@@ -4,7 +4,8 @@ Full documentation for the project is available at [http://facebook.github.io/au
 
 ## Overview
 
-Augmented Traffic Control (ATC) is a tool to simulate network conditions. It allows controlling the connection that a device has to the internet. Aspects of the connection that can be controlled include:
+Augmented Traffic Control (ATC) is a tool to simulate network conditions. It allows controlling the connection that a device has to the internet. Developers can use `ATC` to test their application across varying network conditions, easily emulating high speed, mobile, and even severely impaired networks.
+Aspects of the connection that can be controlled include:
 
 * bandwidth
 * latency
@@ -12,7 +13,7 @@ Augmented Traffic Control (ATC) is a tool to simulate network conditions. It all
 * corrupted packets
 * packets ordering
 
-In order to be able to shape the network traffic, ATC must be running on a device that routes the traffic and sees the real IP address of the device, like your network gateway for instance.
+In order to be able to shape the network traffic, ATC must be running on a device that routes the traffic and sees the real IP address of the device, like your network gateway for instance. This also allows any devices that route through `ATC` to be able to shape their traffic. Traffic can be shaped/unshaped using a web interface allowing any devices with a web browser to use `ATC` without the need for a client application.
 
 ATC is made of multiple components that interact together:
 * [`atcd`](atc/atcd): The ATC daemon which is responsible for setting/unsetting traffic shaping. `atcd` exposes a [Thrift](https://thrift.apache.org/) interface to interact with it.
