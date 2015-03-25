@@ -3,7 +3,9 @@
 {% include header.html %}
     <div class="section_title">About</div>
     <p>
-    <a href="{{ site.data.config.project_github }}">{{ site.data.config.project_fullname }}</a> (aka <strong>{{ site.data.config.project_name}}</strong>) is a project that allows to control the connection that a device has to the internet. Aspects that can be controlled by ATC include:
+    <a href="{{ site.data.config.project_github }}">{{ site.data.config.project_fullname }}</a> (aka <strong>{{ site.data.config.project_name }}</strong>) is a project that allows developers to control the connection that a device has to the internet. Developers can use <strong>{{ site.data.config.project_name }}</strong> to test their application across varying network conditions, easily emulating high speed, mobile, and even severely impaired networks.</p>
+    <p>
+    Aspects that can be controlled by ATC include:
     <ul>
       <li>Bandwith</li>
       <li>Latency</li>
@@ -12,6 +14,11 @@
       <li>Packet reordering</li>
     </ul>
     </p>
+
+    <p>
+    Because <strong>{{ site.data.config.project_name }}</strong> runs on a gateway, any devices that are connected to a network routing through it, can use it to shape its traffic. Traffic can be shaped/unshaped using a web interface allowing any devices that have a web browser to use ATC without the need for a client application.
+    </p>
+    <p>
     <div class="section_title">Architecture</div>
     <div class="section_subtitle">Overview</div>
     <p>
