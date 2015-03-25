@@ -18,6 +18,21 @@
     <p>
     Because <strong>{{ site.data.config.project_name }}</strong> runs on a gateway, any devices that are connected to a network routing through it, can use it to shape its traffic. Traffic can be shaped/unshaped using a web interface allowing any devices that have a web browser to use ATC without the need for a client application.
     </p>
+
+    <p>
+    <div class="section_title">Requirements</div>
+    </p>
+
+    <p>
+    <strong>{{ site.data.config.project_name }}</strong> uses <a href="http://en.wikipedia.org/wiki/Iptables"><code>iptables</code></a> and
+    <a href="http://tldp.org/HOWTO/Traffic-Control-HOWTO/intro.html"><code>tc</code></a> internally, so it is only supported on
+    <strong>linux platforms</strong>.
+    </p>
+
+    <p>
+    <strong>{{ site.data.config.project_name }}</strong> was developed with <strong>python 2.7</strong>. Python 3 is not supported.
+    </p>
+
     <p>
     <div class="section_title">Architecture</div>
     <div class="section_subtitle">Overview</div>
