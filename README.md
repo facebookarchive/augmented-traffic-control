@@ -108,7 +108,7 @@ All require packages should now be installed and configured. We now need to run 
 ``` bash
 sudo atcd
 ```
-Supposing `eth0` is your interface to connect to the internet and `eth1`, your interface to connec to your lan, this should just work. If your setting is slightly different, use the command line arguments `--atcd-wan` and `--atcd-lan` to adapt to your configuration.
+Supposing `eth0` is your interface to connect to the internet and `eth1`, your interface to connect to your lan, this should just work. If your setting is slightly different, use the command line arguments `--atcd-wan` and `--atcd-lan` to adapt to your configuration.
 
 ### ATC UI
 
