@@ -23,13 +23,16 @@ use of more advanced [virtual interfaces](https://wiki.archlinux.org/index.php/V
 
 Although not strictly required, use of a [virtualenv](https://virtualenv.pypa.io/en/latest/) is recommended.
 
-To setup a new virtualenv:
+To setup a new virtualenv in `~/atc/venv`:
 
 ```shell
 mkdir -p ~/atc
 virtualenv ~/atc/venv
 source ~/atc/venv/bin/activate
 ```
+
+On production environments, you probably want to put your atc installation somewhere besides
+`~/atc`.
 
 ATC Daemon
 --------
@@ -57,7 +60,7 @@ pip install django-atc-api django-atc-demo-ui django-atc-profile-storage
 
 ### Django Webapp Setup
 
-ATC's Interfaces are written on [Django REST Framework](http://www.django-rest-framework.org/), so they require a
+ATC's Interfaces are written with [Django](https://www.djangoproject.com/), so they require a
 `django` webapp to work correctly.
 
 To create and setup this webapp you will need the `django` python package:
