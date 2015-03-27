@@ -2,6 +2,16 @@
 ---
 {% assign atc_root = '~/dev/atc' %}
 {% include header.html %}
+<div class="alert alert-info" role="alert">
+<strong>Important:</strong> Before trying to install <strong>ATC</strong>, please make sure you meet the following requirements.<br />
+<strong>ATC</strong> is designed to be running on:
+<ul>
+<li>A Network Getaway: ATC will shape the traffic that is forwarded through it. To do this, ATC will typically have 1 network interface conencted to your local network and an other that connects you to the internet.</li>
+<li>On Linux: ATC makes uses of both iptables and the tc subsystem. As such it Linux is a hard requirement.</li>
+<li>Python 2.7: Currently, ATC only supports python 2 starting from 2.7.</li>
+
+</ul>
+</div>
   <h2>Getting Started</h2>
 <p>
 {{ site.data.config.project_name }} is made of different components, making the whole stack modular and allowing to separate each pieces of the stack. For the purpose of getting started installing {{ site.data.config.project_name }}, we will install everything on the same host.
