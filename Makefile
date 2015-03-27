@@ -38,9 +38,15 @@ install:
 #  atc/   - ATC source code
 #  tests/ - ATC test code
 .PHONY: lint
-lint:
+lint: chef_lint python_lint
+
+.PHONY: chef_lint
+chef_lint:
 	rubocop chef/atc
 	foodcritic chef/atc
+
+.PHONY: python_lint
+python_lint:
 	pep8 atc
 	flake8 atc
 	flake8 tests/
