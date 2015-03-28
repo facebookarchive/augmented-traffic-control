@@ -5,5 +5,7 @@ python:
 install:
     - pip install flake8
     - pip install atc/atc_thrift/ atc/atcd/ atc/django-atc-api/ atc/django-atc-demo-ui/ atc/django-atc-profile-storage/
+    - pip install -r atc/atcd/requirements/requirements-testing.txt
 script:
     - make python_lint
+    - py.test atc/atcd/tests

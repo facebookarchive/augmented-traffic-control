@@ -109,6 +109,9 @@ class TestAccessManager():
 
     def test_access_allowed_controlling_ip_none(self, fake_am):
         # controllingIP = None
+        assert not fake_am.access_allowed(_make_device(None, '2.2.2.5'))
+        # Allowed in non-secure mode
+        fake_am.secure = False
         assert fake_am.access_allowed(_make_device(None, '2.2.2.5'))
 
     def test_access_allowed_valid(self, fake_am):
@@ -126,6 +129,9 @@ class TestAccessManager():
             controlledIP='2.2.2.2'
         )
         assert not fake_am.access_allowed(dev)
+        # Allowed in non-secure mode
+        fake_am.secure = False
+        assert fake_am.access_allowed(dev)
 
     def test_access_allowed_expired(self, fake_am):
         # expired entry
@@ -134,6 +140,9 @@ class TestAccessManager():
             controlledIP='2.2.2.5'
         )
         assert not fake_am.access_allowed(dev)
+        # Allowed in non-secure mode
+        fake_am.secure = False
+        assert fake_am.access_allowed(dev)
 
     def test_validate_token_valid(self, fake_am, succeed_verify):
         fake_am.validate_token(
