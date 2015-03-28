@@ -37,7 +37,7 @@ Most requirements are handled automatically by [pip](https://pip.pypa.io), the p
 
 The fact that `ATC` is splitted in multiple packages allows for multiple deployment scenarii. However, deploying all the packages on the same host is the simplest and most likely fitting most use cases.
 
-To get more details on how to install/configure each packages, please refer to the packages'respective READMEs.
+To get more details on how to install/configure each packages, please refer to the packages' respective READMEs.
 
 ### Packages
 
