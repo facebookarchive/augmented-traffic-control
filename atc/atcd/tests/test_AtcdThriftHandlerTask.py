@@ -7,14 +7,11 @@
 #  of patent rights can be found in the PATENTS file in the same directory.
 #
 #
-import __builtin__
-from mock import mock_open
-
-old_open = __builtin__.open
-__builtin__.open = mock_open(read_data='000003e8 00000040 000f4240 3b9aca00\n')
-
-
 '''
+from sparts.tests.base import SingleTaskTestCase
+from atcd.AtcdThriftHandlerTask import AtcdThriftHandlerTask
+
+
 class AtcdThriftHandlerTaskTest(SingleTaskTestCase):
 
     TASK = AtcdThriftHandlerTask
