@@ -24,6 +24,7 @@ default: lint
 all: lint fulltest
 
 
+# Install packages locally.
 .PHONY: install
 install:
 	cd atc/atc_thrift && pip install --upgrade --force-reinstall .
@@ -31,6 +32,22 @@ install:
 	cd atc/django-atc-api && pip install --upgrade --force-reinstall .
 	cd atc/django-atc-demo-ui && pip install --upgrade --force-reinstall .
 	cd atc/django-atc-profile-storage && pip install --upgrade --force-reinstall .
+
+
+# Publish packages to PyPi.
+.PHONY: publish
+publish:
+	cd atc/atc_thrift && python setup.py publish
+	cd atc/atcd && python setup.py publish
+	cd atc/django-atc-api && python setup.py publish
+	cd atc/django-atc-demo-ui && python setup.py publish
+	cd atc/django-atc-profile-storage && python setup.py publish
+
+
+# Cleans up python dist files
+.PHONY: clean
+clean:
+	rm -rf atc/atcd/dist atc/atc_thrift/dist atc/django-atc-api/dist atc/django-atc-demo-ui/dist atc/django-atc-profile-storage/dist
 
 
 # Lint the various sources that ATC includes:
