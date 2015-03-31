@@ -7,8 +7,10 @@
 #  of patent rights can be found in the PATENTS file in the same directory.
 #
 #
+import datetime
 import pytest
 import time
+import unittest
 
 from atc_thrift.ttypes import TrafficControlledDevice
 from atcd.access_manager import AccessManager
@@ -79,6 +81,31 @@ def _make_token(token):
     return AccessToken(token=token)
 
 
+class TestAtcdTOTP(unittest.TestCase):
+
+    interval = 30
+    s = 'wrn3pqx5uqxqvnqr'
+
+    def test_valid_until(self):
+        t = 1297553958
+        endtime30s = 1297553970
+        endtime10s = 1297553960
+        with Timecop(t):
+            totp = AtcdTOTP(interval=30, s=self.s)
+            dt = datetime.datetime.fromtimestamp(t)
+            self.assertEqual(
+                datetime.datetime.fromtimestamp(endtime30s),
+                totp.valid_until(dt)
+            )
+            totp = AtcdTOTP(interval=10, s=self.s)
+            dt = datetime.datetime.fromtimestamp(t)
+            self.assertEqual(
+                datetime.datetime.fromtimestamp(endtime10s),
+                totp.valid_until(dt)
+            )
+        assert True
+
+
 class TestAccessManager():
 
     def setup_method(self, method):
@@ -90,6 +117,14 @@ class TestAccessManager():
 
     def teardown_method(self, method):
         time.time = self._old_time
+
+    def test_generate_token(self, fake_am):
+        l = len(fake_am._ip_to_totp_map.keys())
+        fake_am.generate_token('1.1.1.1', 10)
+        assert len(fake_am._ip_to_totp_map.keys()) == l+1
+
+        fake_am.generate_token('1.1.1.1', 30)
+        assert len(fake_am._ip_to_totp_map.keys()) == l+1
 
     def test_controlled_by_existing(self, fake_am):
         controlling_by = fake_am.get_devices_controlled_by('1.1.1.1')
@@ -144,6 +179,14 @@ class TestAccessManager():
         fake_am.secure = False
         assert fake_am.access_allowed(dev)
 
+    def test_access_allowed_self(self, fake_am):
+        # expired entry
+        dev = TrafficControlledDevice(
+            controllingIP='1.1.1.1',
+            controlledIP='1.1.1.1'
+        )
+        assert fake_am.access_allowed(dev)
+
     def test_validate_token_valid(self, fake_am, succeed_verify):
         fake_am.validate_token(
             _make_device('1.1.1.1', '2.2.2.1'),
@@ -184,3 +227,29 @@ class TestAccessManager():
             )
         assert str(excinfo.value) == \
             '''That remote device hasn't generated a code yet'''
+
+
+# Directly copied from https://github.com/nathforge/pyotp/blob/master/test.py
+class Timecop(object):
+    """
+    Half-assed clone of timecop.rb, just enough to pass our tests.
+    """
+
+    def __init__(self, freeze_timestamp):
+        self.freeze_timestamp = freeze_timestamp
+
+    def __enter__(self):
+        self.real_datetime = datetime.datetime
+        datetime.datetime = self.frozen_datetime()
+
+    def __exit__(self, type, value, traceback):
+        datetime.datetime = self.real_datetime
+
+    def frozen_datetime(self):
+        class FrozenDateTime(datetime.datetime):
+            @classmethod
+            def now(cls):
+                return cls.fromtimestamp(timecop.freeze_timestamp)
+
+        timecop = self
+        return FrozenDateTime
