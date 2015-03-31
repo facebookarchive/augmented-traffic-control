@@ -10,6 +10,7 @@
 from atcd.AtcdVService import AtcdVService
 from sparts.tests.base import ServiceTestCase
 
+import mock
 import logging
 
 
@@ -29,3 +30,17 @@ class AtcdVServiceTest(ServiceTestCase):
         self.assertTrue(
             'SysLogHandler' in [type(h).__name__ for h in handlers]
         )
+
+    @mock.patch('atcd.AtcdVService.sys')
+    @mock.patch('atcd.AtcdVService.os.path.exists')
+    def test_syslog_macosx_path_exists(self, mock_pathexists, mock_sys):
+        mock_sys.configure_mock(platform='darwin')
+        mock_pathexists.return_value = True
+        self.assertEqual(self.service._syslog_address(), '/var/run/syslog')
+
+    @mock.patch('atcd.AtcdVService.sys')
+    @mock.patch('atcd.AtcdVService.os.path.exists')
+    def test_syslog_macosx_path_dont_exists(self, mock_pathexists, mock_sys):
+        mock_sys.configure_mock(platform='darwin')
+        mock_pathexists.return_value = False
+        self.assertEqual(self.service._syslog_address(), ('localhost', 514))
