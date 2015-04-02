@@ -6,6 +6,8 @@ project_license: BSD
 project_irc: atcd
 project_pip: true
 navigation:
+ - text: FAQ
+   url: /docs/faq.html
  - text: docs
    url: /docs/install.html
  - text: contributing
@@ -14,4 +16,3 @@ navigation:
    url: /docs/support.html
  - text: github
    url: *project_github
-

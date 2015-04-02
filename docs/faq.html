@@ -1,0 +1,78 @@
+---
+---
+{% include header.html %}
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>How do I make ATC run on MacOSX, Windows, or BSD?</h3>
+<p>
+ATC relies on
+<a href="http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2">
+iproute2</a>, a utility that only works on linux systems. As a result,
+at this time, only linux is supported.
+</p>
+
+<h3>How do I change the name of the interfaces <code>atcd</code> shapes?</h3>
+<p>
+<code>atcd</code> accepts two parameters which change the interfaces it shapes
+traffic through:
+<ul>
+<li>
+  <code>--atcd-wan</code> specifies the external
+  <a href="http://en.wikipedia.org/wiki/Wide_area_network">WAN</a> interface.
+</li>
+<li>
+  <code>--atcd-lan</code> specifies the internal
+  <a href="http://en.wikipedia.org/wiki/Local_area_network">LAN</a> interface.
+</li>
+</li>
+</ul>
+</p>
+
+<h3>How do I load default profiles?</h3>
+<p>
+Default profiles can be loaded by running the script
+<code>utils/restore-profiles.sh</code> from within your ATC checkout.
+
+The script accepts a <code>host:port</code> parameter to tell it where ATC is
+located.
+
+Example:
+<div class="code">
+{% highlight bash %}
+utils/restore-profiles.sh localhost:8080
+Adding profile utils/profiles/2G-DevelopingRural.json
+Adding profile utils/profiles/2G-DevelopingUrban.json
+Adding profile utils/profiles/3G-Average.json
+Adding profile utils/profiles/3G-Good.json
+Adding profile utils/profiles/Cable.json
+Adding profile utils/profiles/DSL.json
+Adding profile utils/profiles/Edge-Average.json
+Adding profile utils/profiles/Edge-Good.json
+Adding profile utils/profiles/Edge-Lossy.json
+Adding profile utils/profiles/NoConnectivity.json
+{% endhighlight %}
+</div>
+
+In order to run this script, you must have <code>curl</code> installed.
+</p>
+
+<h3>How do I make ATC more secure?</h3>
+<p>
+<code>atcd</code> accepts a command line parameter <code>--atcd-mode</code>
+which can be set to either <code>secure</code> or <code>unsecure</code>:
+
+<ul>
+<li>
+In <code>secure</code> mode, <code>atcd</code> will enforce a token-based
+authentication method to prevent clients from shaping other clients' addresses.
+</li>
+<li>
+In <code>unsecure</code>, <code>atcd</code> will not enforce any authentication
+methods. This allows any client to shape any other clients' addresses.
+</li>
+</ul>
+See the <a href="https://github.com/facebook/augmented-traffic-control/tree/master/atc/django-atc-api#authentication-and-authorization">django-atc-api readme</a> for more information about how ATC authentication works.
+</p>
+
+{% include footer.html %}
