@@ -190,6 +190,29 @@ vagrant ssh trusty
 
 You should now be able to access ATC at: http://localhost:8080/
 
+### Using the Sample Profiles
+
+Once you've got ATC up and running, you can run the script `utils/restore-profiles.sh` to setup the set of default profiles.
+
+The script needs to be passed a `hostname:port` with the location of your ATC instance:
+
+    utils/restore-profiles.sh localhost:8080
+
+After doing this, you should see the 10 sample profiles listed below in your ATC instance:
+
+- `2G - Developing Rural`
+- `2G - Developing Urban`
+- `3G - Average`
+- `3G - Good`
+- `Cable`
+- `DSL`
+- `Edge - Average`
+- `Edge - Good`
+- `Edge - Lossy`
+- `No Connectivity`
+
+Naturally, you cannot improve your natural network speed by selecting a faster profile than your service. For example, selecting the `Cable` profile will not make your network faster if your natural connection speed resembles DSL more closely.
+
 ### Hacking on the code
 
 Hacking on ATC is done from the host and tested in the VM. In order to reflect the changes, you will need to start the services manually.

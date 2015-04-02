@@ -1,0 +1,50 @@
+{
+    "content": {
+        "down": {
+            "corruption": {
+                "correlation": 0,
+                "percentage": 0
+            },
+            "delay": {
+                "correlation": 0,
+                "delay": "400",
+                "jitter": 0
+            },
+            "iptables_options": [],
+            "loss": {
+                "correlation": 0,
+                "percentage": "1"
+            },
+            "rate": "240",
+            "reorder": {
+                "correlation": 0,
+                "gap": 0,
+                "percentage": 0
+            }
+        },
+        "up": {
+            "corruption": {
+                "correlation": 0,
+                "percentage": 0
+            },
+            "delay": {
+                "correlation": 0,
+                "delay": "440",
+                "jitter": 0
+            },
+            "iptables_options": [],
+            "loss": {
+                "correlation": 0,
+                "percentage": "1"
+            },
+            "rate": "200",
+            "reorder": {
+                "correlation": 0,
+                "gap": 0,
+                "percentage": 0
+            }
+        }
+    },
+    "id": 9,
+    "name": "Edge - Lossy"
+}
