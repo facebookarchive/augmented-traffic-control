@@ -12,4 +12,9 @@
 # Recipe:: default
 #
 include_recipe 'apt'
-package "ubuntu-desktop"
+package 'ubuntu-desktop'
+
+# Force the window manager to start
+service 'lightdm' do
+  action [:enable, :start]
+end
