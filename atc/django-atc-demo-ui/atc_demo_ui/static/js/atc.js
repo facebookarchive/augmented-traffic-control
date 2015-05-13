@@ -425,6 +425,32 @@ var ErrorBox = React.createClass({
 });
 
 
+var JSONView = React.createClass({
+    render: function() {
+        return (
+            <div className="col-md-6">
+            <h3>{this.props.label}</h3>
+            <pre>
+                { JSON.stringify(this.props.json, null, 2) }
+            </pre>
+            </div>
+        );
+    }
+});
+
+
+var JSONDiff = React.createClass({
+    render: function() {
+        return (
+            <div className="row">
+                <JSONView json={this.props.before} label="Before:" />
+                <JSONView json={this.props.after} label="After:" />
+            </div>
+        );
+    }
+});
+
+
 var Atc = React.createClass({
     mixins: [RecursiveLinkStateMixin],
     getInitialState: function() {
@@ -623,10 +649,7 @@ var Atc = React.createClass({
             <div className="row">
                 <ShapingSettings link_state={link_state} />
             </div>
-            <div className="row">
-                <pre className="col-md-6">{ JSON.stringify(this.state.settings) }</pre>
-                <pre className="col-md-6">{ JSON.stringify(this.state.current_settings) }</pre>
-            </div>
+            <JSONDiff before={this.state.settings} after={this.state.current_settings} />
             </div>
         )
     }
