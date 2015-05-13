@@ -12,6 +12,9 @@
 # Described fully in `tests/Vagrantfile`.
 TESTVMS = gateway client server
 
+FLAKE=python -m flake8
+PEP=pep8
+
 
 # By default, we just lint since we want this to be **fast**.
 # In the future when unit testing becomes better this should run quick tests.
@@ -64,9 +67,9 @@ chef_lint:
 
 .PHONY: python_lint
 python_lint:
-	pep8 atc
-	flake8 atc
-	flake8 tests/
+	$(PEP) atc
+	$(FLAKE) atc
+	$(FLAKE) tests/
 
 
 # Performs setup, runs the tests, then cleans up.

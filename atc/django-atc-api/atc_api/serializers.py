@@ -7,7 +7,7 @@
 #  of patent rights can be found in the PATENTS file in the same directory.
 #
 #
-from atc_api.settings import atc_api_settings
+from atc_api.utils import get_client_ip
 from atc_thrift.ttypes import Corruption
 from atc_thrift.ttypes import Delay
 from atc_thrift.ttypes import Loss
@@ -176,11 +176,4 @@ class DeviceSerializer(ThriftSerializer):
         return self._get_client_ip()
 
     def _get_client_ip(self):
-        '''Return the real IP of a client even when using a proxy'''
-        request = self.context['request']
-        if 'HTTP_X_REAL_IP' in request.META:
-            if request.META['REMOTE_ADDR'] not in atc_api_settings.PROXY_IPS:
-                raise ValueError('HTTP_X_REAL_IP set by non-proxy')
-            return request.META['HTTP_X_REAL_IP']
-        else:
-            return request.META['REMOTE_ADDR']
+        return get_client_ip(self.context['request'])

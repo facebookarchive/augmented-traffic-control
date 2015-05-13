@@ -10,6 +10,7 @@
 from atc_api.atcd_client import atcdClient
 from atc_api.serializers import SettingSerializer, DeviceSerializer
 from atc_api.settings import atc_api_settings
+from atc_api.utils import get_client_ip
 from atc_thrift.ttypes import TrafficControlException, TrafficControl
 from atc_thrift.ttypes import TrafficControlledDevice, AccessToken
 
@@ -152,7 +153,7 @@ class AuthApi(APIView):
         Returns the addresses that the provided address is allowed to shape.
         '''
         if address is None:
-            address = _get_client_ip(request)
+            address = get_client_ip(request)
 
         controlled_ips = []
 
@@ -183,7 +184,7 @@ class AuthApi(APIView):
                 )
         controlled_ip = address
 
-        controlling_ip = _get_client_ip(request)
+        controlling_ip = get_client_ip(request)
 
         if 'token' not in request.data:
             token = None
@@ -227,7 +228,7 @@ class TokenApi(APIView):
         if 'duration' in request.query_params:
             duration = int(request.query_params['duration'])
 
-        address = _get_client_ip(request)
+        address = get_client_ip(request)
 
         stuff = service.requestToken(address, duration)
 
@@ -239,14 +240,3 @@ class TokenApi(APIView):
         }
 
         return Response(data, status=status.HTTP_200_OK)
-
-
-def _get_client_ip(request):
-    '''Return the real IP of a client even when using a proxy'''
-
-    if 'HTTP_X_REAL_IP' in request.META:
-        if request.META['REMOTE_ADDR'] not in atc_api_settings.PROXY_IPS:
-            raise ValueError('HTTP_X_REAL_IP set by non-proxy')
-        return request.META['HTTP_X_REAL_IP']
-    else:
-        return request.META['REMOTE_ADDR']
