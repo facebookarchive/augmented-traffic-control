@@ -27,8 +27,17 @@ def speedBetween(client, server, time=30, udp=False):
 
 
 def shape(gateway, host, speed):
-    gw_ip = gateway.getIp()
-    shaped_ip = host.getIp()
+    '''
+    Shape the provided host using the given gateway to the provided speed.
+
+    If host is None, the gateway will use the HTTP request's remote IP.
+
+    Gateway may be either a Host object or an IP address string.
+    '''
+    if isinstance(gateway, str):
+        gw_ip = gateway
+    else:
+        gw_ip = gateway.getIp()
 
     shaping = {
         'down': {
@@ -77,17 +86,24 @@ def shape(gateway, host, speed):
         }
     }
 
+    url = '/api/v1/shape/'
+    exc_f = 'Could not shape host: {}'
+    if host is not None:
+        shaped_ip = host.getIp()
+        exc_f = 'Could not shape host %s: {}' % shaped_ip
+        url += shaped_ip + '/'
+
     h = httplib.HTTPConnection(gw_ip, 8000, timeout=3)
     try:
         h.request(
             'POST',
-            '/api/v1/shape/{}/'.format(shaped_ip),
+            url,
             json.dumps(shaping),
             {'Content-Type': 'application/json'})
         r = h.getresponse()
         if r.status != httplib.CREATED:
             raise RuntimeError(
-                'Could not shape host {}: {}'.format(shaped_ip, r.status))
+                exc_f.format(shaped_ip, r.status))
     finally:
         h.close()
 
