@@ -91,14 +91,17 @@ def getGateway(server):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--rates',
-        default=rateList('10000,1000,100,50,25,10,5'),
-        type=rateList, help='comma-separated list of rates in Kbps')
+                        default=rateList('10000,1000,100,50,25,10,5'),
+                        type=rateList,
+                        help='comma-separated list of rates in Kbps')
     parser.add_argument('-n', '--count',
-        type=int, default=10, help='number of runs for each rate')
+                        type=int, default=10,
+                        help='number of runs for each rate')
     parser.add_argument('--atc', default=None,
-        type=str, help='IP address of ATC gateway')
+                        type=str,
+                        help='IP address of ATC gateway')
     parser.add_argument('iperf',
-        type=str, help='IP address of iperf server')
+                        type=str, help='IP address of iperf server')
     args = parser.parse_args()
 
     iperf = args.iperf
