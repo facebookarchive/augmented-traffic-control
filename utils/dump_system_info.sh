@@ -14,7 +14,7 @@ function run_cmd {
     $1
 }
 
-for cmd in "ip a" "ip r" "iptables-save"
+for cmd in "cat /etc/os-release" "pip freeze" "ip a" "ip r" "iptables-save"
 do
     run_cmd "${cmd}"
 done
