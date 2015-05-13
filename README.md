@@ -1,5 +1,9 @@
 # Augmented Traffic Control
 
+[![build-status-image]][travis]
+[![pypi-version]][pypi]
+
+
 Full documentation for the project is available at [http://facebook.github.io/augmented-traffic-control/](http://facebook.github.io/augmented-traffic-control/).
 
 ## Overview
@@ -254,3 +258,8 @@ cd /var/django && python manage.py runserver 0.0.0.0:8000
 ```
 
 [atc_architecture]: https://facebook.github.io/augmented-traffic-control/images/atc_overview.png
+[build-status-image]: https://travis-ci.org/facebook/augmented-traffic-control.svg?branch=master
+[travis]: https://travis-ci.org/facebook/augmented-traffic-control?branch=master
+[pypi-version]: https://pypip.in/version/atcd/badge.svg
+[pypi]: https://pypi.python.org/pypi/atcd
+
