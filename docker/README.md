@@ -21,7 +21,7 @@ docker build -t="${USER}/atc" .
 # Usage
 
 `ATC` modifies the network of the host it is running on. As such, it **MUST**
-run with the following options: `--privileged --net=host`.
+run with the following options: `--cap-add=NET_ADMIN --net=host`.
 
 There is currently 2 environment variables:
 * ATCD_WAN (default *eth0*)
@@ -31,7 +31,7 @@ There is currently 2 environment variables:
 To run atcd with the default settings:
 
 ```
-docker run -it --privileged --net=host --rm atcd/atc
+docker run -it --cap-add=NET_ADMIN --net=host --rm atcd/atc
 ```
 
 To change which interface to use for WAN access (internet) or LAN, you can modify
@@ -39,7 +39,7 @@ To change which interface to use for WAN access (internet) or LAN, you can modif
 
 
 ```
-docker run -it --privileged --net=host --rm -e ATCD_LAN=wlan1 -e ATCD_WAN=em1 atcd/atc
+docker run -it --cap-add=NET_ADMIN --net=host --rm -e ATCD_LAN=wlan1 -e ATCD_WAN=em1 atcd/atc
 ```
 
 You can then access ATC UI at:
