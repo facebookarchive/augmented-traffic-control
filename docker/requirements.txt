@@ -1,0 +1,6 @@
+atc_thrift
+atcd
+django-atc-demo-ui
+django-atc-profile-storage
+supervisor
+supervisor-stdout
