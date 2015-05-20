@@ -69,6 +69,17 @@ AtcRestClient.prototype.getCurrentShaping = function (callback) {
     this.api_call('GET', 'shape', callback);
 };
 
+AtcRestClient.prototype.getToken = function (callback) {
+    this.api_call('GET', 'token', callback);
+};
+
+AtcRestClient.prototype.getAuthInfo = function (callback) {
+    this.api_call('GET', 'auth', callback);
+};
+
+AtcRestClient.prototype.updateAuthInfo = function (address, data, callback) {
+    this.api_call('POST', 'auth/'.concat(address), callback, data);
+};
 
 function AtcSettings () {
     this.defaults = {
