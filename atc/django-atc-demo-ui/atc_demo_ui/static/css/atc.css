@@ -18,3 +18,7 @@ We're not using anchors, so make sure users know they can click on panel headers
 .panel-heading {
     cursor: pointer;
 }
+
+.error-timer {
+    text-align: right;
+}
