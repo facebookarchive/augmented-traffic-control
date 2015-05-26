@@ -10,6 +10,15 @@ if [ -z "$ATC_HOST" ] ; then
 fi
 
 for x in $(git rev-parse --show-toplevel)/utils/profiles/* ; do
-    echo "Adding profile $x"
-    curl --silent http://"$ATC_HOST"/api/v1/profiles/ -d "@${x}" 1>/dev/null
+    out=$(curl --silent http://"$ATC_HOST"/api/v1/profiles/ -d "@${x}")
+    rc="$?"
+    if [ "$rc" -ne "0" ] ; then
+        echo "Could not add profile $x (curl exit code $rc)"
+        if [ -n "$out" ] ; then
+            echo "$out"
+            echo
+        fi
+    else
+        echo "Added profile $x"
+    fi
 done
