@@ -317,9 +317,7 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
                         protocol=ETH_P_IP,
                         prio=PRIO,
                         classid=idx,
-                        rate="{}kbit".format(shaping.rate or 2**22 - 1),
-                        burst=self.burst_size,
-                        action='drop')
+                        )
         except NetlinkError as e:
             return TrafficControlRc(
                 code=ReturnCode.NETLINK_FW_ERROR,
