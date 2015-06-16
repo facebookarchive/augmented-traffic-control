@@ -165,9 +165,9 @@ var Atc = React.createClass({
           return false;
         }
         equals = true;
-        for (key of x_keys) {
-          equals &= objectEquals(x[key], y[key]);
-        }
+        x_keys.forEach(function (key, index) {
+            equals &= objectEquals(x[key], y[key]);
+        });
         return equals;
       }
       return x.toString() === y.toString();
