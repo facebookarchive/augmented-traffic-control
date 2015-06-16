@@ -19,19 +19,19 @@ var atc_status = {
 };
 
 
-var NOTIFICATION_TYPES = new Map([
-  ["error", "danger"],
-  ["info", "info"],
-  ["warn", "warning"],
-  ["success", "success"],
-]);
+var NOTIFICATION_TYPES = {
+  "error": "danger",
+  "info": "info",
+  "warn": "warning",
+  "success": "success",
+};
 
 
 var NotificationPanel = React.createClass({
   render: function () {
     var notifyNodes = this.props.notifications.map(function(item, idx, arr) {
       var timeout = Math.floor((item.expire_at - new Date().getTime()) / 1000)
-      var cls = "alert alert-" + (NOTIFICATION_TYPES.get(item.type) || item.type);
+      var cls = "alert alert-" + (NOTIFICATION_TYPES[item.type] || item.type);
       return (
         <div className={cls} role="alert">
           <div className="row">
