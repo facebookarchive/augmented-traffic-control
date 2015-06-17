@@ -168,6 +168,8 @@ Interacting with ATC will only shape the traffic within the VM and not on the ho
 
 ### Setting up the environment
 
+Note: vagrant is an easy way to set up a test environment, but virtualization will produce different results than a setup on bare-metal. We recommend using vagrant only for testing/development and using bare-metal for setups which require realistic shaping settings.
+
 You will need to install VirtualBox, Vagrant and a couple of plugins:
 
 * [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
