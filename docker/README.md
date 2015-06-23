@@ -26,6 +26,7 @@ run with the following options: `--cap-add=NET_ADMIN --net=host`.
 There is currently 2 environment variables:
 * ATCD_WAN (default *eth0*)
 * ATCD_LAN (default *eth1*)
+* ATCD_MODE (default *secure*)
 * ATCD_BURST_SIZE (default *12000*)
 
 To run atcd with the default settings:
