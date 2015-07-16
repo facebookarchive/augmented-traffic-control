@@ -12,7 +12,7 @@ import os
 import sys
 from setuptools import setup
 
-version = '0.1.1'
+version = '0.1.2'
 
 readme = open('README.md', 'r')
 

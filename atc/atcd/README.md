@@ -21,7 +21,7 @@ NATting, all the devices behind the NAT will get shaped using the same shaping r
 * pyroute2==0.3.3
 * pyotp==1.4.1
 * sparts==0.7.1
-* atc_thrift==0.1.1
+* atc_thrift==0.1.2
 
 ## Installation
 
