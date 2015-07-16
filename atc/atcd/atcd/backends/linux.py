@@ -312,14 +312,20 @@ class AtcdLinuxShaper(AtcdThriftHandlerTask):
             )
         )
         try:
+            extra_args = {}
+            if not self.dont_drop_packets:
+                extra_args.update({
+                    'rate': "{}kbit".format(shaping.rate or 2**22 - 1),
+                    'burst': self.burst_size,
+                    'action': 'drop',
+                })
             self.ipr.tc(RTM_NEWTFILTER, 'fw', ifid, mark,
                         parent=parent,
                         protocol=ETH_P_IP,
                         prio=PRIO,
                         classid=idx,
-                        rate="{}kbit".format(shaping.rate or 2**22 - 1),
-                        burst=self.burst_size,
-                        action='drop')
+                        **extra_args
+                        )
         except NetlinkError as e:
             return TrafficControlRc(
                 code=ReturnCode.NETLINK_FW_ERROR,
