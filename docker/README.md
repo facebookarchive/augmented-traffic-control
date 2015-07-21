@@ -28,6 +28,7 @@ There is currently 2 environment variables:
 * ATCD_LAN (default *eth1*)
 * ATCD_MODE (default *secure*)
 * ATCD_BURST_SIZE (default *12000*)
+* ATCD_OPTIONS (default *empty*) free form options to pass to atcd
 
 To run atcd with the default settings:
 
