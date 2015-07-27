@@ -87,6 +87,7 @@ else
 end
 
 service 'atcui' do
+  provider Chef::Provider::Service::Upstart
   supports :restart => true
   action [:enable, :start]
 end
