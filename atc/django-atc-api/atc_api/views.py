@@ -55,7 +55,7 @@ class AtcApi(APIView):
         shaped
         '''
         device_serializer = DeviceSerializer(
-            data=request.DATA,
+            data=request.data,
             context={'request': request, 'address': address},
         )
         if not device_serializer.is_valid():
@@ -83,9 +83,9 @@ class AtcApi(APIView):
         the client IP
         @return the profile that was set on success
         '''
-        setting_serializer = SettingSerializer(data=request.DATA)
+        setting_serializer = SettingSerializer(data=request.data)
         device_serializer = DeviceSerializer(
-            data=request.DATA,
+            data=request.data,
             context={'request': request, 'address': address},
         )
         if not setting_serializer.is_valid():
@@ -123,7 +123,7 @@ class AtcApi(APIView):
         client IP
         '''
         device_serializer = DeviceSerializer(
-            data=request.DATA,
+            data=request.data,
             context={'request': request, 'address': address},
         )
         if not device_serializer.is_valid():
