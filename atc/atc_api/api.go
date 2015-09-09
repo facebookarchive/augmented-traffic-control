@@ -10,16 +10,20 @@ import (
 )
 
 var (
-	URL_MAP = map[string]HandlerFunc{
-		"/":                 RedirectHandler("/shape"),
-		"/info":             InfoHandler,
-		"/group":            GroupsHandler,
-		"/group/{id}":       GroupHandler,
-		"/group/{id}/join":  GroupJoinHandler,
-		"/group/{id}/leave": GroupLeaveHandler,
-		"/group/{id}/token": GroupTokenHandler,
-		"/group/{id}/shape": GroupShapeHandler,
-		"/shape":            ShapeHandler,
+	URL_MAP = map[string]map[string]HandlerFunc{
+		"/": {
+			"/": RedirectHandler("/api/v1/shape"),
+		},
+		"/api/v1": {
+			"/info":             InfoHandler,
+			"/group":            GroupsHandler,
+			"/group/{id}":       GroupHandler,
+			"/group/{id}/join":  GroupJoinHandler,
+			"/group/{id}/leave": GroupLeaveHandler,
+			"/group/{id}/token": GroupTokenHandler,
+			"/group/{id}/shape": GroupShapeHandler,
+			"/shape":            ShapeHandler,
+		},
 	}
 )
 
@@ -66,7 +70,10 @@ func GroupHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) 
 	}
 	group, err := atcd.GetGroup(id)
 	if err != nil {
-		return nil, Errorf(http.StatusBadGateway, "Could not get group from atcd: %v", err)
+		if IsNoSuchItem(err) {
+			return nil, Errorf(http.StatusNotFound, "Invalid group")
+		}
+		return nil, Errorf(http.StatusBadGateway, "Could not get group from daemon: %v", err)
 	}
 	return group, nil
 }

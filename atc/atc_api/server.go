@@ -77,9 +77,13 @@ func (srv *Server) Serve() {
 
 func (srv *Server) setupHandlers() {
 	r := mux.NewRouter()
-	for url, f := range URL_MAP {
-		r.HandleFunc(url, NewHandler(srv, f))
-		r.HandleFunc(url+"/", NewHandler(srv, f))
+	for prefix, urls := range URL_MAP {
+		s := r.PathPrefix(prefix).Subrouter()
+		for url, f := range urls {
+			h := NewHandler(srv, f)
+			s.HandleFunc(url, h)
+			s.HandleFunc(url+"/", h)
+		}
 	}
 	srv.Handler = r
 }
