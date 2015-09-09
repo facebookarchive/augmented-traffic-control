@@ -5,154 +5,45 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"time"
-
 	"github.com/facebook/augmented-traffic-control/atc/atc_thrift/atc_thrift"
-	_ "github.com/mattn/go-sqlite3"
+	"log"
+	"time"
 )
 
 const (
-	TIMEOUT_LENGTH = 24 * time.Hour
+	SHAPING_TIMEOUT_LENGTH = 24 * time.Hour
 )
 
 var (
-	db_chan chan *sql.DB
-
-	// Not a prepared statement!
-	SHAPING_CREATE_QUERY = `
-	CREATE TABLE IF NOT EXISTS ShapedAddrs(
-		addr VARCHAR PRIMARY KEY NOT NULL,
-		group_id INTEGER NOT NULL,
-		FOREIGN KEY(group_id) REFERENCES ShapingGroups(id) ON DELETE CASCADE
+	schema = `
+	create table if not exists shapinggroups(
+		id integer primary key not null,
+		secret varchar,
+		tc blob,
+		timeout integer
 	);
 
-	CREATE TABLE IF NOT EXISTS ShapingGroups(
-		id INTEGER PRIMARY KEY NOT NULL,
-		secret VARCHAR,
-		tc BLOB,
-		timeout INTEGER
+	create table if not exists shapedaddrs(
+		addr varchar primary key not null,
+		group_id integer not null,
+		foreign key(group_id) references shapinggroups(id) on delete cascade
 	);
 	`
 
-	GROUP_MAX_ID_STMT  *sql.Stmt
-	GROUP_MAX_ID_QUERY = `
-	SELECT MAX(id) FROM ShapingGroups
-	`
+	queries = map[string]string{
+		"group":               `select id, secret, tc, timeout from shapinggroups where id=?`,
+		"group update":        `insert or replace into shapinggroups values (?, ?, ?, ?)`,
+		"group delete":        `delete from shapinggroups where id = ?`,
+		"groups":              `select id, secret, tc, timeout from shapinggroups`,
+		"empty group cleanup": `delete from shapinggroups where id not in (select distinct(group_id) from shapedaddrs)`,
+		"group max id":        `select max(id) from shapinggroups`,
 
-	GROUP_INSERT_STMT  *sql.Stmt
-	GROUP_INSERT_QUERY = `
-	INSERT OR REPLACE INTO ShapingGroups values (?, ?, ?, ?)
-	`
-
-	GROUP_DELETE_STMT  *sql.Stmt
-	GROUP_DELETE_QUERY = `
-	DELETE FROM ShapingGroups WHERE id = ?
-	`
-
-	GROUP_SELECT_ALL_STMT  *sql.Stmt
-	GROUP_SELECT_ALL_QUERY = `
-	SELECT id, secret, tc, timeout FROM ShapingGroups
-	`
-
-	GROUP_SELECT_ONE_STMT  *sql.Stmt
-	GROUP_SELECT_ONE_QUERY = `
-	SELECT id, secret, tc, timeout FROM ShapingGroups WHERE id = ?
-	`
-
-	MEMBER_INSERT_STMT  *sql.Stmt
-	MEMBER_INSERT_QUERY = `
-	INSERT OR REPLACE INTO ShapedAddrs values (?, ?)
-	`
-
-	MEMBER_DELETE_STMT  *sql.Stmt
-	MEMBER_DELETE_QUERY = `
-	DELETE FROM ShapedAddrs WHERE addr = ?
-	`
-
-	MEMBER_SELECT_ONE_STMT  *sql.Stmt
-	MEMBER_SELECT_ONE_QUERY = `
-	SELECT addr, group_id FROM ShapedAddrs where addr = ?
-	`
-
-	MEMBER_SELECT_GROUP_STMT  *sql.Stmt
-	MEMBER_SELECT_GROUP_QUERY = `
-	SELECT addr FROM ShapedAddrs where group_id = ?
-	`
+		"member":           `select addr, group_id from shapedaddrs where addr = ?`,
+		"member update":    `insert or replace into shapedaddrs values (?, ?)`,
+		"member delete":    `delete from shapedaddrs where addr = ?`,
+		"members in group": `select addr from shapedaddrs where group_id = ?`,
+	}
 )
-
-func initDB(driver, connstr string) error {
-	db_chan = make(chan *sql.DB, 1)
-
-	db, err := sql.Open(driver, connstr)
-	if err != nil {
-		return err
-	}
-
-	// Double check it's working...
-	if err = db.Ping(); err != nil {
-		return fmt.Errorf("Could not open database connection: %v", err)
-	}
-
-	// Create the schema
-	if _, err := db.Exec(SHAPING_CREATE_QUERY); err != nil {
-		return fmt.Errorf("Could not create database schema: %v", err)
-	}
-
-	// Prepare statements...
-	if GROUP_MAX_ID_STMT, err = db.Prepare(GROUP_MAX_ID_QUERY); err != nil {
-		return fmt.Errorf("Could not prepare query: %v", err)
-	}
-
-	if GROUP_INSERT_STMT, err = db.Prepare(GROUP_INSERT_QUERY); err != nil {
-		return fmt.Errorf("Could not prepare query: %v", err)
-	}
-
-	if GROUP_DELETE_STMT, err = db.Prepare(GROUP_DELETE_QUERY); err != nil {
-		return fmt.Errorf("Could not prepare query: %v", err)
-	}
-
-	if GROUP_SELECT_ALL_STMT, err = db.Prepare(GROUP_SELECT_ALL_QUERY); err != nil {
-		return fmt.Errorf("Could not prepare query: %v", err)
-	}
-
-	if GROUP_SELECT_ONE_STMT, err = db.Prepare(GROUP_SELECT_ONE_QUERY); err != nil {
-		return fmt.Errorf("Could not prepare query: %v", err)
-	}
-
-	if MEMBER_INSERT_STMT, err = db.Prepare(MEMBER_INSERT_QUERY); err != nil {
-		return fmt.Errorf("Could not prepare query: %v", err)
-	}
-
-	if MEMBER_DELETE_STMT, err = db.Prepare(MEMBER_DELETE_QUERY); err != nil {
-		return fmt.Errorf("Could not prepare query: %v", err)
-	}
-
-	if MEMBER_SELECT_ONE_STMT, err = db.Prepare(MEMBER_SELECT_ONE_QUERY); err != nil {
-		return fmt.Errorf("Could not prepare query: %v", err)
-	}
-
-	if MEMBER_SELECT_GROUP_STMT, err = db.Prepare(MEMBER_SELECT_GROUP_QUERY); err != nil {
-		return fmt.Errorf("Could not prepare query: %v", err)
-	}
-
-	// Make the db available
-	db_chan <- db
-	return nil
-}
-
-func shutdownDB() error {
-	// Wait for db to be available
-	// Don't write it back into the chan.
-	db := <-db_chan
-
-	GROUP_MAX_ID_STMT.Close()
-	GROUP_INSERT_STMT.Close()
-	GROUP_DELETE_STMT.Close()
-	GROUP_SELECT_ALL_STMT.Close()
-	GROUP_SELECT_ONE_STMT.Close()
-	close(db_chan)
-	return db.Close()
-}
 
 type DbGroup struct {
 	id      int64
@@ -165,6 +56,291 @@ type DbMember struct {
 	addr     string
 	group_id int64
 }
+
+type DbRunner struct {
+	db *sql.DB
+
+	prepared map[string]*sql.Stmt
+}
+
+func NewDbRunner(driver, connstr string) (*DbRunner, error) {
+	db, err := sql.Open(driver, connstr)
+	if err != nil {
+		return nil, fmt.Errorf("Could not open database connection: %v", err)
+	}
+	runner := &DbRunner{
+		db:       db,
+		prepared: make(map[string]*sql.Stmt),
+	}
+
+	if err := runner.db.Ping(); err != nil {
+		runner.Close()
+		return nil, fmt.Errorf("Could not open database connection: %v", err)
+	}
+
+	if _, err := runner.db.Exec(schema); err != nil {
+		runner.Close()
+		return nil, fmt.Errorf("Could not create database schema: %v", err)
+	}
+
+	for name, query := range queries {
+		if runner.prepared[name], err = db.Prepare(query); err != nil {
+			runner.Close()
+			return nil, fmt.Errorf("Could not prepare database query %q: %v", name, err)
+		}
+	}
+	return runner, nil
+}
+
+func (runner *DbRunner) Close() {
+	for _, stmt := range runner.prepared {
+		stmt.Close()
+	}
+	runner.db.Close()
+}
+
+/**
+*** Porcelain (public)
+**/
+
+func (runner *DbRunner) GetGroup(id int64) chan *DbGroup {
+	result := make(chan *DbGroup)
+	go func() {
+		defer close(result)
+		group, err := runner.getGroup(id)
+		if err == nil {
+			result <- group
+		}
+		runner.log(err)
+	}()
+	return result
+}
+
+func (runner *DbRunner) GetAllGroups() chan []DbGroup {
+	result := make(chan []DbGroup)
+	go func() {
+		defer close(result)
+		groups, err := runner.getAllGroups()
+		if err == nil {
+			result <- groups
+		}
+		runner.log(err)
+	}()
+	return result
+}
+
+func (runner *DbRunner) DeleteGroup(id int64) {
+	go func() {
+		err := runner.deleteGroup(id)
+		if err != nil {
+			runner.log(err)
+		}
+	}()
+}
+
+func (runner *DbRunner) UpdateGroup(group DbGroup) chan *DbGroup {
+	result := make(chan *DbGroup)
+	go func() {
+		defer close(result)
+		group, err := runner.updateGroup(group)
+		if err == nil {
+			result <- group
+		}
+		runner.log(err)
+	}()
+	return result
+}
+
+func (runner *DbRunner) GetMember(addr string) chan *DbMember {
+	result := make(chan *DbMember)
+	go func() {
+		defer close(result)
+		member, err := runner.getMember(addr)
+		if err == nil {
+			result <- member
+		}
+		runner.log(err)
+	}()
+	return result
+}
+
+func (runner *DbRunner) UpdateMember(member DbMember) chan *DbMember {
+	result := make(chan *DbMember)
+	go func() {
+		defer close(result)
+		member, err := runner.updateMember(member)
+		if err == nil {
+			result <- member
+		}
+		runner.log(err)
+	}()
+	return result
+}
+
+func (runner *DbRunner) DeleteMember(addr string) {
+	go func() {
+		err := runner.deleteMember(addr)
+		if err != nil {
+			runner.log(err)
+		}
+	}()
+}
+
+func (runner *DbRunner) GetMembersOf(id int64) chan []string {
+	result := make(chan []string)
+	go func() {
+		defer close(result)
+		members, err := runner.getMembersOf(id)
+		if err == nil {
+			result <- members
+		}
+		runner.log(err)
+	}()
+	return result
+}
+
+func (runner *DbRunner) Cleanup() {
+}
+
+/**
+*** Plumbing (private-ish)
+**/
+
+func (runner *DbRunner) log(err error) {
+	if err != nil {
+		log.Println("Error: %v", err)
+	}
+}
+
+func (runner *DbRunner) prep(name string) *sql.Stmt {
+	return runner.prepared[name]
+}
+
+func (runner *DbRunner) getGroup(id int64) (*DbGroup, error) {
+	row := runner.prep("group").QueryRow(id)
+	grp, err := scanGroup(row)
+	if err == sql.ErrNoRows {
+		return nil, NoSuchItem
+	}
+	return grp, err
+}
+
+func (runner *DbRunner) getAllGroups() ([]DbGroup, error) {
+	rows, err := runner.prep("groups").Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	grps := make([]DbGroup, 0, 100)
+	for rows.Next() {
+		grp, err := scanGroup(rows)
+		if err != nil {
+			return nil, err
+		}
+		grps = append(grps, *grp)
+	}
+	return grps, nil
+}
+
+func (runner *DbRunner) deleteGroup(id int64) error {
+	_, err := runner.prep("group delete").Exec(id)
+	return err
+}
+
+func (runner *DbRunner) nextGroupId() (int64, error) {
+	row := runner.prep("group max id").QueryRow()
+	var id *int64
+	// max(id) returns nil if the table is empty instead of an error
+	// hence the double pointer...
+	err := row.Scan(&id)
+	if err == sql.ErrNoRows || id == nil {
+		// No groups yet
+		return 1, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	// Next = Highest + 1
+	return *id + 1, nil
+}
+
+func (runner *DbRunner) updateGroup(group DbGroup) (*DbGroup, error) {
+	var err error
+	if group.id == 0 {
+		group.id, err = runner.nextGroupId()
+		if err != nil {
+			return nil, err
+		}
+	}
+	var tc_bytes []byte = nil
+	if group.tc != nil {
+		buf := &bytes.Buffer{}
+		err = json.NewEncoder(buf).Encode(group.tc)
+		if err != nil {
+			return nil, err
+		}
+		tc_bytes = buf.Bytes()
+	}
+	group.timeout = time.Now().Add(SHAPING_TIMEOUT_LENGTH)
+	_, err = runner.prep("group update").Exec(group.id, group.secret, tc_bytes, group.timeout.Unix())
+	if err != nil {
+		return nil, err
+	}
+	return &group, nil
+}
+
+func (runner *DbRunner) getMember(addr string) (*DbMember, error) {
+	row := runner.prep("member").QueryRow(addr)
+	member, err := scanMember(row)
+	if err == sql.ErrNoRows {
+		return nil, NoSuchItem
+	}
+	return member, err
+}
+
+func (runner *DbRunner) updateMember(member DbMember) (*DbMember, error) {
+	_, err := runner.prep("member update").Exec(member.addr, member.group_id)
+	if err != nil {
+		return nil, err
+	}
+	return &member, nil
+}
+
+func (runner *DbRunner) deleteMember(addr string) error {
+	_, err := runner.prep("member delete").Exec(addr)
+	return err
+}
+
+func (runner *DbRunner) getMembersOf(id int64) ([]string, error) {
+	rows, err := runner.prep("members in group").Query(id)
+	if err != nil {
+		return nil, err
+	}
+	members := make([]string, 0, 10)
+	for rows.Next() {
+		var s string
+		err := rows.Scan(&s)
+		if err != nil {
+			return nil, err
+		}
+		members = append(members, s)
+	}
+	return members, nil
+}
+
+func (runner *DbRunner) cleanupOldGroups() error {
+	log.Println("Cleanup old groups hasn't been implemented yet!")
+	return nil
+}
+
+func (runner *DbRunner) cleanupEmptyGroups() error {
+	_, err := runner.prep("empty group cleanup").Exec()
+	return err
+}
+
+/**
+*** Helpers
+**/
 
 type scanner interface {
 	Scan(...interface{}) error
@@ -208,118 +384,4 @@ func scanMember(sc scanner) (*DbMember, error) {
 		addr:     addr,
 		group_id: gid,
 	}, nil
-}
-
-func dbGetGroup(id int64) (*DbGroup, error) {
-	row := GROUP_SELECT_ONE_STMT.QueryRow(id)
-	grp, err := scanGroup(row)
-	if err == sql.ErrNoRows {
-		return nil, NoSuchItem
-	}
-	return grp, err
-}
-
-func dbGetAllGroups() ([]DbGroup, error) {
-	rows, err := GROUP_SELECT_ALL_STMT.Query()
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	grps := make([]DbGroup, 0, 100)
-	for rows.Next() {
-		grp, err := scanGroup(rows)
-		if err != nil {
-			return nil, err
-		}
-		grps = append(grps, *grp)
-	}
-	return grps, nil
-}
-
-func dbDeleteGroup(id int64) error {
-	_, err := GROUP_DELETE_STMT.Exec(id)
-	return err
-}
-
-func dbNextId() (int64, error) {
-	row := GROUP_MAX_ID_STMT.QueryRow()
-	var id *int64
-	// max(id) returns nil if the table is empty instead of an error
-	// hence the double pointer...
-	err := row.Scan(&id)
-	if err == sql.ErrNoRows || id == nil {
-		// No groups yet
-		return 1, nil
-	}
-	if err != nil {
-		return 0, err
-	}
-	// Next = Highest + 1
-	return *id + 1, nil
-}
-
-// Update/insert
-func dbUpdateGroup(grp DbGroup) (*DbGroup, error) {
-	var err error
-	if grp.id == 0 {
-		grp.id, err = dbNextId()
-		if err != nil {
-			return nil, err
-		}
-	}
-	var tc_bytes []byte = nil
-	if grp.tc != nil {
-		buf := &bytes.Buffer{}
-		err = json.NewEncoder(buf).Encode(grp.tc)
-		if err != nil {
-			return nil, err
-		}
-		tc_bytes = buf.Bytes()
-	}
-	grp.timeout = time.Now().Add(TIMEOUT_LENGTH)
-	_, err = GROUP_INSERT_STMT.Exec(grp.id, grp.secret, tc_bytes, grp.timeout.Unix())
-	if err != nil {
-		return nil, err
-	}
-	return &grp, nil
-}
-
-func dbGetMember(addr string) (*DbMember, error) {
-	row := MEMBER_SELECT_ONE_STMT.QueryRow(addr)
-	member, err := scanMember(row)
-	if err == sql.ErrNoRows {
-		return nil, NoSuchItem
-	}
-	return member, err
-}
-
-// Update/insert
-func dbUpdateMember(member DbMember) (*DbMember, error) {
-	_, err := MEMBER_INSERT_STMT.Exec(member.addr, member.group_id)
-	if err != nil {
-		return nil, err
-	}
-	return &member, nil
-}
-
-func dbDeleteMember(addr string) error {
-	_, err := MEMBER_DELETE_STMT.Exec(addr)
-	return err
-}
-
-func dbGetMembers(id int64) ([]string, error) {
-	rows, err := MEMBER_SELECT_GROUP_STMT.Query(id)
-	if err != nil {
-		return nil, err
-	}
-	members := make([]string, 0, 10)
-	for rows.Next() {
-		var s string
-		err := rows.Scan(&s)
-		if err != nil {
-			return nil, err
-		}
-		members = append(members, s)
-	}
-	return members, nil
 }

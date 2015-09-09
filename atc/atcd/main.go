@@ -28,11 +28,12 @@ func runServer(atcd atc_thrift.Atcd, addr string) error {
 
 func main() {
 	args := parseArgs()
-	if err := initDB(args.DbDriver, args.DbConnstr); err != nil {
+	db, err := NewDbRunner(args.DbDriver, args.DbConnstr)
+	if err != nil {
 		log.Fatalf("Couldn't setup database: %v", err)
 	}
-	defer shutdownDB()
-	atcd := NewAtcd()
+	defer db.Close()
+	atcd := NewAtcd(db)
 	runServer(atcd, "127.0.0.1:9090")
 }
 

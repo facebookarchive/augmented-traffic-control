@@ -18,28 +18,26 @@ var (
 )
 
 func TestDBCreatesSchema(t *testing.T) {
-	err := initDB("sqlite3", ":memory:")
+	db, err := NewDbRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer shutdownDB()
+	defer db.Close()
 
-	db := <-db_chan
-	defer func() { db_chan <- db }()
-	_, err = db.Query("SELECT * FROM ShapingGroups")
+	_, err = db.db.Query("SELECT * FROM ShapingGroups")
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestDBInsertsGroup(t *testing.T) {
-	err := initDB("sqlite3", ":memory:")
+	db, err := NewDbRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer shutdownDB()
+	defer db.Close()
 
-	group, err := dbUpdateGroup(DbGroup{
+	group, err := db.updateGroup(DbGroup{
 		tc: FakeShaping1,
 	})
 	if err != nil {
@@ -54,26 +52,26 @@ func TestDBInsertsGroup(t *testing.T) {
 }
 
 func TestDBDeletesGroup(t *testing.T) {
-	err := initDB("sqlite3", ":memory:")
+	db, err := NewDbRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer shutdownDB()
+	defer db.Close()
 
 	var group *DbGroup
-	if group, err = dbUpdateGroup(DbGroup{id: 1, tc: FakeShaping1}); err != nil {
+	if group, err = db.updateGroup(DbGroup{id: 1, tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if group, err = dbUpdateGroup(DbGroup{id: 2, tc: FakeShaping2}); err != nil {
+	if group, err = db.updateGroup(DbGroup{id: 2, tc: FakeShaping2}); err != nil {
 		t.Fatal(err)
 	}
 
-	err = dbDeleteGroup(2)
+	err = db.deleteGroup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	groups, err := dbGetAllGroups()
+	groups, err := db.getAllGroups()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,20 +84,20 @@ func TestDBDeletesGroup(t *testing.T) {
 }
 
 func TestDBGetsAllGroups(t *testing.T) {
-	err := initDB("sqlite3", ":memory:")
+	db, err := NewDbRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer shutdownDB()
+	defer db.Close()
 
-	if _, err := dbUpdateGroup(DbGroup{tc: FakeShaping1}); err != nil {
+	if _, err := db.updateGroup(DbGroup{tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := dbUpdateGroup(DbGroup{tc: FakeShaping2}); err != nil {
+	if _, err := db.updateGroup(DbGroup{tc: FakeShaping2}); err != nil {
 		t.Fatal(err)
 	}
 
-	groups, err := dbGetAllGroups()
+	groups, err := db.getAllGroups()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,21 +107,21 @@ func TestDBGetsAllGroups(t *testing.T) {
 }
 
 func TestDBUpdatesGroup(t *testing.T) {
-	err := initDB("sqlite3", ":memory:")
+	db, err := NewDbRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer shutdownDB()
+	defer db.Close()
 
 	var group *DbGroup
-	if group, err = dbUpdateGroup(DbGroup{secret: "asdf", tc: FakeShaping1}); err != nil {
+	if group, err = db.updateGroup(DbGroup{secret: "asdf", tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = dbUpdateGroup(DbGroup{id: group.id, secret: "qwer", tc: FakeShaping1}); err != nil {
+	if _, err = db.updateGroup(DbGroup{id: group.id, secret: "qwer", tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
 
-	groups, err := dbGetAllGroups()
+	groups, err := db.getAllGroups()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,20 +137,20 @@ func TestDBUpdatesGroup(t *testing.T) {
 }
 
 func TestDBInsertsMember(t *testing.T) {
-	err := initDB("sqlite3", ":memory:")
+	db, err := NewDbRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer shutdownDB()
+	defer db.Close()
 
 	var (
 		group  *DbGroup
 		member *DbMember
 	)
-	if group, err = dbUpdateGroup(DbGroup{tc: FakeShaping1}); err != nil {
+	if group, err = db.updateGroup(DbGroup{tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if member, err = dbUpdateMember(DbMember{"1.2.3.4", group.id}); err != nil {
+	if member, err = db.updateMember(DbMember{"1.2.3.4", group.id}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -165,24 +163,24 @@ func TestDBInsertsMember(t *testing.T) {
 }
 
 func TestDBGetsMember(t *testing.T) {
-	err := initDB("sqlite3", ":memory:")
+	db, err := NewDbRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer shutdownDB()
+	defer db.Close()
 
 	var (
 		group  *DbGroup
 		member *DbMember
 	)
-	if group, err = dbUpdateGroup(DbGroup{tc: FakeShaping1}); err != nil {
+	if group, err = db.updateGroup(DbGroup{tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = dbUpdateMember(DbMember{"1.2.3.4", group.id}); err != nil {
+	if _, err = db.updateMember(DbMember{"1.2.3.4", group.id}); err != nil {
 		t.Fatal(err)
 	}
 
-	if member, err = dbGetMember("1.2.3.4"); err != nil {
+	if member, err = db.getMember("1.2.3.4"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -195,27 +193,27 @@ func TestDBGetsMember(t *testing.T) {
 }
 
 func TestDBGetsMembersForGroup(t *testing.T) {
-	err := initDB("sqlite3", ":memory:")
+	db, err := NewDbRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer shutdownDB()
+	defer db.Close()
 
 	var (
 		group   *DbGroup
 		members []string
 	)
-	if group, err = dbUpdateGroup(DbGroup{tc: FakeShaping1}); err != nil {
+	if group, err = db.updateGroup(DbGroup{tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = dbUpdateMember(DbMember{"1.2.3.4", group.id}); err != nil {
+	if _, err = db.updateMember(DbMember{"1.2.3.4", group.id}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = dbUpdateMember(DbMember{"2.3.4.5", group.id}); err != nil {
+	if _, err = db.updateMember(DbMember{"2.3.4.5", group.id}); err != nil {
 		t.Fatal(err)
 	}
 
-	if members, err = dbGetMembers(group.id); err != nil {
+	if members, err = db.getMembersOf(group.id); err != nil {
 		t.Fatal(err)
 	}
 	if len(members) != 2 {
@@ -223,6 +221,37 @@ func TestDBGetsMembersForGroup(t *testing.T) {
 	}
 }
 
-// FIXME: testing
-func TestDBUpdatesMember(t *testing.T) { t.Skip("test not implemented") }
-func TestDBDeletesMember(t *testing.T) { t.Skip("test not implemented") }
+func TestDBCleansEmptyGroups(t *testing.T) {
+	db, err := NewDbRunner("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	var group *DbGroup
+	if _, err = db.updateGroup(DbGroup{secret: "qwer"}); err != nil {
+		t.Fatal(err)
+	}
+	if group, err = db.updateGroup(DbGroup{secret: "asdf"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = db.updateMember(DbMember{"1.2.3.4", group.id}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.cleanupEmptyGroups(); err != nil {
+		t.Fatal(err)
+	}
+
+	groups, err := db.getAllGroups()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(groups) != 1 {
+		t.Fatalf("Wrong number of groups: 1 != %d", len(groups))
+	}
+
+	if groups[0].secret != "asdf" {
+		t.Fatal(`Wrong group: "asdf" != %q`, groups[0].secret)
+	}
+}

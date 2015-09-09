@@ -7,16 +7,21 @@ import (
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/facebook/augmented-traffic-control/atc/atc_thrift/atc_thrift"
 	"github.com/hgfischer/go-otp"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Shared constant between ATCD and ATC_API
 // Make sure to change in both places
 var NoSuchItem error = fmt.Errorf("NO_SUCH_ITEM")
 
-type Atcd struct{}
+type Atcd struct {
+	db *DbRunner
+}
 
-func NewAtcd() atc_thrift.Atcd {
-	return &Atcd{}
+func NewAtcd(db *DbRunner) atc_thrift.Atcd {
+	return &Atcd{
+		db: db,
+	}
 }
 
 func (atcd *Atcd) GetAtcdInfo() (*atc_thrift.AtcdInfo, error) {
@@ -32,14 +37,14 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 		Members: []string{member},
 		Shaping: nil,
 	}
-	dbgrp, err := dbUpdateGroup(DbGroup{
+	dbgrp, err := atcd.db.updateGroup(DbGroup{
 		secret: makeSecret(),
 		tc:     nil,
 	})
 	if err != nil {
 		return nil, err
 	}
-	_, err = dbUpdateMember(DbMember{
+	_, err = atcd.db.updateMember(DbMember{
 		addr:     member,
 		group_id: dbgrp.id,
 	})
@@ -51,11 +56,11 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 }
 
 func (atcd *Atcd) GetGroup(id int64) (*atc_thrift.ShapingGroup, error) {
-	group, err := dbGetGroup(id)
+	group, err := atcd.db.getGroup(id)
 	if err != nil {
 		return nil, err
 	}
-	members, err := dbGetMembers(id)
+	members, err := atcd.db.getMembersOf(id)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +73,7 @@ func (atcd *Atcd) GetGroup(id int64) (*atc_thrift.ShapingGroup, error) {
 }
 
 func (atcd *Atcd) GetGroupWith(addr string) (*atc_thrift.ShapingGroup, error) {
-	member, err := dbGetMember(addr)
+	member, err := atcd.db.getMember(addr)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +81,7 @@ func (atcd *Atcd) GetGroupWith(addr string) (*atc_thrift.ShapingGroup, error) {
 }
 
 func (atcd *Atcd) GetGroupToken(id int64) (string, error) {
-	group, err := dbGetGroup(id)
+	group, err := atcd.db.getGroup(id)
 	if err != nil {
 		return "", err
 	}
@@ -85,7 +90,7 @@ func (atcd *Atcd) GetGroupToken(id int64) (string, error) {
 }
 
 func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
-	group, err := dbGetGroup(id)
+	group, err := atcd.db.getGroup(id)
 	if err != nil {
 		return err
 	}
@@ -93,22 +98,30 @@ func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
 	if !p.Verify(token) {
 		return fmt.Errorf("Unauthorized")
 	}
-	_, err = dbUpdateMember(DbMember{
+	_, err = atcd.db.updateMember(DbMember{
 		addr:     to_add,
 		group_id: group.id,
 	})
 	return err
 }
 
-func (atcd *Atcd) otp(group *DbGroup) *otp.TOTP {
-	return &otp.TOTP{
-		Secret:         fmt.Sprintf("%s::%d", group.secret, group.id),
-		IsBase32Secret: true,
-	}
-}
-
 func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
-	return nil
+	member, err := atcd.db.getMember(to_remove)
+	if err != nil {
+		return err
+	}
+	if member.group_id != id {
+		return fmt.Errorf("%q is not a member of group %d", to_remove, id)
+	}
+	group, err := atcd.db.getGroup(member.group_id)
+	if err != nil {
+		return err
+	}
+	p := atcd.otp(group)
+	if !p.Verify(token) {
+		return fmt.Errorf("Unauthorized")
+	}
+	return atcd.db.deleteMember(to_remove)
 }
 
 func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Setting, token string) (*atc_thrift.Setting, error) {
@@ -117,6 +130,13 @@ func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Setting, token strin
 
 func (atcd *Atcd) UnshapeGroup(id int64, token string) error {
 	return nil
+}
+
+func (atcd *Atcd) otp(group *DbGroup) *otp.TOTP {
+	return &otp.TOTP{
+		Secret:         fmt.Sprintf("%s::%d", group.secret, group.id),
+		IsBase32Secret: true,
+	}
 }
 
 func makeSecret() string {
