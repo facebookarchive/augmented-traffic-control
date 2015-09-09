@@ -10,9 +10,15 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// Shared constant between ATCD and ATC_API
-// Make sure to change in both places
-var NoSuchItem error = fmt.Errorf("NO_SUCH_ITEM")
+var (
+	// Database errors are caught and logged internally
+	// This is returned to the thrift client.
+	DbError = fmt.Errorf("Database Error")
+
+	// Shared constant between ATCD and ATC_API
+	// Make sure to change in both places
+	NoSuchItem = fmt.Errorf("NO_SUCH_ITEM")
+)
 
 type Atcd struct {
 	db     *DbRunner
@@ -41,32 +47,32 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 		Members: []string{member},
 		Shaping: nil,
 	}
-	dbgrp, err := atcd.db.updateGroup(DbGroup{
+	dbgrp := <-atcd.db.UpdateGroup(DbGroup{
 		secret: makeSecret(),
 		tc:     nil,
 	})
-	if err != nil {
-		return nil, err
+	if dbgrp == nil {
+		return nil, DbError
 	}
-	_, err = atcd.db.updateMember(DbMember{
+	dbmem := <-atcd.db.UpdateMember(DbMember{
 		addr:     member,
 		group_id: dbgrp.id,
 	})
-	if err != nil {
-		return nil, err
+	if dbmem == nil {
+		return nil, DbError
 	}
 	grp.Id = dbgrp.id
 	return grp, nil
 }
 
 func (atcd *Atcd) GetGroup(id int64) (*atc_thrift.ShapingGroup, error) {
-	group, err := atcd.db.getGroup(id)
-	if err != nil {
-		return nil, err
+	group := <-atcd.db.GetGroup(id)
+	if group == nil {
+		return nil, NoSuchItem
 	}
-	members, err := atcd.db.getMembersOf(id)
-	if err != nil {
-		return nil, err
+	members := <-atcd.db.GetMembersOf(id)
+	if members == nil {
+		return nil, NoSuchItem
 	}
 	grp := &atc_thrift.ShapingGroup{
 		Id:      id,

@@ -55,9 +55,8 @@ func TestAtcdCleansEmptyGroups(_t *testing.T) {
 	runtime.Gosched()
 
 	grp, err := t.atcd.GetGroup(grp.Id)
-	// specific err
-	if err == nil {
-		t.Fatalf("Group should have been deleted: %+v", grp)
+	if err != NoSuchItem {
+		t.Fatalf("Group still exists (%v): %+v", err, grp)
 	}
 }
 
@@ -114,7 +113,13 @@ type testAtcd struct {
 }
 
 func Setup(t *testing.T, secure bool) *testAtcd {
-	db, err := NewDbRunner("sqlite3", ":memory:")
+	/*
+		in-memory databases seem to have some issue with goroutines
+		The symptom is an error continuously logged by the db:
+			`no such table: shapinggroups`
+		Not sure what's causing it. Using file database until I figure it out
+	*/
+	db, err := NewDbRunner("sqlite3", "/tmp/atcd.test.db")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,6 +131,9 @@ func Setup(t *testing.T, secure bool) *testAtcd {
 }
 
 func (t *testAtcd) Cleanup() {
+	if t.atcd.db.connstr != ":memory:" {
+		t.atcd.db.db.Exec("delete from groupmembers; delete from shapinggroups;")
+	}
 	t.atcd.db.Close()
 }
 

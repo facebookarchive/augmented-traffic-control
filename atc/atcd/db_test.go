@@ -240,8 +240,12 @@ func TestDBCleansEmptyGroups(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := db.cleanupEmptyGroups(); err != nil {
+	n, err := db.cleanupEmptyGroups()
+	if err != nil {
 		t.Fatal(err)
+	}
+	if n != 1 {
+		t.Errorf("Wrong number of groups deleted: 1 != %d", n)
 	}
 
 	groups, err := db.getAllGroups()
@@ -277,8 +281,12 @@ func TestDBCleansOldGroups(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := db.cleanupOldGroups(); err != nil {
+	n, err := db.cleanupOldGroups()
+	if err != nil {
 		t.Fatal(err)
+	}
+	if n != 1 {
+		t.Errorf("Wrong number of groups deleted: 1 != %d", n)
 	}
 
 	groups, err := db.getAllGroups()

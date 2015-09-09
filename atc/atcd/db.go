@@ -25,7 +25,7 @@ var (
 		timeout integer
 	);
 
-	create table if not exists shapedaddrs(
+	create table if not exists groupmembers(
 		addr varchar primary key not null,
 		group_id integer not null,
 		foreign key(group_id) references shapinggroups(id) on delete cascade
@@ -39,12 +39,12 @@ var (
 		"groups":       `select id, secret, tc, timeout from shapinggroups`,
 		"group max id": `select max(id) from shapinggroups`,
 
-		"member":           `select addr, group_id from shapedaddrs where addr = ?`,
-		"member update":    `insert or replace into shapedaddrs values (?, ?)`,
-		"member delete":    `delete from shapedaddrs where addr = ?`,
-		"members in group": `select addr from shapedaddrs where group_id = ?`,
+		"member":           `select addr, group_id from groupmembers where addr = ?`,
+		"member update":    `insert or replace into groupmembers values (?, ?)`,
+		"member delete":    `delete from groupmembers where addr = ?`,
+		"members in group": `select addr from groupmembers where group_id = ?`,
 
-		"empty group cleanup": `delete from shapinggroups where id not in (select distinct(group_id) from shapedaddrs)`,
+		"empty group cleanup": `delete from shapinggroups where id not in (select distinct(group_id) from groupmembers)`,
 		"old group cleanup":   `delete from shapinggroups where timeout < ?`,
 	}
 )
@@ -62,12 +62,15 @@ type DbMember struct {
 }
 
 type DbRunner struct {
-	db       *sql.DB
-	mutex    *sync.RWMutex
-	prepared map[string]*sql.Stmt
+	db              *sql.DB
+	mutex           *sync.RWMutex
+	prepared        map[string]*sql.Stmt
+	shaping_timeout time.Duration
+	driver, connstr string
 }
 
 func NewDbRunner(driver, connstr string) (*DbRunner, error) {
+	//log.Printf("DB: Opening %q database\n", driver)
 	db, err := sql.Open(driver, connstr)
 	if err != nil {
 		return nil, fmt.Errorf("Could not open database connection: %v", err)
@@ -79,6 +82,8 @@ func NewDbRunner(driver, connstr string) (*DbRunner, error) {
 		db:       db,
 		mutex:    mutex,
 		prepared: make(map[string]*sql.Stmt),
+		driver:   driver,
+		connstr:  connstr,
 	}
 
 	if err := runner.db.Ping(); err != nil {
@@ -101,6 +106,7 @@ func NewDbRunner(driver, connstr string) (*DbRunner, error) {
 }
 
 func (runner *DbRunner) Close() {
+	//log.Println("DB: Closing database")
 	runner.mutex.Lock()
 	// Don't unlock the mutex again
 	for _, stmt := range runner.prepared {
@@ -207,8 +213,16 @@ func (runner *DbRunner) GetMembersOf(id int64) chan []string {
 
 func (runner *DbRunner) Cleanup() {
 	go func() {
-		runner.log(runner.cleanupEmptyGroups())
-		runner.log(runner.cleanupOldGroups())
+		n, err := runner.cleanupEmptyGroups()
+		runner.log(err)
+		if n > 0 {
+			log.Printf("DB: Cleaned %d empty groups\n", n)
+		}
+		n, err = runner.cleanupOldGroups()
+		runner.log(err)
+		if n > 0 {
+			log.Printf("DB: Cleaned %d expired groups\n", n)
+		}
 	}()
 }
 
@@ -218,7 +232,7 @@ func (runner *DbRunner) Cleanup() {
 
 func (runner *DbRunner) log(err error) {
 	if err != nil {
-		log.Printf("Database error: %v\n", err)
+		log.Printf("DB: error: %v\n", err)
 	}
 }
 
@@ -232,7 +246,7 @@ func (runner *DbRunner) getGroup(id int64) (*DbGroup, error) {
 	row := runner.prep("group").QueryRow(id)
 	grp, err := scanGroup(row)
 	if err == sql.ErrNoRows {
-		return nil, NoSuchItem
+		return nil, nil
 	}
 	return grp, err
 }
@@ -315,7 +329,7 @@ func (runner *DbRunner) getMember(addr string) (*DbMember, error) {
 	row := runner.prep("member").QueryRow(addr)
 	member, err := scanMember(row)
 	if err == sql.ErrNoRows {
-		return nil, NoSuchItem
+		return nil, nil
 	}
 	return member, err
 }
@@ -356,18 +370,32 @@ func (runner *DbRunner) getMembersOf(id int64) ([]string, error) {
 	return members, nil
 }
 
-func (runner *DbRunner) cleanupOldGroups() error {
+func (runner *DbRunner) cleanupOldGroups() (int64, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
-	_, err := runner.prep("old group cleanup").Exec(time.Now().Unix())
-	return err
+	res, err := runner.prep("old group cleanup").Exec(time.Now().Unix())
+	if err != nil {
+		return 0, err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+	return n, nil
 }
 
-func (runner *DbRunner) cleanupEmptyGroups() error {
+func (runner *DbRunner) cleanupEmptyGroups() (int64, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
-	_, err := runner.prep("empty group cleanup").Exec()
-	return err
+	res, err := runner.prep("empty group cleanup").Exec()
+	if err != nil {
+		return 0, err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+	return n, nil
 }
 
 /**
