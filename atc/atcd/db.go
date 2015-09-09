@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/facebook/augmented-traffic-control/atc/atc_thrift/atc_thrift"
 	"log"
+	"sync"
 	"time"
+
+	"github.com/facebook/augmented-traffic-control/atc/atc_thrift/atc_thrift"
 )
 
 const (
@@ -31,17 +33,19 @@ var (
 	`
 
 	queries = map[string]string{
-		"group":               `select id, secret, tc, timeout from shapinggroups where id=?`,
-		"group update":        `insert or replace into shapinggroups values (?, ?, ?, ?)`,
-		"group delete":        `delete from shapinggroups where id = ?`,
-		"groups":              `select id, secret, tc, timeout from shapinggroups`,
-		"empty group cleanup": `delete from shapinggroups where id not in (select distinct(group_id) from shapedaddrs)`,
-		"group max id":        `select max(id) from shapinggroups`,
+		"group":        `select id, secret, tc, timeout from shapinggroups where id=?`,
+		"group update": `insert or replace into shapinggroups values (?, ?, ?, ?)`,
+		"group delete": `delete from shapinggroups where id = ?`,
+		"groups":       `select id, secret, tc, timeout from shapinggroups`,
+		"group max id": `select max(id) from shapinggroups`,
 
 		"member":           `select addr, group_id from shapedaddrs where addr = ?`,
 		"member update":    `insert or replace into shapedaddrs values (?, ?)`,
 		"member delete":    `delete from shapedaddrs where addr = ?`,
 		"members in group": `select addr from shapedaddrs where group_id = ?`,
+
+		"empty group cleanup": `delete from shapinggroups where id not in (select distinct(group_id) from shapedaddrs)`,
+		"old group cleanup":   `delete from shapinggroups where timeout < ?`,
 	}
 )
 
@@ -58,8 +62,8 @@ type DbMember struct {
 }
 
 type DbRunner struct {
-	db *sql.DB
-
+	db       *sql.DB
+	mutex    *sync.RWMutex
 	prepared map[string]*sql.Stmt
 }
 
@@ -68,8 +72,12 @@ func NewDbRunner(driver, connstr string) (*DbRunner, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Could not open database connection: %v", err)
 	}
+	mutex := &sync.RWMutex{}
+	mutex.Lock()
+	defer mutex.Unlock()
 	runner := &DbRunner{
 		db:       db,
+		mutex:    mutex,
 		prepared: make(map[string]*sql.Stmt),
 	}
 
@@ -93,6 +101,8 @@ func NewDbRunner(driver, connstr string) (*DbRunner, error) {
 }
 
 func (runner *DbRunner) Close() {
+	runner.mutex.Lock()
+	// Don't unlock the mutex again
 	for _, stmt := range runner.prepared {
 		stmt.Close()
 	}
@@ -132,9 +142,7 @@ func (runner *DbRunner) GetAllGroups() chan []DbGroup {
 func (runner *DbRunner) DeleteGroup(id int64) {
 	go func() {
 		err := runner.deleteGroup(id)
-		if err != nil {
-			runner.log(err)
-		}
+		runner.log(err)
 	}()
 }
 
@@ -180,9 +188,7 @@ func (runner *DbRunner) UpdateMember(member DbMember) chan *DbMember {
 func (runner *DbRunner) DeleteMember(addr string) {
 	go func() {
 		err := runner.deleteMember(addr)
-		if err != nil {
-			runner.log(err)
-		}
+		runner.log(err)
 	}()
 }
 
@@ -200,15 +206,19 @@ func (runner *DbRunner) GetMembersOf(id int64) chan []string {
 }
 
 func (runner *DbRunner) Cleanup() {
+	go func() {
+		runner.log(runner.cleanupEmptyGroups())
+		runner.log(runner.cleanupOldGroups())
+	}()
 }
 
 /**
-*** Plumbing (private-ish)
+*** Plumbing (private...ish)
 **/
 
 func (runner *DbRunner) log(err error) {
 	if err != nil {
-		log.Println("Error: %v", err)
+		log.Printf("Database error: %v\n", err)
 	}
 }
 
@@ -217,6 +227,8 @@ func (runner *DbRunner) prep(name string) *sql.Stmt {
 }
 
 func (runner *DbRunner) getGroup(id int64) (*DbGroup, error) {
+	runner.mutex.RLock()
+	defer runner.mutex.RUnlock()
 	row := runner.prep("group").QueryRow(id)
 	grp, err := scanGroup(row)
 	if err == sql.ErrNoRows {
@@ -226,6 +238,8 @@ func (runner *DbRunner) getGroup(id int64) (*DbGroup, error) {
 }
 
 func (runner *DbRunner) getAllGroups() ([]DbGroup, error) {
+	runner.mutex.RLock()
+	defer runner.mutex.RUnlock()
 	rows, err := runner.prep("groups").Query()
 	if err != nil {
 		return nil, err
@@ -243,11 +257,15 @@ func (runner *DbRunner) getAllGroups() ([]DbGroup, error) {
 }
 
 func (runner *DbRunner) deleteGroup(id int64) error {
+	runner.mutex.RLock()
+	defer runner.mutex.RUnlock()
 	_, err := runner.prep("group delete").Exec(id)
 	return err
 }
 
 func (runner *DbRunner) nextGroupId() (int64, error) {
+	runner.mutex.RLock()
+	defer runner.mutex.RUnlock()
 	row := runner.prep("group max id").QueryRow()
 	var id *int64
 	// max(id) returns nil if the table is empty instead of an error
@@ -265,6 +283,8 @@ func (runner *DbRunner) nextGroupId() (int64, error) {
 }
 
 func (runner *DbRunner) updateGroup(group DbGroup) (*DbGroup, error) {
+	runner.mutex.RLock()
+	defer runner.mutex.RUnlock()
 	var err error
 	if group.id == 0 {
 		group.id, err = runner.nextGroupId()
@@ -290,6 +310,8 @@ func (runner *DbRunner) updateGroup(group DbGroup) (*DbGroup, error) {
 }
 
 func (runner *DbRunner) getMember(addr string) (*DbMember, error) {
+	runner.mutex.RLock()
+	defer runner.mutex.RUnlock()
 	row := runner.prep("member").QueryRow(addr)
 	member, err := scanMember(row)
 	if err == sql.ErrNoRows {
@@ -299,6 +321,8 @@ func (runner *DbRunner) getMember(addr string) (*DbMember, error) {
 }
 
 func (runner *DbRunner) updateMember(member DbMember) (*DbMember, error) {
+	runner.mutex.RLock()
+	defer runner.mutex.RUnlock()
 	_, err := runner.prep("member update").Exec(member.addr, member.group_id)
 	if err != nil {
 		return nil, err
@@ -307,11 +331,15 @@ func (runner *DbRunner) updateMember(member DbMember) (*DbMember, error) {
 }
 
 func (runner *DbRunner) deleteMember(addr string) error {
+	runner.mutex.RLock()
+	defer runner.mutex.RUnlock()
 	_, err := runner.prep("member delete").Exec(addr)
 	return err
 }
 
 func (runner *DbRunner) getMembersOf(id int64) ([]string, error) {
+	runner.mutex.RLock()
+	defer runner.mutex.RUnlock()
 	rows, err := runner.prep("members in group").Query(id)
 	if err != nil {
 		return nil, err
@@ -329,11 +357,15 @@ func (runner *DbRunner) getMembersOf(id int64) ([]string, error) {
 }
 
 func (runner *DbRunner) cleanupOldGroups() error {
-	log.Println("Cleanup old groups hasn't been implemented yet!")
-	return nil
+	runner.mutex.RLock()
+	defer runner.mutex.RUnlock()
+	_, err := runner.prep("old group cleanup").Exec(time.Now().Unix())
+	return err
 }
 
 func (runner *DbRunner) cleanupEmptyGroups() error {
+	runner.mutex.RLock()
+	defer runner.mutex.RUnlock()
 	_, err := runner.prep("empty group cleanup").Exec()
 	return err
 }

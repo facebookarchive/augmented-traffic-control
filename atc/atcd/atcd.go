@@ -15,12 +15,16 @@ import (
 var NoSuchItem error = fmt.Errorf("NO_SUCH_ITEM")
 
 type Atcd struct {
-	db *DbRunner
+	db     *DbRunner
+	shaper Shaper
+	secure bool
 }
 
-func NewAtcd(db *DbRunner) atc_thrift.Atcd {
+func NewAtcd(db *DbRunner, shaper Shaper, secure bool) atc_thrift.Atcd {
 	return &Atcd{
-		db: db,
+		db:     db,
+		shaper: shaper,
+		secure: secure,
 	}
 }
 
@@ -81,12 +85,14 @@ func (atcd *Atcd) GetGroupWith(addr string) (*atc_thrift.ShapingGroup, error) {
 }
 
 func (atcd *Atcd) GetGroupToken(id int64) (string, error) {
+	if !atcd.secure {
+		return "", nil
+	}
 	group, err := atcd.db.getGroup(id)
 	if err != nil {
 		return "", err
 	}
-	p := atcd.otp(group)
-	return p.Get(), nil
+	return atcd.token(group), nil
 }
 
 func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
@@ -94,8 +100,7 @@ func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
 	if err != nil {
 		return err
 	}
-	p := atcd.otp(group)
-	if !p.Verify(token) {
+	if !atcd.verify(group, token) {
 		return fmt.Errorf("Unauthorized")
 	}
 	_, err = atcd.db.updateMember(DbMember{
@@ -117,26 +122,46 @@ func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
 	if err != nil {
 		return err
 	}
-	p := atcd.otp(group)
-	if !p.Verify(token) {
+	if !atcd.verify(group, token) {
 		return fmt.Errorf("Unauthorized")
 	}
+	defer atcd.db.Cleanup()
 	return atcd.db.deleteMember(to_remove)
 }
 
 func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Setting, token string) (*atc_thrift.Setting, error) {
-	return nil, nil
+	group, err := atcd.db.getGroup(id)
+	if err != nil {
+		return nil, err
+	}
+	if !atcd.verify(group, token) {
+		return nil, fmt.Errorf("Unauthorized")
+	}
+	err = atcd.shaper.Shape(settings)
+	if err != nil {
+		return nil, err
+	}
+	return settings, nil
 }
 
 func (atcd *Atcd) UnshapeGroup(id int64, token string) error {
 	return nil
 }
 
-func (atcd *Atcd) otp(group *DbGroup) *otp.TOTP {
-	return &otp.TOTP{
+func (atcd *Atcd) verify(group *DbGroup, token string) bool {
+	t := &otp.TOTP{
 		Secret:         fmt.Sprintf("%s::%d", group.secret, group.id),
 		IsBase32Secret: true,
 	}
+	return t.Verify(token)
+}
+
+func (atcd *Atcd) token(group *DbGroup) string {
+	t := &otp.TOTP{
+		Secret:         fmt.Sprintf("%s::%d", group.secret, group.id),
+		IsBase32Secret: true,
+	}
+	return t.Get()
 }
 
 func makeSecret() string {

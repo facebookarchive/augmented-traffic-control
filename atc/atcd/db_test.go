@@ -2,6 +2,7 @@ package main
 
 import (
 	"testing"
+	"time"
 
 	"github.com/facebook/augmented-traffic-control/atc/atc_thrift/atc_thrift"
 )
@@ -158,7 +159,7 @@ func TestDBInsertsMember(t *testing.T) {
 		t.Fatal("Wrong group id: %d != %d", group.id, member.group_id)
 	}
 	if member.addr != "1.2.3.4" {
-		t.Fatal(`Wrong member address: "1.2.3.4" != %q`, member.addr)
+		t.Fatalf(`Wrong member address: "1.2.3.4" != %q`, member.addr)
 	}
 }
 
@@ -188,7 +189,7 @@ func TestDBGetsMember(t *testing.T) {
 		t.Fatal("Wrong group id: %d != %d", group.id, member.group_id)
 	}
 	if member.addr != "1.2.3.4" {
-		t.Fatal(`Wrong member address: "1.2.3.4" != %q`, member.addr)
+		t.Fatalf(`Wrong member address: "1.2.3.4" != %q`, member.addr)
 	}
 }
 
@@ -252,6 +253,43 @@ func TestDBCleansEmptyGroups(t *testing.T) {
 	}
 
 	if groups[0].secret != "asdf" {
-		t.Fatal(`Wrong group: "asdf" != %q`, groups[0].secret)
+		t.Fatalf(`Wrong group: "asdf" != %q`, groups[0].secret)
+	}
+}
+
+func TestDBCleansOldGroups(t *testing.T) {
+	db, err := NewDbRunner("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	var group *DbGroup
+	if _, err = db.updateGroup(DbGroup{secret: "qwer"}); err != nil {
+		t.Fatal(err)
+	}
+	if group, err = db.updateGroup(DbGroup{secret: "asdf"}); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = db.db.Exec(`update shapinggroups set timeout=? where id=?`, time.Now().Add(-24*time.Hour).Unix(), group.id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.cleanupOldGroups(); err != nil {
+		t.Fatal(err)
+	}
+
+	groups, err := db.getAllGroups()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(groups) != 1 {
+		t.Fatalf("Wrong number of groups: 1 != %d", len(groups))
+	}
+
+	if groups[0].secret != "qwer" {
+		t.Fatalf(`Wrong group: "qwer" != %q`, groups[0].secret)
 	}
 }

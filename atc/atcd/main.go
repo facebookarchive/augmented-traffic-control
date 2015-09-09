@@ -33,7 +33,7 @@ func main() {
 		log.Fatalf("Couldn't setup database: %v", err)
 	}
 	defer db.Close()
-	atcd := NewAtcd(db)
+	atcd := NewAtcd(db, GetShaper(), args.Secure)
 	runServer(atcd, "127.0.0.1:9090")
 }
 
@@ -41,6 +41,7 @@ type Args struct {
 	DbDriver   string
 	DbConnstr  string
 	ThriftAddr string
+	Secure     bool
 }
 
 func parseArgs() Args {
@@ -49,6 +50,7 @@ func parseArgs() Args {
 	// fixme change to actual file
 	db_connstr := flag.String("Q", ":memory:", "database driver connection parameters")
 	thrift_addr := flag.String("B", "127.0.0.1:9090", "bind address for the thrift server")
+	insecure := flag.Bool("I", false, "disable secure mode")
 
 	flag.Parse()
 
@@ -56,5 +58,6 @@ func parseArgs() Args {
 		DbDriver:   *db_driver,
 		DbConnstr:  *db_connstr,
 		ThriftAddr: *thrift_addr,
+		Secure:     !*insecure,
 	}
 }
