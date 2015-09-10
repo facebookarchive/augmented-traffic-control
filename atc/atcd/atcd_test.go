@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/facebook/augmented-traffic-control/atc/atc_thrift/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/atc/atc_thrift"
 )
 
 func TestAtcdCreatesGroup(_t *testing.T) {

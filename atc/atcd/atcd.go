@@ -5,7 +5,7 @@ import (
 	//"time"
 
 	"code.google.com/p/go-uuid/uuid"
-	"github.com/facebook/augmented-traffic-control/atc/atc_thrift/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/atc/atc_thrift"
 	"github.com/hgfischer/go-otp"
 	_ "github.com/mattn/go-sqlite3"
 )

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/facebook/augmented-traffic-control/atc/atc_thrift/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/atc/atc_thrift"
 	"github.com/gorilla/mux"
 )
 
