@@ -11,28 +11,24 @@ BUILD = go build
 THRIFT = thrift
 
 .PHONY: all
-all: init tests $(BINARIES)
-
-.PHONY: tests
-tests:
-	$(TEST) ${SRC}/atcd
-	$(TEST) ${SRC}/atc_api
+all: init $(BINARIES)
 
 bin/atcd: src/atc_thrift src/atcd/*.go
+	$(TEST) ${SRC}/atcd
 	$(BUILD) -o bin/atcd ${SRC}/atcd
 
 bin/atc_api: src/atc_thrift src/atc_api/*.go
-	$(BUILD) -o bin/atcd ${SRC}/atc_api
+	$(TEST) ${SRC}/atc_api
+	$(BUILD) -o bin/atc_api ${SRC}/atc_api
 
-src/atc_thrift: init src/atc_thrift.thrift
+src/atc_thrift: src/atc_thrift.thrift
 	$(THRIFT) --out src/ --gen go src/atc_thrift.thrift
 
 .PHONY: init
 init:
 	mkdir -p bin/
-	# This symlink is required for the go build commands to work.
 	mkdir -p ${GOPATH}/src/${PROJECT}
-	[ -d ${GOPATH}/src/${PROJECT}/src ] || ln -s $(shell pwd)/src ${GOPATH}/src/${PROJECT}/src
+	[ -h ${GOPATH}/src/${SRC} ] || ln -s $(shell pwd)/src ${GOPATH}/src/${SRC}
 
 .PHONY: clean
 clean:

@@ -37,3 +37,4 @@ internal
 .coverage
 .kitchen/
 /bin/
+*.db
