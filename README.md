@@ -3,6 +3,13 @@
 [![build-status-image]][travis]
 [![pypi-version]][pypi]
 
+## WARNING
+
+This version of ATC is experimental and not yet officially released. We welcome
+feedback on this version of ATC as we continue working on it, but you should
+not use this version of ATC unless you are prepared to deal with bugs or
+feature changes.
+
 
 Full documentation for the project is available at [http://facebook.github.io/augmented-traffic-control/](http://facebook.github.io/augmented-traffic-control/).
 
@@ -20,10 +27,10 @@ Aspects of the connection that can be controlled include:
 In order to be able to shape the network traffic, ATC must be running on a device that routes the traffic and sees the real IP address of the device, like your network gateway for instance. This also allows any devices that route through `ATC` to be able to shape their traffic. Traffic can be shaped/unshaped using a web interface allowing any devices with a web browser to use `ATC` without the need for a client application.
 
 ATC is made of multiple components that interact together:
-* [`atcd`](atc/atcd): The ATC daemon which is responsible for setting/unsetting traffic shaping. `atcd` exposes a [Thrift](https://thrift.apache.org/) interface to interact with it.
-* [`django-atc-api`](atc/django-atc-api): A [Django](https://www.djangoproject.com/) app based on [Django Rest Framework](http://www.django-rest-framework.org/) that provides a RESTful interface to `atcd`.
-* [`django-atc-demo-ui`](atc/django-atc-demo-ui): A Django app that provides a simple Web UI to use `atc` from a mobile phone.
-* [`django-atc-profile-storage`](atc/django-atc-profile-storage): A Django app that can be used to save shaping profiles, making it easier to re-use them later without manually re-entering those settings.
+* `atcd`: The ATC daemon which is responsible for setting/unsetting traffic shaping. `atcd` exposes a [Thrift](https://thrift.apache.org/) interface to interact with it.
+* `atc_api`: A RESTful interface to `atcd`.
+* [`django-atc-demo-ui`](atc/django-atc-demo-ui): A Django app that provides a simple Web UI to use `atc` from a mobile phone. (**Not yet working**)
+* [`django-atc-profile-storage`](atc/django-atc-profile-storage): A Django app that can be used to save shaping profiles, making it easier to re-use them later without manually re-entering those settings. (**Not yet working**)
 
 By splitting `ATC` in sub-components, it make it easier to hack on it or build on top of it. While `django-atc-demo-ui` is shipped as part of `ATC`'s main repository to allow people to be able to use `ATC` out of the box, by providing a REST API to `atcd`, it makes it relatively easy to interact with `atcd` via the command line and opens the path for the community to be able to build creative command line tools, web UI or mobile apps that interact with `ATC`.
 
@@ -31,15 +38,14 @@ By splitting `ATC` in sub-components, it make it easier to hack on it or build o
 
 ## Requirements
 
-Most requirements are handled automatically by [pip](https://pip.pypa.io), the packaging system used by ATC, and each `ATC` package may have different requirements and the README.md files of the respective packages should be checked for more details. Anyhow, some requirements apply to the overall codebase:
+Running ATC only requires downloading the ATC binaries onto a linux box and running them.
 
-* Python 2.7+
-* Django 1.7+
+Compiling ATC from source requires a [working Go compiler](https://golang.org/doc/install) and [go environment](https://golang.org/doc/code.html).
 
 
 ## Installing ATC
 
-The fact that `ATC` is splitted in multiple packages allows for multiple deployment scenarii. However, deploying all the packages on the same host is the simplest and most likely fitting most use cases.
+The fact that `ATC` is split in multiple packages allows for multiple deployment scenarios. However, deploying all the packages on the same host is the simplest and most likely fitting most use cases.
 
 To get more details on how to install/configure each packages, please refer to the packages' respective READMEs.
 
