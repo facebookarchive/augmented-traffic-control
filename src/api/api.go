@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -41,7 +41,7 @@ func InfoHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (
 		return nil, HttpErrorf(http.StatusBadGateway, "Could not communicate with ATC Daemon: %v", err)
 	}
 	info := ServerInfo{
-		Api: GetApiInfo(),
+		Api: APIInfo{Version: VERSION},
 		Atcd: DaemonInfo{
 			Platform: daemon_info.Platform.String(),
 			Version:  daemon_info.Version,

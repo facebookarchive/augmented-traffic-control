@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"net"
@@ -14,19 +14,23 @@ var (
 )
 
 type Server struct {
-	Addr     string
-	Timeout  time.Duration
-	Handler  http.Handler
-	listener net.Listener
-	Atcd     *AtcdConn
+	Addr         string
+	Timeout      time.Duration
+	Handler      http.Handler
+	listener     net.Listener
+	Atcd         *AtcdConn
+	thrift_proto string
+	thrift_addr  string
 }
 
-func ListenAndServe(addr string) (*Server, error) {
+func ListenAndServe(addr, thrift_addr, thrift_proto string) (*Server, error) {
 	srv := &Server{
-		Addr:     addr,
-		listener: nil,
-		Handler:  nil,
-		Timeout:  TIMEOUT,
+		Addr:         addr,
+		listener:     nil,
+		Handler:      nil,
+		Timeout:      TIMEOUT,
+		thrift_addr:  thrift_addr,
+		thrift_proto: thrift_proto,
 	}
 	srv.setupHandlers()
 	err := srv.ListenAndServe()
@@ -40,7 +44,7 @@ func (srv *Server) GetAtcd() (*AtcdConn, HttpError) {
 	if srv.Atcd != nil {
 		return srv.Atcd, nil
 	}
-	atcd := NewAtcdConn()
+	atcd := NewAtcdConn(srv.thrift_addr, srv.thrift_proto)
 	if err := atcd.Open(); err != nil {
 		return nil, HttpErrorf(502, "Could not connect to atcd: %v", err)
 	}

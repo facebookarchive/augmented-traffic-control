@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"

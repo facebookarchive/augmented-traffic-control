@@ -6,34 +6,18 @@ import (
 	"log"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
-	//"github.com/facebook/augmented-traffic-control/src/atc_api/stub"
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/src/daemon"
 )
-
-// Runs the ATCD thrift server on the provided address.
-func runServer(atcd atc_thrift.Atcd, addr string) error {
-	transport, err := thrift.NewTServerSocket(addr)
-	if err != nil {
-		return err
-	}
-	processor := atc_thrift.NewAtcdProcessor(atcd)
-
-	pfactory := thrift.NewTJSONProtocolFactory()
-	tfactory := thrift.NewTTransportFactory()
-	server := thrift.NewTSimpleServer4(processor, transport, tfactory, pfactory)
-
-	fmt.Println("Starting the thrift server on", addr)
-	return server.Serve()
-}
 
 func main() {
 	args := parseArgs()
-	db, err := NewDbRunner(args.DbDriver, args.DbConnstr)
+	db, err := daemon.NewDbRunner(args.DbDriver, args.DbConnstr)
 	if err != nil {
 		log.Fatalf("Couldn't setup database: %v", err)
 	}
 	defer db.Close()
-	atcd := NewAtcd(db, GetShaper(), args.Secure)
+	atcd := daemon.NewAtcd(db, daemon.GetShaper(), args.Secure)
 	runServer(atcd, "127.0.0.1:9090")
 }
 
@@ -60,4 +44,20 @@ func parseArgs() Args {
 		ThriftAddr: *thrift_addr,
 		Secure:     !*insecure,
 	}
+}
+
+// Runs the ATCD thrift server on the provided address.
+func runServer(atcd atc_thrift.Atcd, addr string) error {
+	transport, err := thrift.NewTServerSocket(addr)
+	if err != nil {
+		return err
+	}
+	processor := atc_thrift.NewAtcdProcessor(atcd)
+
+	pfactory := thrift.NewTJSONProtocolFactory()
+	tfactory := thrift.NewTTransportFactory()
+	server := thrift.NewTSimpleServer4(processor, transport, tfactory, pfactory)
+
+	fmt.Println("Starting the thrift server on", addr)
+	return server.Serve()
 }
