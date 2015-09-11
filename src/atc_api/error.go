@@ -13,12 +13,12 @@ var (
 )
 
 var (
-	ServerError   = httpError{http.StatusInternalServerError, "Internal Server Error"}
-	InvalidMethod = Errorf(http.StatusMethodNotAllowed, "Method not allowed")
+	ServerError   = HttpErrorf(http.StatusInternalServerError, "Internal Server Error")
+	InvalidMethod = HttpErrorf(http.StatusMethodNotAllowed, "Method not allowed")
 
 	// Used to indicate to the error handler that the request already wrote the
 	// HTTP status
-	NoStatus = Errorf(-1, "Not a real error")
+	NoStatus = HttpErrorf(-1, "Not a real error")
 )
 
 type HttpError interface {
@@ -39,18 +39,8 @@ func (e httpError) Status() int {
 	return e.status
 }
 
-func Error(status int, message string) HttpError {
-	return httpError{
-		message: message,
-		status:  status,
-	}
-}
-
-func Errorf(status int, f string, things ...interface{}) HttpError {
-	return httpError{
-		message: fmt.Sprintf(f, things...),
-		status:  status,
-	}
+func HttpErrorf(status int, f string, things ...interface{}) HttpError {
+	return httpError{status, fmt.Sprintf(f, things...)}
 }
 
 func IsNoSuchItem(err error) bool {

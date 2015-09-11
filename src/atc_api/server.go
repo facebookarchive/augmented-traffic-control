@@ -42,7 +42,7 @@ func (srv *Server) GetAtcd() (*AtcdConn, HttpError) {
 	}
 	atcd := NewAtcdConn()
 	if err := atcd.Open(); err != nil {
-		return nil, Errorf(502, "Could not connect to atcd: %v", err)
+		return nil, HttpErrorf(502, "Could not connect to atcd: %v", err)
 	}
 	return atcd, nil
 }

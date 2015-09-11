@@ -15,6 +15,7 @@ var (
 			"/": RedirectHandler("/api/v1/shape"),
 		},
 		"/api/v1": {
+			"/":                 RedirectHandler("/api/v1/shape"),
 			"/info":             InfoHandler,
 			"/group":            GroupsHandler,
 			"/group/{id}":       GroupHandler,
@@ -37,7 +38,7 @@ func RedirectHandler(url string) HandlerFunc {
 func InfoHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
 	daemon_info, err := atcd.GetAtcdInfo()
 	if err != nil {
-		return nil, Errorf(http.StatusBadGateway, "Could not communicate with ATC Daemon: %v", err)
+		return nil, HttpErrorf(http.StatusBadGateway, "Could not communicate with ATC Daemon: %v", err)
 	}
 	info := ServerInfo{
 		Api: GetApiInfo(),
@@ -55,7 +56,7 @@ func GroupsHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request)
 	}
 	grp, err := atcd.CreateGroup(GetClientAddr(r))
 	if err != nil {
-		return nil, Errorf(http.StatusBadGateway, "Could not create group: %v", err)
+		return nil, HttpErrorf(http.StatusBadGateway, "Could not create group: %v", err)
 	}
 	return grp, nil
 }
@@ -66,14 +67,14 @@ func GroupHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) 
 	}
 	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
-		return nil, Errorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
 	}
 	group, err := atcd.GetGroup(id)
 	if err != nil {
 		if IsNoSuchItem(err) {
-			return nil, Errorf(http.StatusNotFound, "Invalid group")
+			return nil, HttpErrorf(http.StatusNotFound, "Invalid group")
 		}
-		return nil, Errorf(http.StatusBadGateway, "Could not get group from daemon: %v", err)
+		return nil, HttpErrorf(http.StatusBadGateway, "Could not get group from daemon: %v", err)
 	}
 	return group, nil
 }
@@ -84,11 +85,11 @@ func GroupJoinHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Reque
 	}
 	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
-		return nil, Errorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
 	}
 	req_info := &MemberTokenRequest{}
 	if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
-		return nil, Errorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
+		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 	}
 	if req_info.Member == "" {
 		req_info.Member = GetClientAddr(r)
@@ -96,7 +97,7 @@ func GroupJoinHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Reque
 	// FIXME: maybe we need to check auth here?
 	err = atcd.JoinGroup(id, req_info.Member, req_info.Token)
 	if err != nil {
-		return nil, Errorf(http.StatusBadGateway, "Could not join group: %v", err)
+		return nil, HttpErrorf(http.StatusBadGateway, "Could not join group: %v", err)
 	}
 	return MemberResponse{
 		Id:     id,
@@ -110,11 +111,11 @@ func GroupLeaveHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Requ
 	}
 	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
-		return nil, Errorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
 	}
 	req_info := &MemberTokenRequest{}
 	if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
-		return nil, Errorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
+		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 	}
 	if req_info.Member == "" {
 		req_info.Member = GetClientAddr(r)
@@ -122,7 +123,7 @@ func GroupLeaveHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Requ
 	// FIXME: maybe we need to check auth here?
 	err = atcd.LeaveGroup(id, req_info.Member, req_info.Token)
 	if err != nil {
-		return nil, Errorf(http.StatusBadGateway, "Could not join group: %v", err)
+		return nil, HttpErrorf(http.StatusBadGateway, "Could not join group: %v", err)
 	}
 	return MemberResponse{
 		Id:     id,
@@ -136,21 +137,21 @@ func GroupTokenHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Requ
 	}
 	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
-		return nil, Errorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
 	}
 	grp, err := atcd.GetGroupWith(GetClientAddr(r))
 	if err != nil {
 		if IsNoSuchItem(err) {
-			return nil, Errorf(http.StatusUnauthorized, "Invalid group")
+			return nil, HttpErrorf(http.StatusUnauthorized, "Invalid group")
 		}
-		return nil, Errorf(http.StatusBadGateway, "Could not get group from daemon: %v", err)
+		return nil, HttpErrorf(http.StatusBadGateway, "Could not get group from daemon: %v", err)
 	}
 	if grp.Id != id {
-		return nil, Errorf(http.StatusUnauthorized, "Invalid group")
+		return nil, HttpErrorf(http.StatusUnauthorized, "Invalid group")
 	}
 	token, err := atcd.GetGroupToken(id)
 	if err != nil {
-		return nil, Errorf(http.StatusBadGateway, "Could not get token from daemon: %v", err)
+		return nil, HttpErrorf(http.StatusBadGateway, "Could not get token from daemon: %v", err)
 	}
 
 	return GroupToken{
@@ -162,13 +163,13 @@ func GroupTokenHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Requ
 func GroupShapeHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
 	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
-		return nil, Errorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
 	}
 	switch r.Method {
 	case "GET":
 		group, err := atcd.GetGroup(id)
 		if err != nil {
-			return nil, Errorf(http.StatusBadGateway, "Could not get shaping from atcd: %v", err)
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not get shaping from atcd: %v", err)
 		}
 		return GroupShaping{
 			Id:      id,
@@ -177,11 +178,11 @@ func GroupShapeHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Requ
 	case "POST":
 		req_info := &TokenShaping{}
 		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
-			return nil, Errorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 		}
 		setting, err := atcd.ShapeGroup(id, req_info.Shaping, req_info.Token)
 		if err != nil {
-			return nil, Errorf(http.StatusBadGateway, "Could not shape: %v", err)
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not shape: %v", err)
 		}
 		return GroupShaping{
 			Id:      id,
@@ -190,11 +191,11 @@ func GroupShapeHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Requ
 	case "DELETE":
 		req_info := &Token{}
 		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
-			return nil, Errorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 		}
 		err = atcd.UnshapeGroup(id, req_info.Token)
 		if err != nil {
-			return nil, Errorf(http.StatusBadGateway, "Could not delete shaping from atcd: %v", err)
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not delete shaping from atcd: %v", err)
 		}
 		return nil, nil
 	default:
@@ -206,7 +207,7 @@ func ShapeHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) 
 	addr := GetClientAddr(r)
 	group, err := atcd.GetGroupWith(addr)
 	if err != nil {
-		return nil, Errorf(http.StatusNotFound, "Address not being shaped")
+		return nil, HttpErrorf(http.StatusNotFound, "Address not being shaped")
 	}
 	switch r.Method {
 	case "GET":
@@ -217,11 +218,11 @@ func ShapeHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) 
 	case "POST":
 		req_info := &TokenShaping{}
 		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
-			return nil, Errorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 		}
 		setting, err := atcd.ShapeGroup(group.Id, req_info.Shaping, req_info.Token)
 		if err != nil {
-			return nil, Errorf(http.StatusBadGateway, "Could not shape: %v", err)
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not shape: %v", err)
 		}
 		return GroupShaping{
 			Id:      group.Id,
@@ -230,11 +231,11 @@ func ShapeHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) 
 	case "DELETE":
 		req_info := &Token{}
 		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
-			return nil, Errorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 		}
 		err = atcd.UnshapeGroup(group.Id, req_info.Token)
 		if err != nil {
-			return nil, Errorf(http.StatusBadGateway, "Could not delete shaping from atcd: %v", err)
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not delete shaping from atcd: %v", err)
 		}
 		return nil, nil
 	default:

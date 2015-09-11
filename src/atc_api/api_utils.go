@@ -80,7 +80,7 @@ func JsonHandler(f jsonFunc) errorFunc {
 		}
 		json_err := json.NewEncoder(w).Encode(v)
 		if json_err != nil {
-			return Errorf(500, "Bad JSON: %v", json_err)
+			return HttpErrorf(500, "Bad JSON: %v", json_err)
 		}
 		return nil
 	}

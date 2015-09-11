@@ -156,7 +156,7 @@ func TestDBInsertsMember(t *testing.T) {
 	}
 
 	if member.group_id != group.id {
-		t.Fatal("Wrong group id: %d != %d", group.id, member.group_id)
+		t.Fatalf("Wrong group id: %d != %d", group.id, member.group_id)
 	}
 	if member.addr != "1.2.3.4" {
 		t.Fatalf(`Wrong member address: "1.2.3.4" != %q`, member.addr)
@@ -186,7 +186,7 @@ func TestDBGetsMember(t *testing.T) {
 	}
 
 	if member.group_id != group.id {
-		t.Fatal("Wrong group id: %d != %d", group.id, member.group_id)
+		t.Fatalf("Wrong group id: %d != %d", group.id, member.group_id)
 	}
 	if member.addr != "1.2.3.4" {
 		t.Fatalf(`Wrong member address: "1.2.3.4" != %q`, member.addr)

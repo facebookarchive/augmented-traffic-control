@@ -55,7 +55,7 @@ func TestHandlesReturnedError(t *testing.T) {
 	message := "This message is okay in tests!"
 
 	real_handler := func(w http.ResponseWriter, r *http.Request) HttpError {
-		return Error(status_code, message)
+		return HttpErrorf(status_code, message)
 	}
 	err_handler := ErrorHandler(real_handler)
 	w := FakeResponse()
@@ -82,13 +82,13 @@ func TestHandlesThrownError(t *testing.T) {
 	err_handler(w, nil)
 
 	// check status code is set
-	if w.status != ServerError.status {
-		t.Errorf("Expected status code %v != %v", ServerError.status, w.status)
+	if w.status != ServerError.Status() {
+		t.Errorf("Expected status code %v != %v", ServerError.Status(), w.status)
 	}
 
 	// check message is set
 	actual_message := strings.TrimSpace(w.buf.String())
-	if actual_message != ServerError.message {
-		t.Errorf("Expected error message %q != %q", ServerError.message, actual_message)
+	if actual_message != ServerError.Error() {
+		t.Errorf("Expected error message %q != %q", ServerError.Error(), actual_message)
 	}
 }

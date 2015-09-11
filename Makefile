@@ -8,16 +8,22 @@ BINARIES = bin/atcd bin/atc_api
 
 TEST = go test -v
 BUILD = go build
+VET = go vet
+FMT = go fmt
 THRIFT = thrift
 
 .PHONY: all
 all: init $(BINARIES)
 
 bin/atcd: src/atc_thrift src/atcd/*.go
+	$(FMT) ${SRC}/atcd
+	$(VET) ${SRC}/atcd
 	$(TEST) ${SRC}/atcd
 	$(BUILD) -o bin/atcd ${SRC}/atcd
 
 bin/atc_api: src/atc_thrift src/atc_api/*.go
+	$(FMT) ${SRC}/atc_api
+	$(VET) ${SRC}/atc_api
 	$(TEST) ${SRC}/atc_api
 	$(BUILD) -o bin/atc_api ${SRC}/atc_api
 
