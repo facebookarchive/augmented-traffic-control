@@ -36,3 +36,4 @@ pcap2har/
 internal
 .coverage
 .kitchen/
+/bin/

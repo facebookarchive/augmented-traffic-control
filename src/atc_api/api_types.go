@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/facebook/augmented-traffic-control/atc/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 )
 
 type ServerInfo struct {

@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/facebook/augmented-traffic-control/atc/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 )
 
 const (

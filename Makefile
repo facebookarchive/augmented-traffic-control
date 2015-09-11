@@ -1,98 +1,43 @@
-#
-#  Copyright (c) 2014, Facebook, Inc.
-#  All rights reserved.
-#
-#  This source code is licensed under the BSD-style license found in the
-#  LICENSE file in the root directory of this source tree. An additional grant
-#  of patent rights can be found in the PATENTS file in the same directory.
-#
+# You must have a working go environment in order to build atc.
+# See https://golang.org/doc/code.html
 
+PROJECT = github.com/facebook/augmented-traffic-control
+SRC = ${PROJECT}/src
 
-# Vagrant names used for testing.
-# Described fully in `tests/Vagrantfile`.
-TESTVMS = gateway client server
+BINARIES = bin/atcd bin/atc_api
 
-FLAKE=python -m flake8
-PEP=pep8
+TEST = go test -v
+BUILD = go build
+THRIFT = thrift
 
-
-# By default, we just lint since we want this to be **fast**.
-# In the future when unit testing becomes better this should run quick tests.
-.PHONY: default
-default: lint
-
-
-# Do all the things!
 .PHONY: all
-all: lint fulltest
+all: init tests $(BINARIES)
 
+.PHONY: tests
+tests:
+	$(TEST) ${SRC}/atcd
+	$(TEST) ${SRC}/atc_api
 
-# Install packages locally.
-.PHONY: install
-install:
-	cd atc/atc_thrift && pip install --upgrade --force-reinstall .
-	cd atc/atcd && pip install --upgrade --force-reinstall .
-	cd atc/django-atc-api && pip install --upgrade --force-reinstall .
-	cd atc/django-atc-demo-ui && pip install --upgrade --force-reinstall .
-	cd atc/django-atc-profile-storage && pip install --upgrade --force-reinstall .
+bin/atcd: src/atc_thrift src/atcd/*.go
+	$(BUILD) -o bin/atcd ${SRC}/atcd
 
+bin/atc_api: src/atc_thrift src/atc_api/*.go
+	$(BUILD) -o bin/atcd ${SRC}/atc_api
 
-# Publish packages to PyPi.
-.PHONY: publish
-publish:
-	cd atc/atc_thrift && python setup.py publish
-	cd atc/atcd && python setup.py publish
-	cd atc/django-atc-api && python setup.py publish
-	cd atc/django-atc-demo-ui && python setup.py publish
-	cd atc/django-atc-profile-storage && python setup.py publish
+src/atc_thrift: init src/atc_thrift.thrift
+	$(THRIFT) --out src/ --gen go src/atc_thrift.thrift
 
+.PHONY: init
+init:
+	mkdir -p bin/
+	# This symlink is required for the go build commands to work.
+	mkdir -p ${GOPATH}/src/${PROJECT}
+	[ -d ${GOPATH}/src/${PROJECT}/src ] || ln -s $(shell pwd)/src ${GOPATH}/src/${PROJECT}/src
 
-# Cleans up python dist files
 .PHONY: clean
 clean:
-	rm -rf atc/atcd/dist atc/atc_thrift/dist atc/django-atc-api/dist atc/django-atc-demo-ui/dist atc/django-atc-profile-storage/dist
+	rm -rf bin/
 
-
-# Lint the various sources that ATC includes:
-#  chef/  - chef cookbooks
-#  atc/   - ATC source code
-#  tests/ - ATC test code
-.PHONY: lint
-lint: chef_lint python_lint
-
-.PHONY: chef_lint
-chef_lint:
-	rubocop chef/atc
-	foodcritic chef/atc
-
-.PHONY: python_lint
-python_lint:
-	$(PEP) atc
-	$(FLAKE) atc
-	$(FLAKE) tests/
-
-
-# Performs setup, runs the tests, then cleans up.
-# Should be used for automated testing.
-.PHONY: fulltest
-fulltest: testvup test testvdown
-
-
-# Runs the ATC test suite.
-# This can be run manually for quick testing.
-# Requires that the test VMs have been created by `testvup`
-.PHONY: test
-test:
-	nosetests -s tests/
-
-
-# Creates vagrant VMs for testing.
-.PHONY: testvup
-testvup:
-	cd tests/ && vagrant up ${TESTVMS}
-
-
-# Tears down vagrant VMs.
-.PHONY: testvdown
-testvdown:
-	cd tests/ && vagrant destroy -f ${TESTVMS}
+.PHONY: fullclean
+fullclean: clean
+	rm -rf src/atc_thrift/
