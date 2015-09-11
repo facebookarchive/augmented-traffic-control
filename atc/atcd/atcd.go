@@ -143,7 +143,7 @@ func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Setting, token strin
 	if !atcd.verify(group, token) {
 		return nil, fmt.Errorf("Unauthorized")
 	}
-	err = atcd.shaper.Shape(settings)
+	err = atcd.shaper.Shape(group.id, settings)
 	if err != nil {
 		return nil, err
 	}
@@ -151,10 +151,24 @@ func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Setting, token strin
 }
 
 func (atcd *Atcd) UnshapeGroup(id int64, token string) error {
+	group, err := atcd.db.getGroup(id)
+	if err != nil {
+		return err
+	}
+	if !atcd.verify(group, token) {
+		return fmt.Errorf("Unauthorized")
+	}
+	err = atcd.shaper.Unshape(group.id)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (atcd *Atcd) verify(group *DbGroup, token string) bool {
+	if token == group.secret {
+		return true
+	}
 	t := &otp.TOTP{
 		Secret:         fmt.Sprintf("%s::%d", group.secret, group.id),
 		IsBase32Secret: true,

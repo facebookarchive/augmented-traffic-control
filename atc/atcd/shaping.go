@@ -9,11 +9,12 @@ import (
 type Shaper interface {
 	GetPlatform() atc_thrift.PlatformType
 
-	// Needs to be extended to include group info
-	Shape(shaping *atc_thrift.Setting) error
-
-	// Needs to be extended to include group info
-	Unshape() error
+	CreateGroup(member string) (int64, error)
+	JoinGroup(id int64, member string) error
+	LeaveGroup(id int64, member string) error
+	DeleteGroup(id int64) error
+	Shape(id int64, settings *atc_thrift.Setting) error
+	Unshape(id int64) error
 }
 
 func GetShaper() Shaper {
@@ -28,8 +29,12 @@ func (FakeShaper) GetPlatform() atc_thrift.PlatformType {
 	return atc_thrift.PlatformType_LINUX
 }
 
-func (FakeShaper) Shape(shaping *atc_thrift.Setting) error { return nil }
-func (FakeShaper) Unshape() error                          { return nil }
+func (FakeShaper) CreateGroup(string) (int64, error)                 { return 0, nil }
+func (FakeShaper) JoinGroup(int64, string) error                     { return nil }
+func (FakeShaper) LeaveGroup(int64, string) error                    { return nil }
+func (FakeShaper) DeleteGroup(int64) error                           { return nil }
+func (FakeShaper) Shape(id int64, shaping *atc_thrift.Setting) error { return nil }
+func (FakeShaper) Unshape(int64) error                               { return nil }
 
 // *NetlinkShaper implements Shaper
 type NetlinkShaper struct{}
@@ -38,9 +43,21 @@ func (*NetlinkShaper) GetPlatform() atc_thrift.PlatformType {
 	return atc_thrift.PlatformType_LINUX
 }
 
-func (*NetlinkShaper) Shape(shaping *atc_thrift.Setting) error {
-	return fmt.Errorf("Netlink not implemented")
+func (*NetlinkShaper) CreateGroup(string) (int64, error) {
+	return 0, fmt.Errorf("Netlink is not implemented")
 }
-func (*NetlinkShaper) Unshape() error {
-	return fmt.Errorf("Netlink not implemented")
+func (*NetlinkShaper) JoinGroup(int64, string) error {
+	return fmt.Errorf("Netlink is not implemented")
+}
+func (*NetlinkShaper) LeaveGroup(int64, string) error {
+	return fmt.Errorf("Netlink is not implemented")
+}
+func (*NetlinkShaper) DeleteGroup(int64) error {
+	return fmt.Errorf("Netlink is not implemented")
+}
+func (*NetlinkShaper) Shape(id int64, shaping *atc_thrift.Setting) error {
+	return fmt.Errorf("Netlink is not implemented")
+}
+func (*NetlinkShaper) Unshape(int64) error {
+	return fmt.Errorf("Netlink is not implemented")
 }
