@@ -4,7 +4,6 @@
 PROJECT = github.com/facebook/augmented-traffic-control
 SRC = ${PROJECT}/src
 
-BINARIES = bin/atcd bin/atc_api
 
 TEST = go test -v
 BUILD = go build
@@ -13,22 +12,22 @@ FMT = go fmt
 THRIFT = thrift
 
 .PHONY: all
-all: init $(BINARIES)
+all: init bin/atcd bin/atc_api
 
-bin/atcd: src/atc_thrift src/atcd/*.go
-	$(FMT) ${SRC}/atcd
-	$(VET) ${SRC}/atcd
-	$(TEST) ${SRC}/atcd
-	$(BUILD) -o bin/atcd ${SRC}/atcd
+bin/atcd: src/atc_thrift src/daemon/*.go
+	$(FMT) ${SRC}/daemon
+	$(VET) ${SRC}/daemon
+	$(TEST) ${SRC}/daemon
+	$(BUILD) -o bin/atcd ${SRC}/daemon
 
-bin/atc_api: src/atc_thrift src/atc_api/*.go
-	$(FMT) ${SRC}/atc_api
-	$(VET) ${SRC}/atc_api
-	$(TEST) ${SRC}/atc_api
-	$(BUILD) -o bin/atc_api ${SRC}/atc_api
+bin/atc_api: src/atc_thrift src/api/*.go
+	$(FMT) ${SRC}/api
+	$(VET) ${SRC}/api
+	$(TEST) ${SRC}/api
+	$(BUILD) -o bin/atc_api ${SRC}/api
 
-src/atc_thrift: src/atc_thrift.thrift
-	$(THRIFT) --out src/ --gen go src/atc_thrift.thrift
+src/atc_thrift: if/atc_thrift.thrift
+	$(THRIFT) --out src/ --gen go if/atc_thrift.thrift
 
 .PHONY: init
 init:

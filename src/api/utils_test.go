@@ -8,6 +8,10 @@ import (
 	"testing"
 )
 
+func init() {
+	PANIC_STACK = false
+}
+
 /*
 Fake http.ResponseWriter to pass into tests. Saves any data written in the
 http response, and the status code. Disregardes headers

@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/facebook/augmented-traffic-control/src/atc_api/stub"
+	"github.com/facebook/augmented-traffic-control/src/api/stub"
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 )
 

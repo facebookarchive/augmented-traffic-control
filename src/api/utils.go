@@ -11,6 +11,12 @@ import (
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 )
 
+var (
+	// DO NOT SET THIS TO FALSE
+	// Provided to reduce noise in tests.
+	PANIC_STACK = true
+)
+
 // Write new HTTP handlers using this type.
 type HandlerFunc func(atc_thrift.Atcd, http.ResponseWriter, *http.Request) (interface{}, HttpError)
 
@@ -46,7 +52,9 @@ func ErrorHandler(f errorFunc) http.HandlerFunc {
 			e := recover()
 			if e != nil {
 				log.Printf("panic: %v\n", e)
-				debug.PrintStack()
+				if PANIC_STACK {
+					debug.PrintStack()
+				}
 				writeError(w, ServerError)
 			}
 		}()

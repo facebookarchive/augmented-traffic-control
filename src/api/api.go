@@ -87,21 +87,18 @@ func GroupJoinHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
 	}
-	req_info := &MemberTokenRequest{}
+	req_info := &Token{}
 	if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
 		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 	}
-	if req_info.Member == "" {
-		req_info.Member = GetClientAddr(r)
-	}
-	// FIXME: maybe we need to check auth here?
-	err = atcd.JoinGroup(id, req_info.Member, req_info.Token)
+	member := GetClientAddr(r)
+	err = atcd.JoinGroup(id, member, req_info.Token)
 	if err != nil {
 		return nil, HttpErrorf(http.StatusBadGateway, "Could not join group: %v", err)
 	}
 	return MemberResponse{
 		Id:     id,
-		Member: req_info.Member,
+		Member: member,
 	}, nil
 }
 
@@ -113,21 +110,18 @@ func GroupLeaveHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
 	}
-	req_info := &MemberTokenRequest{}
+	req_info := &Token{}
 	if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
 		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 	}
-	if req_info.Member == "" {
-		req_info.Member = GetClientAddr(r)
-	}
-	// FIXME: maybe we need to check auth here?
-	err = atcd.LeaveGroup(id, req_info.Member, req_info.Token)
+	member := GetClientAddr(r)
+	err = atcd.LeaveGroup(id, member, req_info.Token)
 	if err != nil {
 		return nil, HttpErrorf(http.StatusBadGateway, "Could not join group: %v", err)
 	}
 	return MemberResponse{
 		Id:     id,
-		Member: req_info.Member,
+		Member: member,
 	}, nil
 }
 

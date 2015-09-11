@@ -28,20 +28,14 @@ type MemberRequest struct {
 	Member string `json:"member"`
 }
 
-// used for join and leave requests
-type MemberTokenRequest struct {
-	Token  string `json:"token"`
-	Member string `json:"member"`
-}
-
-// used for join and leave requests
+// used for join and leave responses
 type MemberResponse struct {
 	Member string `json:"member"`
 	Id     int64  `json:"id"`
 }
 
 // just the ...
-// used by unshaping requests
+// used by unshaping, join, leave requests
 type Token struct {
 	Token string `json:"token"`
 }
