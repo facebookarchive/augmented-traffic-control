@@ -2,7 +2,7 @@ package daemon
 
 import (
 	"fmt"
-	//"time"
+	"log"
 
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
@@ -87,6 +87,9 @@ func (atcd *Atcd) GetGroupWith(addr string) (*atc_thrift.ShapingGroup, error) {
 	if err != nil {
 		return nil, err
 	}
+	if member == nil {
+		return nil, NoSuchItem
+	}
 	return atcd.GetGroup(member.group_id)
 }
 
@@ -143,11 +146,17 @@ func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Setting, token strin
 	if !atcd.verify(group, token) {
 		return nil, fmt.Errorf("Unauthorized")
 	}
-	err = atcd.shaper.Shape(group.id, settings)
+	group.tc = settings
+	log.Println("Shaping group", group.id)
+	err = atcd.shaper.Shape(group.id, group.tc)
 	if err != nil {
 		return nil, err
 	}
-	return settings, nil
+	group, err = atcd.db.updateGroup(*group)
+	if err != nil {
+		return nil, err
+	}
+	return group.tc, nil
 }
 
 func (atcd *Atcd) UnshapeGroup(id int64, token string) error {
@@ -158,7 +167,13 @@ func (atcd *Atcd) UnshapeGroup(id int64, token string) error {
 	if !atcd.verify(group, token) {
 		return fmt.Errorf("Unauthorized")
 	}
+	group.tc = nil
+	log.Println("Unshaping group", group.id)
 	err = atcd.shaper.Unshape(group.id)
+	if err != nil {
+		return err
+	}
+	_, err = atcd.db.updateGroup(*group)
 	if err != nil {
 		return err
 	}
@@ -173,6 +188,7 @@ func (atcd *Atcd) verify(group *DbGroup, token string) bool {
 		Secret:         fmt.Sprintf("%s::%d", group.secret, group.id),
 		IsBase32Secret: true,
 	}
+	log.Printf("Expected != Actual: %q != %q\n", atcd.token(group), token)
 	return t.Verify(token)
 }
 

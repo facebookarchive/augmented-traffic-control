@@ -1,0 +1,24 @@
+/**
+ * Copyright (c) 2014, Facebook, Inc.
+ * All rights reserved.
+ *
+ *  This source code is licensed under the BSD-style license found in the
+ *  LICENSE file in the root directory of this source tree. An additional grant
+ *  of patent rights can be found in the PATENTS file in the same directory.
+ */
+
+#shaping_buttons button {
+    margin: 10px;
+    padding: 5px;
+}
+
+/*
+We're not using anchors, so make sure users know they can click on panel headers
+*/
+.panel-heading {
+    cursor: pointer;
+}
+
+.error-timer {
+    text-align: right;
+}

@@ -11,7 +11,15 @@ import (
 var (
 	// HTTP Connection timeouts for read/write
 	TIMEOUT = time.Second * 30
+
+	ServerData = serverData{
+		ApiUrl: "/api/v1/",
+	}
 )
+
+type serverData struct {
+	ApiUrl string
+}
 
 type Server struct {
 	Addr         string
@@ -81,13 +89,13 @@ func (srv *Server) Serve() {
 
 func (srv *Server) setupHandlers() {
 	r := mux.NewRouter()
-	for prefix, urls := range URL_MAP {
-		s := r.PathPrefix(prefix).Subrouter()
-		for url, f := range urls {
-			h := NewHandler(srv, f)
-			s.HandleFunc(url, h)
-			s.HandleFunc(url+"/", h)
-		}
+	apir := r.PathPrefix(ServerData.ApiUrl).Subrouter()
+	for url, f := range API_URL_MAP {
+		h := NewHandler(srv, f)
+		apir.HandleFunc(url, h)
+		apir.HandleFunc(url+"/", h)
 	}
+	r.HandleFunc("/", rootHandler)
+	r.HandleFunc("/static/{folder}/{name}", diskAssetHandler)
 	srv.Handler = r
 }

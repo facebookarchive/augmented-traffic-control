@@ -32,7 +32,7 @@ func parseArgs() Args {
 	// Letters here mostly chosen arbitrarily
 	db_driver := flag.String("D", "sqlite3", "database driver")
 	// fixme change to actual file
-	db_connstr := flag.String("Q", ":memory:", "database driver connection parameters")
+	db_connstr := flag.String("Q", "atcd.db", "database driver connection parameters")
 	thrift_addr := flag.String("B", "127.0.0.1:9090", "bind address for the thrift server")
 	insecure := flag.Bool("I", false, "disable secure mode")
 

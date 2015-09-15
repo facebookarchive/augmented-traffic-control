@@ -60,7 +60,9 @@ func ErrorHandler(f errorFunc) http.HandlerFunc {
 		}()
 		err := f(w, r)
 		if err != nil && err != NoStatus {
-			log.Printf("Error: %v\n", err)
+			if err.Status() != http.StatusNotFound {
+				log.Printf("Error: %v\n", err)
+			}
 			writeError(w, err)
 		}
 	}

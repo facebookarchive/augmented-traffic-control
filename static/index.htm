@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2014, Facebook, Inc.
+All rights reserved.
+
+This source code is licensed under the BSD-style license found in the
+LICENSE file in the root directory of this source tree. An additional grant
+of patent rights can be found in the PATENTS file in the same directory.
+-->
+<html lang="en">
+  <head>
+    <title>ATC</title>
+    <meta charset="utf-8" />
+    <meta name="description" content="Augmented Traffic Control" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="icon" href="/static/images/favicon.png" type="image/x-icon">
+
+    <!-- React.js -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/es5-shim/2.2.0/es5-shim.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/es5-shim/2.2.0/es5-sham.min.js"></script>
+    <script src="//fb.me/react-0.13.3.min.js"></script>
+    <script src="//fb.me/JSXTransformer-0.13.3.js"></script>
+    <script src="/static/js/minivents.js"></script>
+
+    <script type="text/jsx" src="/static/js/api.js"></script>
+    <script type="text/jsx" src="/static/js/group.js"></script>
+    <script type="text/jsx" src="/static/js/utils.js"></script>
+    <script type="text/jsx" src="/static/js/shaping.js"></script>
+    <script type="text/jsx" src="/static/js/atc.js"></script>
+    <script type="text/jsx" src="/static/js/server.js"></script>
+
+    <link rel="stylesheet" href="/static/css/atc.css" />
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="//getbootstrap.com/dist/css/bootstrap.min.css" type="text/css" />
+    <script type="text/javascript" src="//getbootstrap.com/dist/js/bootstrap.min.js"></script>
+
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+        <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="starter-template">
+        <h1>Augmented Traffic Control</h1>
+        <div id="atc_demo_ui" />
+        <script type="text/jsx">
+          React.render(
+            <Atc endpoint={{.ApiUrl}}/>,
+            document.getElementById('atc_demo_ui')
+          );
+        </script>
+      </div>
+    </div>
+  </body>
+</html>
+

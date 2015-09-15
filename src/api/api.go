@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -10,21 +11,16 @@ import (
 )
 
 var (
-	URL_MAP = map[string]map[string]HandlerFunc{
-		"/": {
-			"/": RedirectHandler("/api/v1/shape"),
-		},
-		"/api/v1": {
-			"/":                 RedirectHandler("/api/v1/shape"),
-			"/info":             InfoHandler,
-			"/group":            GroupsHandler,
-			"/group/{id}":       GroupHandler,
-			"/group/{id}/join":  GroupJoinHandler,
-			"/group/{id}/leave": GroupLeaveHandler,
-			"/group/{id}/token": GroupTokenHandler,
-			"/group/{id}/shape": GroupShapeHandler,
-			"/shape":            ShapeHandler,
-		},
+	API_URL_MAP = map[string]HandlerFunc{
+		"/":                 RedirectHandler(ServerData.ApiUrl + "shape"),
+		"/info":             InfoHandler,
+		"/group":            GroupsHandler,
+		"/group/{id}":       GroupHandler,
+		"/group/{id}/join":  GroupJoinHandler,
+		"/group/{id}/leave": GroupLeaveHandler,
+		"/group/{id}/token": GroupTokenHandler,
+		"/group/{id}/shape": GroupShapeHandler,
+		"/shape":            ShapeHandler,
 	}
 )
 
@@ -51,14 +47,24 @@ func InfoHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (
 }
 
 func GroupsHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	if r.Method != "POST" {
+	switch r.Method {
+	case "POST":
+		grp, err := atcd.CreateGroup(GetClientAddr(r))
+		if err != nil {
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not create group: %v", err)
+		}
+		return grp, nil
+	case "GET":
+		addr := GetClientAddr(r)
+		group, err := atcd.GetGroupWith(addr)
+		if err != nil {
+			return nil, HttpErrorf(http.StatusNotFound, "No group found")
+		}
+		return group, nil
+	default:
 		return nil, InvalidMethod
 	}
-	grp, err := atcd.CreateGroup(GetClientAddr(r))
-	if err != nil {
-		return nil, HttpErrorf(http.StatusBadGateway, "Could not create group: %v", err)
-	}
-	return grp, nil
+
 }
 
 func GroupHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
@@ -198,41 +204,81 @@ func GroupShapeHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Requ
 }
 
 func ShapeHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	switch r.Method {
+	case "GET":
+		return getSimpleShaping(atcd, w, r)
+	case "POST":
+		return createSimpleShaping(atcd, w, r)
+	case "DELETE":
+		return deleteSimpleShaping(atcd, w, r)
+	default:
+		return nil, InvalidMethod
+	}
+}
+
+func getSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
 	addr := GetClientAddr(r)
 	group, err := atcd.GetGroupWith(addr)
 	if err != nil {
 		return nil, HttpErrorf(http.StatusNotFound, "Address not being shaped")
 	}
-	switch r.Method {
-	case "GET":
-		return GroupShaping{
-			Id:      group.Id,
-			Shaping: group.Shaping,
-		}, nil
-	case "POST":
-		req_info := &TokenShaping{}
-		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
-			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
-		}
-		setting, err := atcd.ShapeGroup(group.Id, req_info.Shaping, req_info.Token)
+	return GroupShaping{
+		Id:      group.Id,
+		Shaping: group.Shaping,
+	}, nil
+}
+
+func createSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	addr := GetClientAddr(r)
+	group, err := atcd.GetGroupWith(addr)
+	if err != nil {
+		group, err = atcd.CreateGroup(addr)
 		if err != nil {
-			return nil, HttpErrorf(http.StatusBadGateway, "Could not shape: %v", err)
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not create group: %v", err)
 		}
-		return GroupShaping{
-			Id:      group.Id,
-			Shaping: setting,
-		}, nil
-	case "DELETE":
-		req_info := &Token{}
-		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
-			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
-		}
-		err = atcd.UnshapeGroup(group.Id, req_info.Token)
-		if err != nil {
-			return nil, HttpErrorf(http.StatusBadGateway, "Could not delete shaping from atcd: %v", err)
-		}
-		return nil, nil
-	default:
-		return nil, InvalidMethod
 	}
+	req_info := &TokenShaping{}
+	if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
+		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
+	}
+	// This is allowed since the requestor is shaping their own device!
+	if req_info.Token == "" {
+		req_info.Token, err = atcd.GetGroupToken(group.Id)
+		if err != nil {
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not get token from daemon: %v", err)
+		}
+	}
+	setting, err := atcd.ShapeGroup(group.Id, req_info.Shaping, req_info.Token)
+	if err != nil {
+		return nil, HttpErrorf(http.StatusBadGateway, "Could not shape: %v", err)
+	}
+	return GroupShaping{
+		Id:      group.Id,
+		Shaping: setting,
+	}, nil
+}
+
+func deleteSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	addr := GetClientAddr(r)
+	group, err := atcd.GetGroupWith(addr)
+	if err != nil {
+		return nil, HttpErrorf(http.StatusNotFound, "Address not being shaped")
+	}
+	req_info := &Token{}
+	err = json.NewDecoder(r.Body).Decode(req_info)
+	if !(err == nil || err == io.EOF) {
+		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
+	}
+	// This is allowed since the requestor is shaping their own device!
+	if req_info.Token == "" {
+		req_info.Token, err = atcd.GetGroupToken(group.Id)
+		if err != nil {
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not get token from daemon: %v", err)
+		}
+	}
+	err = atcd.UnshapeGroup(group.Id, req_info.Token)
+	if err != nil {
+		return nil, HttpErrorf(http.StatusBadGateway, "Could not delete shaping from atcd: %v", err)
+	}
+	return nil, nil
 }
