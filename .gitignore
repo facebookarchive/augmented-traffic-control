@@ -38,3 +38,4 @@ internal
 .kitchen/
 /bin/
 *.db
+src/api/bindata.go
