@@ -106,8 +106,13 @@ func NewDbRunner(driver, connstr string) (*DbRunner, error) {
 }
 
 func (runner *DbRunner) Close() {
-	//log.Println("DB: Closing database")
-	runner.mutex.Lock()
+	runner.close(true)
+}
+
+func (runner *DbRunner) close(lock bool) {
+	if lock {
+		runner.mutex.Lock()
+	}
 	// Don't unlock the mutex again
 	for _, stmt := range runner.prepared {
 		stmt.Close()
