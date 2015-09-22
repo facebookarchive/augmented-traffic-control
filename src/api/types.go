@@ -4,6 +4,7 @@ import (
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 )
 
+// Used for server info request
 type ServerInfo struct {
 	Api  APIInfo    `json:"atc_api"`
 	Atcd DaemonInfo `json:"atc_daemon"`
@@ -21,11 +22,6 @@ type DaemonInfo struct {
 type GroupToken struct {
 	Token string `json:"token"`
 	Id    int64  `json:"id"`
-}
-
-// used for group creation request
-type MemberRequest struct {
-	Member string `json:"member"`
 }
 
 // used for join and leave responses

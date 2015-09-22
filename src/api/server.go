@@ -26,7 +26,7 @@ type Server struct {
 	Timeout      time.Duration
 	Handler      http.Handler
 	listener     net.Listener
-	Atcd         *AtcdConn
+	Atcd         AtcdCloser
 	thrift_proto string
 	thrift_addr  string
 }
@@ -39,6 +39,7 @@ func ListenAndServe(addr, thrift_addr, thrift_proto string) (*Server, error) {
 		Timeout:      TIMEOUT,
 		thrift_addr:  thrift_addr,
 		thrift_proto: thrift_proto,
+		Atcd:         nil,
 	}
 	srv.setupHandlers()
 	err := srv.ListenAndServe()
@@ -48,7 +49,7 @@ func ListenAndServe(addr, thrift_addr, thrift_proto string) (*Server, error) {
 	return srv, nil
 }
 
-func (srv *Server) GetAtcd() (*AtcdConn, HttpError) {
+func (srv *Server) GetAtcd() (AtcdCloser, HttpError) {
 	if srv.Atcd != nil {
 		return srv.Atcd, nil
 	}
@@ -98,4 +99,8 @@ func (srv *Server) setupHandlers() {
 	r.HandleFunc("/", rootHandler)
 	r.HandleFunc("/static/{folder}/{name}", diskAssetHandler)
 	srv.Handler = r
+}
+
+func (srv *Server) GetAddr() string {
+	return srv.listener.Addr().String()
 }

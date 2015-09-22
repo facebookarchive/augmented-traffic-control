@@ -21,6 +21,11 @@ func getThriftProtocol(thrift_proto string) (thrift.TProtocolFactory, error) {
 	return f, nil
 }
 
+type AtcdCloser interface {
+	atc_thrift.Atcd
+	Close()
+}
+
 type AtcdConn struct {
 	*atc_thrift.AtcdClient
 	xport        thrift.TTransport

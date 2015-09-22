@@ -188,7 +188,6 @@ func (atcd *Atcd) verify(group *DbGroup, token string) bool {
 		Secret:         fmt.Sprintf("%s::%d", group.secret, group.id),
 		IsBase32Secret: true,
 	}
-	log.Printf("Expected != Actual: %q != %q\n", atcd.token(group), token)
 	return t.Verify(token)
 }
 

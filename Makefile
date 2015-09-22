@@ -8,21 +8,21 @@ TEST = go test -v
 BUILD = go build
 VET = @go vet
 FMT = @go fmt
-BINGEN = go-bindata
+BINGEN = go-bindata # https://github.com/jteeuwen/go-bindata
 THRIFT = thrift
 
 STATIC_FILES = $(shell find static/ -print)
 
 .PHONY: all
-all: init bin/atcd bin/atc_api
+all: bin/atcd bin/atc_api
 
-bin/atcd: src/atc_thrift src/daemon/*.go src/atcd/*.go
+bin/atcd: bin src/atc_thrift src/daemon/*.go src/atcd/*.go
 	$(FMT) ${SRC}/daemon ${SRC}/atcd
 	$(VET) ${SRC}/daemon ${SRC}/atcd
 	$(TEST) ${SRC}/daemon ${SRC}/atcd
 	$(BUILD) -o $@ ${SRC}/atcd
 
-bin/atc_api: src/atc_thrift src/api/*.go src/atc_api/*.go
+bin/atc_api: bin src/atc_thrift src/api/*.go src/atc_api/*.go
 	$(FMT) ${SRC}/api ${SRC}/atc_api
 	$(VET) ${SRC}/api ${SRC}/atc_api
 	$(TEST) ${SRC}/api ${SRC}/atc_api
@@ -35,11 +35,8 @@ src/api/bindata.go: $(STATIC_FILES)
 src/atc_thrift: if/atc_thrift.thrift
 	$(THRIFT) --out src/ --gen go if/atc_thrift.thrift
 
-.PHONY: init
-init:
+bin:
 	mkdir -p bin/
-	mkdir -p ${GOPATH}/src/${PROJECT}
-	[ -h ${GOPATH}/src/${SRC} ] || ln -s $(shell pwd)/src ${GOPATH}/src/${SRC}
 
 .PHONY: clean
 clean:

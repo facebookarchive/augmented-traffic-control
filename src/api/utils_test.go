@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -12,30 +13,8 @@ func init() {
 	PANIC_STACK = false
 }
 
-/*
-Fake http.ResponseWriter to pass into tests. Saves any data written in the
-http response, and the status code. Disregardes headers
-*/
-type fakeHttpWriter struct {
-	status int
-	buf    bytes.Buffer
-}
-
-func FakeResponse() *fakeHttpWriter {
-	return &fakeHttpWriter{}
-}
-
-func (w *fakeHttpWriter) Header() http.Header {
-	// can't return nil since it might be used
-	return http.Header{}
-}
-
-func (w *fakeHttpWriter) Write(b []byte) (int, error) {
-	return w.buf.Write(b)
-}
-
-func (w *fakeHttpWriter) WriteHeader(status int) {
-	w.status = status
+func FakeResponse() *httptest.ResponseRecorder {
+	return httptest.NewRecorder()
 }
 
 /*
@@ -62,16 +41,16 @@ func TestHandlesReturnedError(t *testing.T) {
 		return HttpErrorf(status_code, message)
 	}
 	err_handler := ErrorHandler(real_handler)
-	w := FakeResponse()
+	w := httptest.NewRecorder()
 	err_handler(w, nil)
 
 	// check status code is set
-	if w.status != status_code {
-		t.Errorf("Expected status code %v != %v", status_code, w.status)
+	if w.Code != status_code {
+		t.Errorf("Expected status code %v != %v", status_code, w.Code)
 	}
 
 	// check message is set
-	actual_message := strings.TrimSpace(w.buf.String())
+	actual_message := strings.TrimSpace(w.Body.String())
 	if actual_message != message {
 		t.Errorf("Expected error message %q != %q", message, actual_message)
 	}
@@ -86,12 +65,12 @@ func TestHandlesThrownError(t *testing.T) {
 	err_handler(w, nil)
 
 	// check status code is set
-	if w.status != ServerError.Status() {
-		t.Errorf("Expected status code %v != %v", ServerError.Status(), w.status)
+	if w.Code != ServerError.Status() {
+		t.Errorf("Expected status code %v != %v", ServerError.Status(), w.Code)
 	}
 
 	// check message is set
-	actual_message := strings.TrimSpace(w.buf.String())
+	actual_message := strings.TrimSpace(w.Body.String())
 	if actual_message != ServerError.Error() {
 		t.Errorf("Expected error message %q != %q", ServerError.Error(), actual_message)
 	}

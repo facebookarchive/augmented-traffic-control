@@ -41,7 +41,7 @@ type fake_atcd struct {
 	groups map[int64]*atc_thrift.ShapingGroup
 }
 
-func NewFakeAtcd() atc_thrift.Atcd {
+func NewFakeAtcd() *fake_atcd {
 	atcd := &fake_atcd{
 		nextId: 16,
 		groups: make(map[int64]*atc_thrift.ShapingGroup),
@@ -53,7 +53,7 @@ func NewFakeAtcd() atc_thrift.Atcd {
 func (atcd *fake_atcd) GetAtcdInfo() (*atc_thrift.AtcdInfo, error) {
 	info := &atc_thrift.AtcdInfo{
 		Platform: atc_thrift.PlatformType_LINUX,
-		Version:  "1.0-fake",
+		Version:  "2.0-gostub",
 	}
 	return info, nil
 }
@@ -169,4 +169,10 @@ func (atcd *fake_atcd) UnshapeGroup(id int64, token string) error {
 	}
 	grp.Shaping = nil
 	return nil
+}
+
+// This is a convenience method for allowing us to use a *fake_atcd as an
+// Atcd client connection
+func (atcd *fake_atcd) Close() {
+	// Do nothing
 }

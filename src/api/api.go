@@ -21,6 +21,8 @@ var (
 		"/group/{id}/token": GroupTokenHandler,
 		"/group/{id}/shape": GroupShapeHandler,
 		"/shape":            ShapeHandler,
+		"/profile":          ProfilesHandler,
+		"/profile/{id}":     ProfileHandler,
 	}
 )
 
@@ -64,7 +66,6 @@ func GroupsHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request)
 	default:
 		return nil, InvalidMethod
 	}
-
 }
 
 func GroupHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
@@ -281,4 +282,12 @@ func deleteSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Re
 		return nil, HttpErrorf(http.StatusBadGateway, "Could not delete shaping from atcd: %v", err)
 	}
 	return nil, nil
+}
+
+func ProfilesHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	return nil, HttpErrorf(http.StatusNotImplemented, "Unimplemented")
+}
+
+func ProfileHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	return nil, HttpErrorf(http.StatusNotImplemented, "Unimplemented")
 }
