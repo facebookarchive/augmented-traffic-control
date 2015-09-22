@@ -27,13 +27,14 @@ var (
 )
 
 func RedirectHandler(url string) HandlerFunc {
-	return func(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	return func(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
 		http.Redirect(w, r, url, http.StatusFound)
 		return nil, NoStatus
 	}
 }
 
-func InfoHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+func InfoHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	atcd := GetAtcd(r)
 	daemon_info, err := atcd.GetAtcdInfo()
 	if err != nil {
 		return nil, HttpErrorf(http.StatusBadGateway, "Could not communicate with ATC Daemon: %v", err)
@@ -48,7 +49,8 @@ func InfoHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (
 	return info, nil
 }
 
-func GroupsHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+func GroupsHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	atcd := GetAtcd(r)
 	switch r.Method {
 	case "POST":
 		grp, err := atcd.CreateGroup(GetClientAddr(r))
@@ -68,7 +70,8 @@ func GroupsHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func GroupHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+func GroupHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	atcd := GetAtcd(r)
 	if r.Method != "GET" {
 		return nil, InvalidMethod
 	}
@@ -86,7 +89,8 @@ func GroupHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) 
 	return group, nil
 }
 
-func GroupJoinHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+func GroupJoinHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	atcd := GetAtcd(r)
 	if r.Method != "POST" {
 		return nil, InvalidMethod
 	}
@@ -109,7 +113,8 @@ func GroupJoinHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Reque
 	}, nil
 }
 
-func GroupLeaveHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+func GroupLeaveHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	atcd := GetAtcd(r)
 	if r.Method != "POST" {
 		return nil, InvalidMethod
 	}
@@ -132,7 +137,8 @@ func GroupLeaveHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Requ
 	}, nil
 }
 
-func GroupTokenHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+func GroupTokenHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	atcd := GetAtcd(r)
 	if r.Method != "GET" {
 		return nil, InvalidMethod
 	}
@@ -161,7 +167,8 @@ func GroupTokenHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Requ
 	}, nil
 }
 
-func GroupShapeHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+func GroupShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	atcd := GetAtcd(r)
 	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
 		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
@@ -204,7 +211,8 @@ func GroupShapeHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func ShapeHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+func ShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	atcd := GetAtcd(r)
 	switch r.Method {
 	case "GET":
 		return getSimpleShaping(atcd, w, r)
@@ -284,10 +292,48 @@ func deleteSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Re
 	return nil, nil
 }
 
-func ProfilesHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	return nil, HttpErrorf(http.StatusNotImplemented, "Unimplemented")
+func ProfilesHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	db := GetDB(r)
+	switch r.Method {
+	case "GET":
+		profiles := <-db.GetProfiles()
+		if profiles == nil {
+			return nil, HttpErrorf(http.StatusInternalServerError, "Couldn't load profiles from database")
+		}
+		return Profiles{profiles}, nil
+	case "POST":
+		var p ProfileRequest
+		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
+		}
+		if p.Name == "" {
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Mandatory field 'name' not provided")
+		} else if p.Settings == nil {
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Mandatory field 'settings' not provided")
+		}
+		prof := <-db.UpdateProfile(Profile{
+			Id:       -1,
+			Name:     p.Name,
+			Settings: p.Settings,
+		})
+		if prof == nil {
+			return nil, HttpErrorf(http.StatusInternalServerError, "Couldn't save profile to database")
+		}
+		return prof, nil
+	default:
+		return nil, InvalidMethod
+	}
 }
 
-func ProfileHandler(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	return nil, HttpErrorf(http.StatusNotImplemented, "Unimplemented")
+func ProfileHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	if r.Method != "DELETE" {
+		return nil, InvalidMethod
+	}
+	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+	if err != nil {
+		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+	}
+	db := GetDB(r)
+	db.DeleteProfile(id)
+	return nil, nil
 }

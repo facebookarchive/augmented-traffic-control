@@ -33,7 +33,7 @@ func TestDBInsertsProfile(t *testing.T) {
 	}
 	defer db.Close()
 
-	profile, err := db.updateProfile(DbProfile{
+	profile, err := db.updateProfile(Profile{
 		Name:     "sample-profile",
 		Settings: FakeShaping,
 	})
@@ -55,10 +55,10 @@ func TestDBGetsProfiles(t *testing.T) {
 	}
 	defer db.Close()
 
-	if _, err := db.updateProfile(DbProfile{Name: "sample-profile", Settings: FakeShaping}); err != nil {
+	if _, err := db.updateProfile(Profile{Name: "sample-profile", Settings: FakeShaping}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.updateProfile(DbProfile{Name: "fake-profile", Settings: FakeShaping}); err != nil {
+	if _, err := db.updateProfile(Profile{Name: "fake-profile", Settings: FakeShaping}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -96,12 +96,12 @@ func TestDBDeletesProfiles(t *testing.T) {
 	defer db.Close()
 
 	var (
-		profile *DbProfile
+		profile *Profile
 	)
-	if _, err := db.updateProfile(DbProfile{Name: "sample-profile", Settings: FakeShaping}); err != nil {
+	if _, err := db.updateProfile(Profile{Name: "sample-profile", Settings: FakeShaping}); err != nil {
 		t.Fatal(err)
 	}
-	if profile, err = db.updateProfile(DbProfile{Name: "fake-profile", Settings: FakeShaping}); err != nil {
+	if profile, err = db.updateProfile(Profile{Name: "fake-profile", Settings: FakeShaping}); err != nil {
 		t.Fatal(err)
 	}
 

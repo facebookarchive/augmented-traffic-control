@@ -93,7 +93,6 @@ func TestJoinsGroup(t *testing.T) {
 	var token Token
 	cli1.GetJson(1, &token, url("group", group.Id, "token"))
 
-	// cli2 attempts to join group
 	var resp MemberResponse
 	cli2.PostJson(1, token, &resp, url("group", group.Id, "join"))
 
@@ -109,7 +108,116 @@ func TestJoinsGroup(t *testing.T) {
 	checkSetContains(t, group.Members, Addr1, Addr2)
 }
 
-func TestGetsProfiles(t *testing.T) {}
+func TestLeavesGroup(t *testing.T) {
+	srv := newTestServer(t)
+	defer srv.Cleanup()
+	cli1 := srv.client(Addr1)
+	cli2 := srv.client(Addr2)
+
+	var group atc_thrift.ShapingGroup
+	cli1.PostJson(1, nil, &group, "/group")
+	var token Token
+	cli1.GetJson(1, &token, url("group", group.Id, "token"))
+
+	var resp MemberResponse
+	cli2.PostJson(1, token, &resp, url("group", group.Id, "join"))
+
+	cli2.PostJson(1, token, &resp, url("group", group.Id, "leave"))
+
+	if resp.Member != Addr2 {
+		t.Errorf("Invalid member: %q != %q", Addr2, resp.Member)
+	}
+	if resp.Id != group.Id {
+		t.Errorf("Invalid group ID: %d != %d", group.Id, resp.Id)
+	}
+
+	cli1.GetJson(1, &group, url("group", group.Id))
+
+	checkSetContains(t, group.Members, Addr1)
+
+}
+
+func TestCreatesProfile(t *testing.T) {
+	srv := newTestServer(t)
+	defer srv.Cleanup()
+	cli1 := srv.client(Addr1)
+
+	req := ProfileRequest{
+		Name: "asdf",
+		Settings: &atc_thrift.Setting{
+			Down: &atc_thrift.Shaping{
+				Rate: 64,
+			},
+			Up: &atc_thrift.Shaping{
+				Rate: 32,
+			},
+		},
+	}
+	var resp Profile
+	cli1.PostJson(1, req, &resp, "/profile")
+
+	if resp.Id <= 0 {
+		t.Error("Wrong profile id:", resp.Id)
+	}
+	if resp.Settings.Down.Rate != 64 {
+		t.Error("Wrong profile down rate:", resp.Settings.Down.Rate)
+	}
+}
+
+func TestGetsProfiles(t *testing.T) {
+	srv := newTestServer(t)
+	defer srv.Cleanup()
+	cli := srv.client(Addr1)
+
+	cli.PostJson(1, ProfileRequest{Name: "foo", Settings: &atc_thrift.Setting{}}, nil, "/profile")
+	cli.PostJson(1, ProfileRequest{Name: "bar", Settings: &atc_thrift.Setting{}}, nil, "/profile")
+
+	var profiles Profiles
+	cli.GetJson(1, &profiles, "/profile")
+
+	if len(profiles.Profiles) != 2 {
+		t.Error("Wrong number of profiles:", len(profiles.Profiles))
+	}
+	set := make(map[string]struct{})
+	for _, prof := range profiles.Profiles {
+		set[prof.Name] = struct{}{}
+	}
+	if _, ok := set["foo"]; !ok {
+		t.Errorf("Profile wasn't returned: foo")
+	}
+	if _, ok := set["bar"]; !ok {
+		t.Errorf("Profile wasn't returned: bar")
+	}
+}
+
+func TestDeletesProfiles(t *testing.T) {
+	srv := newTestServer(t)
+	defer srv.Cleanup()
+	cli := srv.client(Addr1)
+
+	cli.PostJson(1, ProfileRequest{Name: "foo", Settings: &atc_thrift.Setting{}}, nil, "/profile")
+	var profile Profile
+	cli.PostJson(1, ProfileRequest{Name: "bar", Settings: &atc_thrift.Setting{}}, &profile, "/profile")
+
+	cli.Delete(1, url("profile", profile.Id))
+
+	var profiles Profiles
+	cli.GetJson(1, &profiles, "/profile")
+
+	if len(profiles.Profiles) != 1 {
+		t.Error("Wrong number of profiles:", len(profiles.Profiles))
+	}
+	set := make(map[string]struct{})
+	for _, prof := range profiles.Profiles {
+		set[prof.Name] = struct{}{}
+	}
+	if _, ok := set["foo"]; !ok {
+		t.Errorf("Profile wasn't returned: foo")
+	}
+	if _, ok := set["bar"]; ok {
+		t.Errorf("Profile wasn't deleted: bar")
+	}
+}
 
 /**
 *** Utilities
@@ -121,7 +229,7 @@ type testServer struct {
 }
 
 func newTestServer(t *testing.T) testServer {
-	srv, err := ListenAndServe(net.JoinHostPort(ServerAddr, "0"), "", "")
+	srv, err := ListenAndServe(net.JoinHostPort(ServerAddr, "0"), "", "", "sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,6 +268,21 @@ func (c testClient) Get(version int, url string) *http.Response {
 		url = "/" + url
 	}
 	resp, err := http.Get(fmt.Sprintf("http://%s/api/v%d%s", c.addr, version, url))
+	if err != nil {
+		c.t.Fatalf("Couldn't fetch url %q: %v", url, err)
+	}
+	return resp
+}
+
+func (c testClient) Delete(version int, url string) *http.Response {
+	if url[0] != '/' {
+		url = "/" + url
+	}
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("http://%s/api/v%d%s", c.addr, version, url), &bytes.Buffer{})
+	if err != nil {
+		c.t.Fatalf("Couldn't fetch url %q: %v", url, err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		c.t.Fatalf("Couldn't fetch url %q: %v", url, err)
 	}

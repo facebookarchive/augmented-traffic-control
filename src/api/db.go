@@ -29,12 +29,6 @@ var (
 	}
 )
 
-type DbProfile struct {
-	Id       int64               `json:"id"`
-	Name     string              `json:"name"`
-	Settings *atc_thrift.Setting `json:"settings"`
-}
-
 type DbRunner struct {
 	db              *sql.DB
 	mutex           *sync.RWMutex
@@ -103,8 +97,21 @@ func (runner *DbRunner) close(lock bool) {
 *** Porcelain (public)
 **/
 
-func (runner *DbRunner) GetProfiles() chan []DbProfile {
-	result := make(chan []DbProfile)
+func (runner *DbRunner) UpdateProfile(profile Profile) chan *Profile {
+	result := make(chan *Profile)
+	go func() {
+		defer close(result)
+		profile, err := runner.updateProfile(profile)
+		if err == nil {
+			result <- profile
+		}
+		runner.log(err)
+	}()
+	return result
+}
+
+func (runner *DbRunner) GetProfiles() chan []Profile {
+	result := make(chan []Profile)
 	go func() {
 		defer close(result)
 		profiles, err := runner.getProfiles()
@@ -155,24 +162,22 @@ func (runner *DbRunner) nextProfileId() (int64, error) {
 	return *id + 1, nil
 }
 
-func (runner *DbRunner) updateProfile(profile DbProfile) (*DbProfile, error) {
+func (runner *DbRunner) updateProfile(profile Profile) (*Profile, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	var err error
-	if profile.Id == 0 {
+	if profile.Id <= 0 {
 		profile.Id, err = runner.nextProfileId()
 		if err != nil {
 			return nil, err
 		}
 	}
 	var settings_bytes []byte = nil
-	if profile.Settings != nil {
-		buf := &bytes.Buffer{}
-		if err := json.NewEncoder(buf).Encode(profile.Settings); err != nil {
-			return nil, err
-		}
-		settings_bytes = buf.Bytes()
+	buf := &bytes.Buffer{}
+	if err := json.NewEncoder(buf).Encode(profile.Settings); err != nil {
+		return nil, err
 	}
+	settings_bytes = buf.Bytes()
 	_, err = runner.prep("profile update").Exec(profile.Id, profile.Name, settings_bytes)
 	if err != nil {
 		return nil, err
@@ -180,7 +185,7 @@ func (runner *DbRunner) updateProfile(profile DbProfile) (*DbProfile, error) {
 	return &profile, nil
 }
 
-func (runner *DbRunner) getProfiles() ([]DbProfile, error) {
+func (runner *DbRunner) getProfiles() ([]Profile, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	rows, err := runner.prep("profiles").Query()
@@ -188,7 +193,7 @@ func (runner *DbRunner) getProfiles() ([]DbProfile, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	profiles := make([]DbProfile, 0, 100)
+	profiles := make([]Profile, 0, 100)
 	for rows.Next() {
 		profile, err := scanProfile(rows)
 		if err != nil {
@@ -214,7 +219,7 @@ type scanner interface {
 	Scan(...interface{}) error
 }
 
-func scanProfile(sc scanner) (*DbProfile, error) {
+func scanProfile(sc scanner) (*Profile, error) {
 	var (
 		id             int64
 		name           string
@@ -231,7 +236,7 @@ func scanProfile(sc scanner) (*DbProfile, error) {
 			return nil, err
 		}
 	}
-	return &DbProfile{
+	return &Profile{
 		Id:       id,
 		Name:     name,
 		Settings: shape,

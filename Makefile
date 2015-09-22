@@ -14,15 +14,15 @@ THRIFT = thrift
 STATIC_FILES = $(shell find static/ -print)
 
 .PHONY: all
-all: bin/atcd bin/atc_api
+all: bin bin/atcd bin/atc_api
 
-bin/atcd: bin src/atc_thrift src/daemon/*.go src/atcd/*.go
+bin/atcd: src/atc_thrift src/daemon/*.go src/atcd/*.go
 	$(FMT) ${SRC}/daemon ${SRC}/atcd
 	$(VET) ${SRC}/daemon ${SRC}/atcd
 	$(TEST) ${SRC}/daemon ${SRC}/atcd
 	$(BUILD) -o $@ ${SRC}/atcd
 
-bin/atc_api: bin src/atc_thrift src/api/*.go src/atc_api/*.go
+bin/atc_api: src/atc_thrift src/api/*.go src/atc_api/*.go
 	$(FMT) ${SRC}/api ${SRC}/atc_api
 	$(VET) ${SRC}/api ${SRC}/atc_api
 	$(TEST) ${SRC}/api ${SRC}/atc_api

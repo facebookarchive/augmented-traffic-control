@@ -9,6 +9,7 @@ import (
 	"runtime/debug"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"github.com/gorilla/context"
 )
 
 var (
@@ -17,28 +18,58 @@ var (
 	PANIC_STACK = true
 )
 
+type context_key int
+
+const (
+	db_context_key context_key = iota
+	srv_context_key
+	atcd_context_key
+)
+
+// Context functions to retrieve context from requests
+func GetAtcd(r *http.Request) atc_thrift.Atcd {
+	if rv := context.Get(r, atcd_context_key); rv != nil {
+		return rv.(atc_thrift.Atcd)
+	}
+	return nil
+}
+
+func GetServer(r *http.Request) *Server {
+	if rv := context.Get(r, srv_context_key); rv != nil {
+		return rv.(*Server)
+	}
+	return nil
+}
+
+func GetDB(r *http.Request) *DbRunner {
+	if rv := context.Get(r, db_context_key); rv != nil {
+		return rv.(*DbRunner)
+	}
+	return nil
+}
+
 // Write new HTTP handlers using this type.
-type HandlerFunc func(atc_thrift.Atcd, http.ResponseWriter, *http.Request) (interface{}, HttpError)
+type HandlerFunc func(http.ResponseWriter, *http.Request) (interface{}, HttpError)
 
 // internal to this file:
-type jsonFunc func(http.ResponseWriter, *http.Request) (interface{}, HttpError)
 type errorFunc func(http.ResponseWriter, *http.Request) HttpError
 
 func NewHandler(srv *Server, f HandlerFunc) http.HandlerFunc {
-	return ErrorHandler(JsonHandler(AtcdHandler(f, srv)))
+	return ErrorHandler(ContextHandler(srv, JsonHandler(f)))
 }
 
-/*
-Http handler that adds atcd connection management
-*/
-func AtcdHandler(f HandlerFunc, srv *Server) jsonFunc {
-	return func(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+// Http handler to set context data for requests.
+func ContextHandler(srv *Server, f errorFunc) errorFunc {
+	return func(w http.ResponseWriter, r *http.Request) HttpError {
 		atcd, err := srv.GetAtcd()
 		if err != nil {
-			return nil, err
+			return err
 		}
 		defer atcd.Close()
-		return f(atcd, w, r)
+		context.Set(r, atcd_context_key, atcd)
+		context.Set(r, db_context_key, srv.db)
+		context.Set(r, srv_context_key, srv)
+		return f(w, r)
 	}
 }
 
@@ -47,7 +78,6 @@ Http handler that adds better error handling.
 */
 func ErrorHandler(f errorFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// FIXME: error logging
 		defer func() {
 			e := recover()
 			if e != nil {
@@ -76,7 +106,7 @@ func writeError(w http.ResponseWriter, e HttpError) {
 /*
 Http handler that adds JSON serialization of returned data.
 */
-func JsonHandler(f jsonFunc) errorFunc {
+func JsonHandler(f HandlerFunc) errorFunc {
 	return func(w http.ResponseWriter, r *http.Request) HttpError {
 		v, err := f(w, r)
 		if err != nil {

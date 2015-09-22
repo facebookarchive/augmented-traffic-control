@@ -47,3 +47,21 @@ type GroupShaping struct {
 	Id      int64               `json:"id"`
 	Shaping *atc_thrift.Setting `json:"shaping"`
 }
+
+// used by profile creation request
+type ProfileRequest struct {
+	Name     string              `json:"name"`
+	Settings *atc_thrift.Setting `json:"settings"`
+}
+
+// used by profile creation response
+type Profile struct {
+	Id       int64               `json:"id"`
+	Name     string              `json:"name"`
+	Settings *atc_thrift.Setting `json:"settings"`
+}
+
+// used by profile index response
+type Profiles struct {
+	Profiles []Profile `json:"profiles"`
+}

@@ -27,11 +27,16 @@ type Server struct {
 	Handler      http.Handler
 	listener     net.Listener
 	Atcd         AtcdCloser
+	db           *DbRunner
 	thrift_proto string
 	thrift_addr  string
 }
 
-func ListenAndServe(addr, thrift_addr, thrift_proto string) (*Server, error) {
+func ListenAndServe(addr, thrift_addr, thrift_proto, dbdriver, dbconn string) (*Server, error) {
+	db, err := NewDbRunner(dbdriver, dbconn)
+	if err != nil {
+		return nil, err
+	}
 	srv := &Server{
 		Addr:         addr,
 		listener:     nil,
@@ -40,9 +45,10 @@ func ListenAndServe(addr, thrift_addr, thrift_proto string) (*Server, error) {
 		thrift_addr:  thrift_addr,
 		thrift_proto: thrift_proto,
 		Atcd:         nil,
+		db:           db,
 	}
 	srv.setupHandlers()
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +81,7 @@ func (srv *Server) Kill() {
 		// Ignore error
 		srv.listener.Close()
 		srv.listener = nil
+		srv.db.Close()
 	}
 }
 
