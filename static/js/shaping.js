@@ -8,6 +8,94 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
+var ProfilePanel = React.createClass({
+  getInitialState: function() {
+    return {
+      profiles: null,
+      profile_name: "",
+    };
+  },
+
+  componentDidMount: function() {
+    this.updateProfiles();
+    this.update_interval = setInterval(this.updateProfiles, 10000);
+  },
+
+  componentWillUnmount: function() {
+    clearInterval(this.update_interval);
+  },
+
+  updateProfiles: function() {
+    this.props.client.getProfiles(function (rc) {
+      if (rc.status == 200) {
+        this.setState({
+          profiles: rc.json.profiles,
+        });
+      }
+    }.bind(this));
+  },
+
+  updateProfileName: function(ev) {
+    this.setState({profile_name: ev.target.value});
+  },
+
+  saveNewAsProfile: function() {
+    this.props.client.createProfile(
+      {name:this.state.profile_name, settings:this.props.parent.state.potential.shaping},
+      function(rc) {
+        if (rc.status == 200) {
+          this.updateProfiles();
+        }
+      }.bind(this)
+    );
+  },
+
+  selectProfile: function(ev) {
+    profile = this.state.profiles[ev.target.selectedIndex];
+    this.props.parent.setPotential(profile.settings);
+  },
+
+  render: function() {
+    var profilesDisabled = "true";
+    var profiles = false;
+    if (this.state.profiles != null && this.state.profiles.length > 0) {
+      profilesDisabled = "false";
+      profiles = this.state.profiles.map(function(item) {
+        return (
+          <option>{item.name}</option>
+        );
+      }.bind(this));
+    }
+    return (
+      <div>
+        <div className="row">
+          <div className="col-md-4">
+            Profiles: 
+          </div>
+          <div className="col-md-8">
+            <select onChange={this.selectProfile} id="profileSelect" className="form-control">
+              {profiles}
+            </select>
+          </div>
+        </div>
+        <p></p>
+        <div className="row">
+          <div className="col-md-6">
+            <label className="control-label">Profile Name:</label>
+            <input type="text" className="form-control" placeholder="name" onChange={this.updateProfileName}/>
+          </div>
+          <div className="col-md-6">
+            <button type="button" className="btn btn-info" onClick={this.saveNewAsProfile}>
+              Save New As Profile
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  },
+});
+
+
 var ShapingPanel = React.createClass({
   getInitialState: function() {
     return {
@@ -71,7 +159,12 @@ var ShapingPanel = React.createClass({
   },
 
   updatePotential: function(ev) {
-    this.setState({potential: {shaping: JSON.parse(ev.target.value)}, changed: true});
+    this.setPotential(JSON.parse(ev.target.value));
+  },
+
+  setPotential: function(s) {
+    console.log("Set potential to", s);
+    this.setState({potential: {shaping: s}, changed: true});
   },
 
   render: function() {
@@ -87,6 +180,7 @@ var ShapingPanel = React.createClass({
       );
     }
     if (this.state.potential != null) {
+      console.log("Potential rate:", this.state.potential.shaping.up.rate);
       var after_view = (
         <JSONEdit json={this.state.potential.shaping} onchange={this.updatePotential} />
       );
@@ -98,8 +192,10 @@ var ShapingPanel = React.createClass({
     }
     return (
       <div>
-        Shaping goes here!
-        <div>
+        <CollapsePanel title="Profiles" hidden={true}>
+          <ProfilePanel parent={this} client={this.props.client} />
+        </CollapsePanel>
+        <div className="row">
           <div className="col-md-6">
             <div className="row">
               <div className="col-md-6">
@@ -111,20 +207,24 @@ var ShapingPanel = React.createClass({
                 </button>
               </div>
             </div>
-            {before_view}
+            <div>
+              {before_view}
+            </div>
           </div>
           <div className="col-md-6">
             <div className="row">
               <div className="col-md-6">
                 <h4>New:</h4>
               </div>
-              <div className="col-md-6">
-                <button type="button" className="btn btn-info" disabled={!this.state.changed} onClick={this.performShaping}>
+              <div className="col-md-3">
+                <button type="button" className="btn btn-primary" disabled={!this.state.changed} onClick={this.performShaping}>
                   Apply Shaping
                 </button>
               </div>
             </div>
-            {after_view}
+            <div>
+              {after_view}
+            </div>
           </div>
         </div>
       </div>

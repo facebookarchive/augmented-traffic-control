@@ -1,9 +1,7 @@
 /** @jsx React.DOM */
 /**
  * Copyright (c) 2014, Facebook, Inc.
- * All rights reserved.
- *
- *  This source code is licensed under the BSD-style license found in the
+ * All rights reserved.  * *  This source code is licensed under the BSD-style license found in the
  *  LICENSE file in the root directory of this source tree. An additional grant
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
@@ -76,6 +74,14 @@ AtcRestClient.prototype.shape = function (data, callback) {
 AtcRestClient.prototype.unshape = function (callback) {
   this.api_call('DELETE', 'shape', callback);
 };
+
+AtcRestClient.prototype.getProfiles = function (callback) {
+  this.api_call('GET', 'profile', callback);
+};
+
+AtcRestClient.prototype.createProfile = function(profile, callback) {
+  this.api_call('POST', 'profile', callback, profile)
+}
 
 function defaultSettings() {
   return {
