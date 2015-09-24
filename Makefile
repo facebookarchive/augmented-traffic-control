@@ -29,8 +29,7 @@ bin/atc_api: src/atc_thrift src/api/*.go src/atc_api/*.go
 	$(BUILD) -o $@ ${SRC}/atc_api
 
 src/api/bindata.go: $(STATIC_FILES)
-	$(BINGEN) -o $@ static/...
-	sed -i "s/package main/package api/" $@ 
+	$(BINGEN) -pkg api -o $@ static/...
 
 src/atc_thrift: if/atc_thrift.thrift
 	$(THRIFT) --out src/ --gen go if/atc_thrift.thrift
