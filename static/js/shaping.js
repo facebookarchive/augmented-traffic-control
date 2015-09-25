@@ -51,8 +51,12 @@ var ProfilePanel = React.createClass({
   },
 
   selectProfile: function(ev) {
-    profile = this.state.profiles[ev.target.selectedIndex];
-    this.props.parent.setPotential(profile.settings);
+    // Ignore index 0 because that's the None option.
+    if (ev.target.selectedIndex > 0) {
+      // subtract one because the None option.
+      profile = this.state.profiles[ev.target.selectedIndex-1];
+      this.props.parent.setPotential(profile.settings);
+    }
   },
 
   render: function() {
@@ -74,6 +78,7 @@ var ProfilePanel = React.createClass({
           </div>
           <div className="col-md-8">
             <select onChange={this.selectProfile} id="profileSelect" className="form-control">
+              <option>None</option>
               {profiles}
             </select>
           </div>
@@ -163,7 +168,6 @@ var ShapingPanel = React.createClass({
   },
 
   setPotential: function(s) {
-    console.log("Set potential to", s);
     this.setState({potential: {shaping: s}, changed: true});
   },
 
