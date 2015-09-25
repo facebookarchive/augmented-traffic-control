@@ -5,10 +5,6 @@
 # Path to install files under
 PREFIX = /usr/local
 
-# The location of the GOPATH. (absolute path!)
-GOPATH := $(PWD)/.gopath/
-export GOPATH
-
 TEST = go test -v
 BUILD = go build
 VET = go vet

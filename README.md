@@ -11,125 +11,70 @@ not use this version of ATC unless you are prepared to deal with bugs or
 feature changes.
 
 
-Full documentation for the project is available at [http://facebook.github.io/augmented-traffic-control/](http://facebook.github.io/augmented-traffic-control/).
+Full documentation for the project is available at
+[http://facebook.github.io/augmented-traffic-control/](http://facebook.github.io/augmented-traffic-control/).
 
 
 ## Overview
 
-Augmented Traffic Control (ATC) is a tool to simulate network conditions. It allows controlling the connection that a device has to the internet. Developers can use `ATC` to test their application across varying network conditions, easily emulating high speed, mobile, and even severely impaired networks.
+Augmented Traffic Control (ATC) is a tool to simulate network conditions. It allows controlling the connection that a device has to the internet.
+Developers can use `ATC` to test their application across varying network conditions, easily emulating mobile, and severely impaired networks.
+
 Aspects of the connection that can be controlled include:
 
 * bandwidth
 * latency
 * packet loss
-* corrupted packets
-* packets ordering
+* corrupted packet rates
+* packet ordering
 
-In order to be able to shape the network traffic, ATC must be running on a device that routes the traffic and sees the real IP address of the device, like your network gateway for instance. This also allows any devices that route through `ATC` to be able to shape their traffic. Traffic can be shaped/unshaped using a web interface allowing any devices with a web browser to use `ATC` without the need for a client application.
+In order to be able to shape the network traffic, ATC must be running on a device that routes the traffic and sees the real IP address of the device,
+for example, your network gateway. This also allows any devices that route through `ATC` to be able to shape their traffic.
+Traffic can be shaped/unshaped using a web interface allowing any devices with a web browser to use `ATC` without the need for a client application.
 
-ATC is made of multiple components that interact together:
-* `atcd`: The ATC daemon which is responsible for setting/unsetting traffic shaping. `atcd` exposes a [Thrift](https://thrift.apache.org/) interface to interact with it.
-* `atc_api`: A RESTful interface to `atcd`.
-* [`django-atc-demo-ui`](atc/django-atc-demo-ui): A Django app that provides a simple Web UI to use `atc` from a mobile phone. (**Not yet working**)
-* [`django-atc-profile-storage`](atc/django-atc-profile-storage): A Django app that can be used to save shaping profiles, making it easier to re-use them later without manually re-entering those settings. (**Not yet working**)
-
-By splitting `ATC` in sub-components, it make it easier to hack on it or build on top of it. While `django-atc-demo-ui` is shipped as part of `ATC`'s main repository to allow people to be able to use `ATC` out of the box, by providing a REST API to `atcd`, it makes it relatively easy to interact with `atcd` via the command line and opens the path for the community to be able to build creative command line tools, web UI or mobile apps that interact with `ATC`.
+ATC is made of two components that interact together:
+* `atcd`: A low-level thrift interface which is responsible for directly setting/unsetting traffic shaping.
+* `atc_api`: A RESTful HTTP interface to `atcd`. Proxies requests to an `atcd` thrift server.
 
 ![ATC architecture][atc_architecture]
-
-## Requirements
-
-Running ATC only requires downloading the ATC binaries onto a linux box and running them.
-
-Compiling ATC from source requires a [working Go compiler](https://golang.org/doc/install) and [go environment](https://golang.org/doc/code.html).
 
 
 ## Installing ATC
 
-The fact that `ATC` is split in multiple packages allows for multiple deployment scenarios. However, deploying all the packages on the same host is the simplest and most likely fitting most use cases.
+The fact that `ATC` is split in multiple packages allows for multiple deployment scenarios.
+However, deploying all the packages on the same host is the simplest way to setup ATC.
 
-To get more details on how to install/configure each packages, please refer to the packages' respective READMEs.
+### Requirements
 
-### Packages
+ATC requires a  working [Golang](https://golang.org/) toolchain.
 
-The easiest way to install `ATC` is by using `pip`.
-``` bash
-pip install atc_thrift atcd django-atc-api django-atc-demo-ui django-atc-profile-storage
-```
+Most linux distributions have binary packages available for go.
 
-### Django
+For example:
 
-Now that we have all the packages installed, we need to create a new Django project in which we will use our Django app.
+### Installing from Source
 
-``` bash
-django-admin startproject atcui
-cd atcui
-```
+First, setup a GOPATH. If you aren't doing normal golang development, you can run
+`setup.sh` within the ATC project and a GOPATH will be setup locally specifically for ATC.
+After running the script, you must `export GOPATH="$(pwd)/.gopath"` before compiling ATC.
 
-Now that we have our django project, we need to configure it to use our apps and we need to tell it how to route to our apps.
-
-Open `atcui/settings.py` and enable the `ATC` apps by adding to `INSTALLED_APPS`:
-
-``` python
-INSTALLED_APPS = (
-    ...
-    # Django ATC API
-    'rest_framework',
-    'atc_api',
-    # Django ATC Demo UI
-    'bootstrap_themes',
-    'django_static_jquery',
-    'atc_demo_ui',
-    # Django ATC Profile Storage
-    'atc_profile_storage',
-)
-```
-
-Now, open `atcui/urls.py` and enable routing to the `ATC` apps by adding the routes to `urlpatterns`:
-``` python
-...
-...
-from django.views.generic.base import RedirectView
-
-urlpatterns = patterns('',
-    ...
-    # Django ATC API
-    url(r'^api/v1/', include('atc_api.urls')),
-    # Django ATC Demo UI
-    url(r'^atc_demo_ui/', include('atc_demo_ui.urls')),
-    # Django ATC profile storage
-    url(r'^api/v1/profiles/', include('atc_profile_storage.urls')),
-    url(r'^$', RedirectView.as_view(url='/atc_demo_ui/', permanent=False)),
-)
-```
-
-Finally, let's update the Django DB:
-``` bash
-python manage.py migrate
-```
-
-## Running ATC
-
-All require packages should now be installed and configured. We now need to run the daemon and the UI interface. While we will run `ATC` straight from the command line in this example, you can refer to example [sysvinit](chef/atc/files/default/init.d) and [upstart](chef/atc/templates/default/upstart) scripts.
-
-### atcd
-
-`atcd` modifies network related settings and as such needs to run in privileged mode:
+Clone the ATC code somewhere on your machine and run `make` within the project:
 
 ``` bash
-sudo atcd
-```
-Supposing `eth0` is your interface to connect to the internet and `eth1`, your interface to connect to your lan, this should just work. If your setting is slightly different, use the command line arguments `--atcd-wan` and `--atcd-lan` to adapt to your configuration.
-
-### ATC UI
-
-The UI on the other hand is a standard Django Web app and can be run as a normal user. Make sure you are in the directory that was created when you ran `django-admin startproject atcui` and run:
-
-``` bash
-python manage.py runserver 0.0.0.0:8000
+git clone git@github.com:facebook/augmented-traffic-control.git
+cd augmented-traffic-control
+./setup.sh
+export GOPATH="$(pwd)/.gopath"
+make
 ```
 
-You should now be able to access the web UI at http://localhost:8000
+This will download all of ATC's dependencies and compile `atcd` and `atc_api` into `bin/`.
+
+Note that downloading the dependencies may take a while depending on your connection speed.
+
+You can then run `sudo make install` to copy these binaries into `/usr/local/bin/`, but this isn't required to run ATC.
+
+MARKER
 
 ## ATC Code Structure
 
