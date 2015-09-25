@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 
-	"code.google.com/p/go-uuid/uuid"
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/hgfischer/go-otp"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/pborman/uuid"
 )
 
 var (
