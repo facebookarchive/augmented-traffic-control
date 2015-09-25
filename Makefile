@@ -8,13 +8,15 @@ TEST = go test -v
 BUILD = go build
 VET = @go vet
 FMT = @go fmt
+GET = go get
+LIST = @go list
 BINGEN = go-bindata # https://github.com/jteeuwen/go-bindata
 THRIFT = thrift
 
 STATIC_FILES = $(shell find static/ -print)
 
 .PHONY: all
-all: bin bin/atcd bin/atc_api
+all: get bin bin/atcd bin/atc_api
 
 bin/atcd: src/atc_thrift src/daemon/*.go src/atcd/*.go
 	$(FMT) ${SRC}/daemon ${SRC}/atcd
@@ -45,3 +47,7 @@ clean:
 fullclean: clean
 	rm -rf src/atc_thrift/
 	rm -f src/api/bindata.go
+
+.PHONY: get
+get:
+	$(LIST) -f '{{range .Imports}}{{.}}{{"\n"}}{{end}}' ${SRC}/daemon ${SRC}/atcd ${SRC}/api ${SRC}/atc_api ${SRC}/atc_thrift | sort -u | fgrep '.' | grep -v 'augmented-traffic-control' | xargs $(GET)
