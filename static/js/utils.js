@@ -24,9 +24,7 @@ var JSONEdit = React.createClass({
     var s = JSON.stringify(this.props.json, null, 2);
     return (
       <pre>
-        <textarea rows="46" className="form-control" onChange={this.props.onchange}>
-          {s}
-        </textarea>
+        <textarea rows="46" className="form-control" onChange={this.props.onchange} value={s} />
       </pre>
     );
   }

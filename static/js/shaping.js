@@ -180,7 +180,6 @@ var ShapingPanel = React.createClass({
       );
     }
     if (this.state.potential != null) {
-      console.log("Potential rate:", this.state.potential.shaping.up.rate);
       var after_view = (
         <JSONEdit json={this.state.potential.shaping} onchange={this.updatePotential} />
       );
