@@ -36,6 +36,9 @@ pcap2har/
 internal
 .coverage
 .kitchen/
+
+# Go stuff
 /bin/
 *.db
 src/api/bindata.go
+.gopath
