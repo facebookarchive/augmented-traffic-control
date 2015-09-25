@@ -6,7 +6,8 @@
 PREFIX = /usr/local
 
 # The location of the GOPATH. (absolute path!)
-GOPATH = $(PWD)/.gopath/
+GOPATH := $(PWD)/.gopath/
+export GOPATH
 
 TEST = go test -v
 BUILD = go build
@@ -24,53 +25,35 @@ SRC = ${PROJECT}/src
 STATIC_FILES = $(shell find static/ -print)
 
 .PHONY: all
-all: .gopath/depends bin/atcd bin/atc_api
+all: bin/atcd bin/atc_api
 
-bin/atcd: .gopath/depends bin src/atc_thrift src/daemon/*.go src/atcd/*.go
+bin/atcd: src/atc_thrift src/daemon/*.go src/atcd/*.go
 	@$(FMT) ${SRC}/daemon ${SRC}/atcd
 	@$(VET) ${SRC}/daemon ${SRC}/atcd
 	$(TEST) ${SRC}/daemon ${SRC}/atcd
+	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atcd
 
-bin/atc_api: .gopath/depends bin src/atc_thrift src/api/bindata.go src/api/*.go src/atc_api/*.go
+bin/atc_api: src/atc_thrift src/api/bindata.go src/api/*.go src/atc_api/*.go
 	@$(FMT) ${SRC}/api ${SRC}/atc_api
 	@$(VET) ${SRC}/api ${SRC}/atc_api
 	$(TEST) ${SRC}/api ${SRC}/atc_api
+	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atc_api
 
-src/api/bindata.go: .gopath/depends $(STATIC_FILES)
+src/api/bindata.go: $(STATIC_FILES)
 	$(BINGEN) -pkg api -o $@ static/...
 
 src/atc_thrift: if/atc_thrift.thrift
 	$(THRIFT) --out src/ --gen go if/atc_thrift.thrift
 
-bin:
-	mkdir -p bin/
-
-# Downloads dependencies into the gopath
-.gopath/depends: .gopath
-	@echo "Downloading dependencies. This might take a while."
-	@$(GET) github.com/jteeuwen/go-bindata
-	@for x in $(shell $(LIST) -f '{{range .Imports}}{{.}}{{"\n"}}{{end}}' ${SRC}/daemon ${SRC}/atcd ${SRC}/api ${SRC}/atc_api ${SRC}/atc_thrift | sort -u | fgrep '.' | grep -v 'augmented-traffic-control') ; do \
-		echo "go get $$x" ; \
-		$(GET) $$x ; \
-	done
-	@touch .gopath/depends
-
-# Build the gopath and symlink our src tree into it.
-.gopath:
-	mkdir -p "$(GOPATH)/src/$(PROJECT)"
-	ln -s "$(PWD)/src" "$(GOPATH)/src/$(PROJECT)/"
-
-# Removed compiled binaries, downloaded dependencies, and generated source code
+# Removed compiled binaries, and generated source code
 .PHONY: clean
 clean:
 	rm -rf bin/
-	rm -rf .gopath/
-	rm -rf src/atc_thrift/
 	rm -f src/api/bindata.go
 
 # Copy built binaries into /usr/local/lib
 .PHONY: install
 install:
-	cp bin/atcd bin/atc_api "$(PREFIX)/bin"
+	cp bin/atcd bin/atc_api "$(PREFIX)/bin/"
