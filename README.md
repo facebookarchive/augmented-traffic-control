@@ -1,7 +1,7 @@
 # Augmented Traffic Control
 
+[![GoDoc](https://godoc.org/github.com/facebook/augmented-traffic-control?status.svg)](https://godoc.org/github.com/facebook/augmented-traffic-control)
 [![build-status-image]][travis]
-[![pypi-version]][pypi]
 
 ## WARNING
 
@@ -12,6 +12,7 @@ feature changes.
 
 
 Full documentation for the project is available at [http://facebook.github.io/augmented-traffic-control/](http://facebook.github.io/augmented-traffic-control/).
+
 
 ## Overview
 
