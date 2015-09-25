@@ -18,7 +18,7 @@ func main() {
 	}
 	defer db.Close()
 	atcd := daemon.NewAtcd(db, daemon.GetShaper(), args.Secure)
-	runServer(atcd, "127.0.0.1:9090")
+	runServer(atcd, args.ThriftAddr)
 }
 
 type Args struct {
