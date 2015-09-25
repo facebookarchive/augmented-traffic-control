@@ -23,12 +23,16 @@ func TestAtcdConnection(addr, proto string) error {
 func main() {
 	args := ParseArgs()
 
-	if err := TestAtcdConnection(args.ThriftAddr, args.ThriftProtocol); err != nil {
+	err := TestAtcdConnection(args.ThriftAddr, args.ThriftProtocol)
+	if err != nil {
 		fmt.Fprintln(os.Stderr, "failed to connect to atcd server:", err)
-		os.Exit(1)
+		if !args.WarnOnly {
+			os.Exit(1)
+		}
+	} else {
+		fmt.Fprintln(os.Stderr, "Connected to atcd socket on", args.ThriftAddr)
 	}
 
-	fmt.Fprintln(os.Stderr, "Connected to atcd socket on", args.ThriftAddr)
 	fmt.Fprintln(os.Stderr, "Listening on", args.BindAddr)
 
 	srv, err := api.ListenAndServe(args.BindAddr, args.ThriftAddr, args.ThriftProtocol, args.DbDriver, args.DbConnstr)
@@ -49,6 +53,7 @@ type Arguments struct {
 	ThriftProtocol string
 	DbDriver       string
 	DbConnstr      string
+	WarnOnly       bool
 }
 
 func ParseArgs() Arguments {
@@ -57,6 +62,7 @@ func ParseArgs() Arguments {
 	proto := flag.String("p", "json", "Thrift protocol")
 	db_driver := flag.String("D", "sqlite3", "database driver")
 	db_connstr := flag.String("Q", ":memory:", "database driver connection parameters")
+	warn_only := flag.Bool("W", false, "only warn if the thrift server isn't reachable")
 	flag.Parse()
 
 	return Arguments{
@@ -65,5 +71,6 @@ func ParseArgs() Arguments {
 		ThriftProtocol: *proto,
 		DbDriver:       *db_driver,
 		DbConnstr:      *db_connstr,
+		WarnOnly:       *warn_only,
 	}
 }
