@@ -1,0 +1,10 @@
+# docker-compose spec allowing to run:
+# docker run -ti --rm -v "$PWD":/usr/src/myapp -w /usr/src/myapp -p 9090:9090 -p 8080:8080 atc bash
+atc:
+    build: .
+    volumes:
+        - .:/usr/src/myapp
+    working_dir: /usr/src/myapp
+    ports:
+        - "9090:9090"
+        - "8080:8080"

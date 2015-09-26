@@ -7,6 +7,8 @@ PREFIX = /usr/local
 
 # The location of the GOPATH. (absolute path!)
 GOPATH = $(PWD)/.gopath/
+export PATH := $(GOPATH)/bin:$(PATH)
+
 
 TEST = go test -v
 BUILD = go build
@@ -26,13 +28,13 @@ STATIC_FILES = $(shell find static/ -print)
 .PHONY: all
 all: .gopath/depends bin/atcd bin/atc_api
 
-bin/atcd: .gopath/depends bin src/atc_thrift src/daemon/*.go src/atcd/*.go
+bin/atcd: .gopath/depends bin src/daemon/*.go src/atcd/*.go
 	@$(FMT) ${SRC}/daemon ${SRC}/atcd
 	@$(VET) ${SRC}/daemon ${SRC}/atcd
 	$(TEST) ${SRC}/daemon ${SRC}/atcd
 	$(BUILD) -o $@ ${SRC}/atcd
 
-bin/atc_api: .gopath/depends bin src/atc_thrift src/api/bindata.go src/api/*.go src/atc_api/*.go
+bin/atc_api: .gopath/depends bin src/api/bindata.go src/api/*.go src/atc_api/*.go
 	@$(FMT) ${SRC}/api ${SRC}/atc_api
 	@$(VET) ${SRC}/api ${SRC}/atc_api
 	$(TEST) ${SRC}/api ${SRC}/atc_api
@@ -50,7 +52,8 @@ bin:
 # Downloads dependencies into the gopath
 .gopath/depends: .gopath
 	@echo "Downloading dependencies. This might take a while."
-	@$(GET) github.com/jteeuwen/go-bindata
+	@$(GET)  github.com/jteeuwen/go-bindata
+	@test -f ".gopath/bin/go-bindata" || make -C "${GOPATH}/src/github.com/jteeuwen/go-bindata"
 	@for x in $(shell $(LIST) -f '{{range .Imports}}{{.}}{{"\n"}}{{end}}' ${SRC}/daemon ${SRC}/atcd ${SRC}/api ${SRC}/atc_api ${SRC}/atc_thrift | sort -u | fgrep '.' | grep -v 'augmented-traffic-control') ; do \
 		echo "go get $$x" ; \
 		$(GET) $$x ; \
@@ -67,7 +70,6 @@ bin:
 clean:
 	rm -rf bin/
 	rm -rf .gopath/
-	rm -rf src/atc_thrift/
 	rm -f src/api/bindata.go
 
 # Copy built binaries into /usr/local/lib
