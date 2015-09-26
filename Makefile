@@ -23,14 +23,14 @@ STATIC_FILES = $(shell find static/ -print)
 .PHONY: all
 all: bin/atcd bin/atc_api
 
-bin/atcd: src/atc_thrift src/daemon/*.go src/atcd/*.go
+bin/atcd: src/daemon/*.go src/atcd/*.go
 	@$(FMT) ${SRC}/daemon ${SRC}/atcd
 	@$(VET) ${SRC}/daemon ${SRC}/atcd
 	$(TEST) ${SRC}/daemon ${SRC}/atcd
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atcd
 
-bin/atc_api: src/atc_thrift src/api/bindata.go src/api/*.go src/atc_api/*.go
+bin/atc_api: src/api/bindata.go src/api/*.go src/atc_api/*.go
 	@$(FMT) ${SRC}/api ${SRC}/atc_api
 	@$(VET) ${SRC}/api ${SRC}/atc_api
 	$(TEST) ${SRC}/api ${SRC}/atc_api
@@ -43,7 +43,7 @@ src/api/bindata.go: $(STATIC_FILES)
 src/atc_thrift: if/atc_thrift.thrift
 	$(THRIFT) --out src/ --gen go if/atc_thrift.thrift
 
-# Removed compiled binaries, and generated source code
+# Removed compiled binaries
 .PHONY: clean
 clean:
 	rm -rf bin/
