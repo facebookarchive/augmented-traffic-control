@@ -3,9 +3,7 @@ package api
 import (
 	"fmt"
 	"html/template"
-	"io"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 )
@@ -50,26 +48,4 @@ func cachedAssetHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
-}
-
-func diskAssetHandler(w http.ResponseWriter, r *http.Request) {
-	name, ok := mux.Vars(r)["name"]
-	if !ok {
-		w.WriteHeader(404)
-		return
-	}
-	folder, ok := mux.Vars(r)["folder"]
-	if !ok {
-		w.WriteHeader(404)
-		return
-	}
-	filename := fmt.Sprintf("static/%s/%s", folder, name)
-	file, err := os.Open(filename)
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(404)
-		return
-	}
-	w.WriteHeader(200)
-	io.Copy(w, file)
 }
