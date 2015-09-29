@@ -23,6 +23,7 @@ func main() {
 			log.Fatalf("Couldn't get shaper: %v", err)
 		}
 	} else {
+		log.Println("Using fake shaper. Your network isn't actually being shaped!")
 		shaper = daemon.FakeShaper{}
 	}
 	defer db.Close()
