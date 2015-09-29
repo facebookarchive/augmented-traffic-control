@@ -19,7 +19,7 @@ var NoGroup = React.createClass({
   createGroupCB: function() {
     this.props.client.createGroup(function(rc) {
       if (rc.status == 200) {
-        this.props.updateGroup();
+        this.props.fetchGroup();
       }
     }.bind(this));
   },
@@ -35,7 +35,7 @@ var NoGroup = React.createClass({
   joinGroupCB: function() {
     this.props.client.joinGroup(this.state.group_id, {token: this.state.token.toString()}, function(rc) {
       if (rc.status == 200) {
-        this.props.updateGroup();
+        this.props.fetchGroup();
       }
     }.bind(this));
   },
@@ -76,7 +76,7 @@ var InGroup = React.createClass({
 
   componentDidMount: function() {
     this.updateToken();
-    this.update_interval = setInterval(this.updateToken, 10000); // 10s
+    this.update_interval = setInterval(this.updateToken, 1000);
   },
 
   componentWillUnmount: function() {
@@ -100,7 +100,7 @@ var InGroup = React.createClass({
   leaveGroupCB: function() {
     this.props.client.leaveGroup(this.state.token.id, this.state.token, function(rc) {
       if (rc.status == 200) {
-        this.props.updateGroup();
+        this.props.fetchGroup();
       }
     }.bind(this))
   },
@@ -139,14 +139,14 @@ var GroupPanel = React.createClass({
   },
 
   componentDidMount: function() {
-    this.update_interval = setInterval(this.updateGroup, 1000);
+    this.update_interval = setInterval(this.fetchGroup, 5000);
   },
 
   componentWillUnmount: function() {
     clearInterval(this.update_interval);
   },
 
-  updateGroup: function() {
+  fetchGroup: function() {
     // Get group from API
     this.props.client.getGroup(function(rc) {
       if (rc.status == 200) {
@@ -155,7 +155,7 @@ var GroupPanel = React.createClass({
             group: rc.json,
           };
         });
-      } else if (rc.status == 404) {
+      } else if (rc.status == 204) {
         this.setState(function(state, props) {
           return {
             group: null,
@@ -168,11 +168,11 @@ var GroupPanel = React.createClass({
   render: function() {
     if (this.state.group != null) {
       return (
-        <InGroup events={this.props.events} client={this.props.client} group={this.state.group} updateGroup={this.updateGroup} />
+        <InGroup events={this.props.events} client={this.props.client} group={this.state.group} fetchGroup={this.fetchGroup} />
       );
     } else {
       return (
-        <NoGroup events={this.props.events} client={this.props.client} updateGroup={this.updateGroup} />
+        <NoGroup events={this.props.events} client={this.props.client} fetchGroup={this.fetchGroup} />
       );
     }
   },

@@ -33,42 +33,23 @@ var JSONEdit = React.createClass({
 var CollapsePanel = React.createClass({
   getInitialState: function() {
     return {
-      expanded: !this.props.hidden,
+      expanded: true,
     };
-  },
-
-  getDefaultProps: function() {
-    return {
-      hidden: false,
-    };
-  },
-
-  toggle: function() {
-    this.setState({
-      expanded: !this.state.expanded,
-    });
   },
 
   render: function() {
     var acc_id = 'accordion'+this.props.title.replace(' ', '');
     var col_id = 'collapse'+this.props.title.replace(' ', '');
-    var headingCN = 'panel-heading';
-    var panelCN = 'panel-collapse collapse';
-    if (this.state.expanded) {
-      panelCN += ' in';
-    } else {
-      headingCN += ' collapsed';
-    }
     return (
       <div className="panel-group" id={acc_id} role="tablist" aria-multiselectable="false">
         <div className="panel panel-default">
-          <div className={headingCN} onClick={this.toggle} data-toggle="collapse" data-parent={'#' + acc_id} href={'#' + col_id}
+          <div className="panel-heading" data-toggle="collapse" data-parent={'#' + acc_id} href={'#' + col_id}
               aria-expanded={this.props.expanded} aria-controls={col_id}>
             <h3 className="panel-title">
               {this.props.title}
             </h3>
           </div>
-          <div id={col_id} className={panelCN} role="tabpanel">
+          <div id={col_id} className="panel-collapse collapse in" role="tabpanel">
             <div className="panel-body">
               {this.props.children}
             </div>

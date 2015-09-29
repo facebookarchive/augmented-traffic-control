@@ -83,7 +83,7 @@ AtcRestClient.prototype.createProfile = function(profile, callback) {
   this.api_call('POST', 'profile', callback, profile)
 }
 
-function defaultSettings() {
+function defaultShaping() {
   return {
     'down': {
       'rate': 100,
