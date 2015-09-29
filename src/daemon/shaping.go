@@ -1,8 +1,6 @@
 package daemon
 
 import (
-	"fmt"
-
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 )
 
@@ -15,11 +13,6 @@ type Shaper interface {
 	DeleteGroup(id int64) error
 	Shape(id int64, settings *atc_thrift.Shaping) error
 	Unshape(id int64) error
-}
-
-func GetShaper() Shaper {
-	// FIXME: do switching on platform type or something...
-	return FakeShaper{}
 }
 
 // FakeShaper implements Shaper
@@ -35,29 +28,3 @@ func (FakeShaper) LeaveGroup(int64, string) error                    { return ni
 func (FakeShaper) DeleteGroup(int64) error                           { return nil }
 func (FakeShaper) Shape(id int64, shaping *atc_thrift.Shaping) error { return nil }
 func (FakeShaper) Unshape(int64) error                               { return nil }
-
-// *NetlinkShaper implements Shaper
-type NetlinkShaper struct{}
-
-func (*NetlinkShaper) GetPlatform() atc_thrift.PlatformType {
-	return atc_thrift.PlatformType_LINUX
-}
-
-func (*NetlinkShaper) CreateGroup(string) (int64, error) {
-	return 0, fmt.Errorf("Netlink is not implemented")
-}
-func (*NetlinkShaper) JoinGroup(int64, string) error {
-	return fmt.Errorf("Netlink is not implemented")
-}
-func (*NetlinkShaper) LeaveGroup(int64, string) error {
-	return fmt.Errorf("Netlink is not implemented")
-}
-func (*NetlinkShaper) DeleteGroup(int64) error {
-	return fmt.Errorf("Netlink is not implemented")
-}
-func (*NetlinkShaper) Shape(id int64, shaping *atc_thrift.Shaping) error {
-	return fmt.Errorf("Netlink is not implemented")
-}
-func (*NetlinkShaper) Unshape(int64) error {
-	return fmt.Errorf("Netlink is not implemented")
-}

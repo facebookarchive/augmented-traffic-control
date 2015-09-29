@@ -36,7 +36,7 @@ func NewAtcd(db *DbRunner, shaper Shaper, secure bool) atc_thrift.Atcd {
 
 func (atcd *Atcd) GetAtcdInfo() (*atc_thrift.AtcdInfo, error) {
 	info := &atc_thrift.AtcdInfo{
-		Platform: GetShaper().GetPlatform(),
+		Platform: atcd.shaper.GetPlatform(),
 		Version:  VERSION,
 	}
 	return info, nil

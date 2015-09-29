@@ -16,16 +16,26 @@ func main() {
 	if err != nil {
 		log.Fatalf("Couldn't setup database: %v", err)
 	}
+	var shaper daemon.Shaper
+	if !args.FakeShaping {
+		shaper, err = daemon.GetShaper()
+		if err != nil {
+			log.Fatalf("Couldn't get shaper: %v", err)
+		}
+	} else {
+		shaper = daemon.FakeShaper{}
+	}
 	defer db.Close()
-	atcd := daemon.NewAtcd(db, daemon.GetShaper(), args.Secure)
+	atcd := daemon.NewAtcd(db, shaper, args.Secure)
 	runServer(atcd, args.ThriftAddr)
 }
 
 type Args struct {
-	DbDriver   string
-	DbConnstr  string
-	ThriftAddr string
-	Secure     bool
+	DbDriver    string
+	DbConnstr   string
+	ThriftAddr  string
+	Secure      bool
+	FakeShaping bool
 }
 
 func parseArgs() Args {
@@ -35,14 +45,16 @@ func parseArgs() Args {
 	db_connstr := flag.String("Q", "atcd.db", "database driver connection parameters")
 	thrift_addr := flag.String("B", "127.0.0.1:9090", "bind address for the thrift server")
 	insecure := flag.Bool("I", false, "disable secure mode")
+	fake_shaping := flag.Bool("F", false, "don't do real shaping. instead use a mock shaper")
 
 	flag.Parse()
 
 	return Args{
-		DbDriver:   *db_driver,
-		DbConnstr:  *db_connstr,
-		ThriftAddr: *thrift_addr,
-		Secure:     !*insecure,
+		DbDriver:    *db_driver,
+		DbConnstr:   *db_connstr,
+		ThriftAddr:  *thrift_addr,
+		Secure:      !*insecure,
+		FakeShaping: *fake_shaping,
 	}
 }
 
