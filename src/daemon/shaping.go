@@ -13,7 +13,7 @@ type Shaper interface {
 	JoinGroup(id int64, member string) error
 	LeaveGroup(id int64, member string) error
 	DeleteGroup(id int64) error
-	Shape(id int64, settings *atc_thrift.Setting) error
+	Shape(id int64, settings *atc_thrift.Shaping) error
 	Unshape(id int64) error
 }
 
@@ -33,7 +33,7 @@ func (FakeShaper) CreateGroup(string) (int64, error)                 { return 0,
 func (FakeShaper) JoinGroup(int64, string) error                     { return nil }
 func (FakeShaper) LeaveGroup(int64, string) error                    { return nil }
 func (FakeShaper) DeleteGroup(int64) error                           { return nil }
-func (FakeShaper) Shape(id int64, shaping *atc_thrift.Setting) error { return nil }
+func (FakeShaper) Shape(id int64, shaping *atc_thrift.Shaping) error { return nil }
 func (FakeShaper) Unshape(int64) error                               { return nil }
 
 // *NetlinkShaper implements Shaper
@@ -55,7 +55,7 @@ func (*NetlinkShaper) LeaveGroup(int64, string) error {
 func (*NetlinkShaper) DeleteGroup(int64) error {
 	return fmt.Errorf("Netlink is not implemented")
 }
-func (*NetlinkShaper) Shape(id int64, shaping *atc_thrift.Setting) error {
+func (*NetlinkShaper) Shape(id int64, shaping *atc_thrift.Shaping) error {
 	return fmt.Errorf("Netlink is not implemented")
 }
 func (*NetlinkShaper) Unshape(int64) error {

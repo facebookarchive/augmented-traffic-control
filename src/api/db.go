@@ -174,7 +174,7 @@ func (runner *DbRunner) updateProfile(profile Profile) (*Profile, error) {
 	}
 	var settings_bytes []byte = nil
 	buf := &bytes.Buffer{}
-	if err := json.NewEncoder(buf).Encode(profile.Settings); err != nil {
+	if err := json.NewEncoder(buf).Encode(profile.Shaping); err != nil {
 		return nil, err
 	}
 	settings_bytes = buf.Bytes()
@@ -228,17 +228,17 @@ func scanProfile(sc scanner) (*Profile, error) {
 	if err := sc.Scan(&id, &name, &settings_bytes); err != nil {
 		return nil, err
 	}
-	var shape *atc_thrift.Setting
+	var shape *atc_thrift.Shaping
 	if settings_bytes != nil {
-		shape = new(atc_thrift.Setting)
+		shape = new(atc_thrift.Shaping)
 		err := json.Unmarshal(settings_bytes, shape)
 		if err != nil {
 			return nil, err
 		}
 	}
 	return &Profile{
-		Id:       id,
-		Name:     name,
-		Settings: shape,
+		Id:      id,
+		Name:    name,
+		Shaping: shape,
 	}, nil
 }

@@ -8,13 +8,13 @@ import (
 )
 
 var (
-	FakeShaping1 *atc_thrift.Setting = &atc_thrift.Setting{
-		Up:   &atc_thrift.Shaping{},
+	FakeShaping1 *atc_thrift.Shaping = &atc_thrift.Shaping{
+		Up:   &atc_thrift.LinkShaping{},
 		Down: nil,
 	}
-	FakeShaping2 *atc_thrift.Setting = &atc_thrift.Setting{
+	FakeShaping2 *atc_thrift.Shaping = &atc_thrift.Shaping{
 		Up:   nil,
-		Down: &atc_thrift.Shaping{},
+		Down: &atc_thrift.LinkShaping{},
 	}
 )
 

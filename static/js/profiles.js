@@ -25,7 +25,7 @@ var ProfilePanel = React.createClass({
       // subtract one because the None option.
       profile = this.props.profiles[ev.target.selectedIndex-1];
       // FIXME SETTINGS
-      this.props.onSelect(profile.settings);
+      this.props.onSelect(profile.shaping);
     }
   },
 

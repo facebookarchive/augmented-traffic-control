@@ -19,11 +19,14 @@ var GoUnusedProtection__ int
 type PlatformType int64
 
 const (
-	PlatformType_LINUX PlatformType = 0
+	PlatformType_OTHER PlatformType = 0
+	PlatformType_LINUX PlatformType = 1
 )
 
 func (p PlatformType) String() string {
 	switch p {
+	case PlatformType_OTHER:
+		return "PlatformType_OTHER"
 	case PlatformType_LINUX:
 		return "PlatformType_LINUX"
 	}
@@ -32,6 +35,8 @@ func (p PlatformType) String() string {
 
 func PlatformTypeFromString(s string) (PlatformType, error) {
 	switch s {
+	case "PlatformType_OTHER":
+		return PlatformType_OTHER, nil
 	case "PlatformType_LINUX":
 		return PlatformType_LINUX, nil
 	}
@@ -636,7 +641,7 @@ func (p *Corruption) String() string {
 	return fmt.Sprintf("Corruption(%+v)", *p)
 }
 
-type Shaping struct {
+type LinkShaping struct {
 	Rate            int32       `thrift:"rate,1" json:"rate"`
 	Delay           *Delay      `thrift:"delay,2" json:"delay"`
 	Loss            *Loss       `thrift:"loss,3" json:"loss"`
@@ -645,80 +650,80 @@ type Shaping struct {
 	IptablesOptions []string    `thrift:"iptables_options,6" json:"iptables_options"`
 }
 
-func NewShaping() *Shaping {
-	return &Shaping{}
+func NewLinkShaping() *LinkShaping {
+	return &LinkShaping{}
 }
 
-func (p *Shaping) GetRate() int32 {
+func (p *LinkShaping) GetRate() int32 {
 	return p.Rate
 }
 
-var Shaping_Delay_DEFAULT *Delay = &Delay{
+var LinkShaping_Delay_DEFAULT *Delay = &Delay{
 	Delay: 0}
 
-func (p *Shaping) GetDelay() *Delay {
+func (p *LinkShaping) GetDelay() *Delay {
 	if !p.IsSetDelay() {
-		return Shaping_Delay_DEFAULT
+		return LinkShaping_Delay_DEFAULT
 	}
 	return p.Delay
 }
 
-var Shaping_Loss_DEFAULT *Loss = &Loss{
+var LinkShaping_Loss_DEFAULT *Loss = &Loss{
 	Percentage: 0}
 
-func (p *Shaping) GetLoss() *Loss {
+func (p *LinkShaping) GetLoss() *Loss {
 	if !p.IsSetLoss() {
-		return Shaping_Loss_DEFAULT
+		return LinkShaping_Loss_DEFAULT
 	}
 	return p.Loss
 }
 
-var Shaping_Reorder_DEFAULT *Reorder = &Reorder{
+var LinkShaping_Reorder_DEFAULT *Reorder = &Reorder{
 	Percentage: 0}
 
-func (p *Shaping) GetReorder() *Reorder {
+func (p *LinkShaping) GetReorder() *Reorder {
 	if !p.IsSetReorder() {
-		return Shaping_Reorder_DEFAULT
+		return LinkShaping_Reorder_DEFAULT
 	}
 	return p.Reorder
 }
 
-var Shaping_Corruption_DEFAULT *Corruption = &Corruption{
+var LinkShaping_Corruption_DEFAULT *Corruption = &Corruption{
 	Percentage: 0}
 
-func (p *Shaping) GetCorruption() *Corruption {
+func (p *LinkShaping) GetCorruption() *Corruption {
 	if !p.IsSetCorruption() {
-		return Shaping_Corruption_DEFAULT
+		return LinkShaping_Corruption_DEFAULT
 	}
 	return p.Corruption
 }
 
-var Shaping_IptablesOptions_DEFAULT []string
+var LinkShaping_IptablesOptions_DEFAULT []string
 
-func (p *Shaping) GetIptablesOptions() []string {
+func (p *LinkShaping) GetIptablesOptions() []string {
 	return p.IptablesOptions
 }
-func (p *Shaping) IsSetDelay() bool {
+func (p *LinkShaping) IsSetDelay() bool {
 	return p.Delay != nil
 }
 
-func (p *Shaping) IsSetLoss() bool {
+func (p *LinkShaping) IsSetLoss() bool {
 	return p.Loss != nil
 }
 
-func (p *Shaping) IsSetReorder() bool {
+func (p *LinkShaping) IsSetReorder() bool {
 	return p.Reorder != nil
 }
 
-func (p *Shaping) IsSetCorruption() bool {
+func (p *LinkShaping) IsSetCorruption() bool {
 	return p.Corruption != nil
 }
 
-func (p *Shaping) IsSetIptablesOptions() bool {
+func (p *LinkShaping) IsSetIptablesOptions() bool {
 	return p.IptablesOptions != nil
 }
 
-func (p *Shaping) Read(iprot thrift.TProtocol) error {
+func (p *LinkShaping) Read(iprot thrift.TProtocol) error {
 	if _, err := iprot.ReadStructBegin(); err != nil {
 		return fmt.Errorf("%T read error: %s", p, err)
 	}
@@ -770,7 +775,7 @@ func (p *Shaping) Read(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *Shaping) ReadField1(iprot thrift.TProtocol) error {
+func (p *LinkShaping) ReadField1(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadI32(); err != nil {
 		return fmt.Errorf("error reading field 1: %s", err)
 	} else {
@@ -779,7 +784,7 @@ func (p *Shaping) ReadField1(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *Shaping) ReadField2(iprot thrift.TProtocol) error {
+func (p *LinkShaping) ReadField2(iprot thrift.TProtocol) error {
 	p.Delay = &Delay{}
 	if err := p.Delay.Read(iprot); err != nil {
 		return fmt.Errorf("%T error reading struct: %s", p.Delay, err)
@@ -787,7 +792,7 @@ func (p *Shaping) ReadField2(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *Shaping) ReadField3(iprot thrift.TProtocol) error {
+func (p *LinkShaping) ReadField3(iprot thrift.TProtocol) error {
 	p.Loss = &Loss{}
 	if err := p.Loss.Read(iprot); err != nil {
 		return fmt.Errorf("%T error reading struct: %s", p.Loss, err)
@@ -795,7 +800,7 @@ func (p *Shaping) ReadField3(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *Shaping) ReadField4(iprot thrift.TProtocol) error {
+func (p *LinkShaping) ReadField4(iprot thrift.TProtocol) error {
 	p.Reorder = &Reorder{}
 	if err := p.Reorder.Read(iprot); err != nil {
 		return fmt.Errorf("%T error reading struct: %s", p.Reorder, err)
@@ -803,7 +808,7 @@ func (p *Shaping) ReadField4(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *Shaping) ReadField5(iprot thrift.TProtocol) error {
+func (p *LinkShaping) ReadField5(iprot thrift.TProtocol) error {
 	p.Corruption = &Corruption{}
 	if err := p.Corruption.Read(iprot); err != nil {
 		return fmt.Errorf("%T error reading struct: %s", p.Corruption, err)
@@ -811,7 +816,7 @@ func (p *Shaping) ReadField5(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *Shaping) ReadField6(iprot thrift.TProtocol) error {
+func (p *LinkShaping) ReadField6(iprot thrift.TProtocol) error {
 	_, size, err := iprot.ReadListBegin()
 	if err != nil {
 		return fmt.Errorf("error reading list begin: %s", err)
@@ -833,8 +838,8 @@ func (p *Shaping) ReadField6(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *Shaping) Write(oprot thrift.TProtocol) error {
-	if err := oprot.WriteStructBegin("Shaping"); err != nil {
+func (p *LinkShaping) Write(oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin("LinkShaping"); err != nil {
 		return fmt.Errorf("%T write struct begin error: %s", p, err)
 	}
 	if err := p.writeField1(oprot); err != nil {
@@ -864,7 +869,7 @@ func (p *Shaping) Write(oprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *Shaping) writeField1(oprot thrift.TProtocol) (err error) {
+func (p *LinkShaping) writeField1(oprot thrift.TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("rate", thrift.I32, 1); err != nil {
 		return fmt.Errorf("%T write field begin error 1:rate: %s", p, err)
 	}
@@ -877,7 +882,7 @@ func (p *Shaping) writeField1(oprot thrift.TProtocol) (err error) {
 	return err
 }
 
-func (p *Shaping) writeField2(oprot thrift.TProtocol) (err error) {
+func (p *LinkShaping) writeField2(oprot thrift.TProtocol) (err error) {
 	if p.IsSetDelay() {
 		if err := oprot.WriteFieldBegin("delay", thrift.STRUCT, 2); err != nil {
 			return fmt.Errorf("%T write field begin error 2:delay: %s", p, err)
@@ -892,7 +897,7 @@ func (p *Shaping) writeField2(oprot thrift.TProtocol) (err error) {
 	return err
 }
 
-func (p *Shaping) writeField3(oprot thrift.TProtocol) (err error) {
+func (p *LinkShaping) writeField3(oprot thrift.TProtocol) (err error) {
 	if p.IsSetLoss() {
 		if err := oprot.WriteFieldBegin("loss", thrift.STRUCT, 3); err != nil {
 			return fmt.Errorf("%T write field begin error 3:loss: %s", p, err)
@@ -907,7 +912,7 @@ func (p *Shaping) writeField3(oprot thrift.TProtocol) (err error) {
 	return err
 }
 
-func (p *Shaping) writeField4(oprot thrift.TProtocol) (err error) {
+func (p *LinkShaping) writeField4(oprot thrift.TProtocol) (err error) {
 	if p.IsSetReorder() {
 		if err := oprot.WriteFieldBegin("reorder", thrift.STRUCT, 4); err != nil {
 			return fmt.Errorf("%T write field begin error 4:reorder: %s", p, err)
@@ -922,7 +927,7 @@ func (p *Shaping) writeField4(oprot thrift.TProtocol) (err error) {
 	return err
 }
 
-func (p *Shaping) writeField5(oprot thrift.TProtocol) (err error) {
+func (p *LinkShaping) writeField5(oprot thrift.TProtocol) (err error) {
 	if p.IsSetCorruption() {
 		if err := oprot.WriteFieldBegin("corruption", thrift.STRUCT, 5); err != nil {
 			return fmt.Errorf("%T write field begin error 5:corruption: %s", p, err)
@@ -937,7 +942,7 @@ func (p *Shaping) writeField5(oprot thrift.TProtocol) (err error) {
 	return err
 }
 
-func (p *Shaping) writeField6(oprot thrift.TProtocol) (err error) {
+func (p *LinkShaping) writeField6(oprot thrift.TProtocol) (err error) {
 	if p.IsSetIptablesOptions() {
 		if err := oprot.WriteFieldBegin("iptables_options", thrift.LIST, 6); err != nil {
 			return fmt.Errorf("%T write field begin error 6:iptables_options: %s", p, err)
@@ -960,48 +965,48 @@ func (p *Shaping) writeField6(oprot thrift.TProtocol) (err error) {
 	return err
 }
 
-func (p *Shaping) String() string {
+func (p *LinkShaping) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("Shaping(%+v)", *p)
+	return fmt.Sprintf("LinkShaping(%+v)", *p)
 }
 
-type Setting struct {
-	Up   *Shaping `thrift:"up,1" json:"up"`
-	Down *Shaping `thrift:"down,2" json:"down"`
+type Shaping struct {
+	Up   *LinkShaping `thrift:"up,1" json:"up"`
+	Down *LinkShaping `thrift:"down,2" json:"down"`
 }
 
-func NewSetting() *Setting {
-	return &Setting{}
+func NewShaping() *Shaping {
+	return &Shaping{}
 }
 
-var Setting_Up_DEFAULT *Shaping
+var Shaping_Up_DEFAULT *LinkShaping
 
-func (p *Setting) GetUp() *Shaping {
+func (p *Shaping) GetUp() *LinkShaping {
 	if !p.IsSetUp() {
-		return Setting_Up_DEFAULT
+		return Shaping_Up_DEFAULT
 	}
 	return p.Up
 }
 
-var Setting_Down_DEFAULT *Shaping
+var Shaping_Down_DEFAULT *LinkShaping
 
-func (p *Setting) GetDown() *Shaping {
+func (p *Shaping) GetDown() *LinkShaping {
 	if !p.IsSetDown() {
-		return Setting_Down_DEFAULT
+		return Shaping_Down_DEFAULT
 	}
 	return p.Down
 }
-func (p *Setting) IsSetUp() bool {
+func (p *Shaping) IsSetUp() bool {
 	return p.Up != nil
 }
 
-func (p *Setting) IsSetDown() bool {
+func (p *Shaping) IsSetDown() bool {
 	return p.Down != nil
 }
 
-func (p *Setting) Read(iprot thrift.TProtocol) error {
+func (p *Shaping) Read(iprot thrift.TProtocol) error {
 	if _, err := iprot.ReadStructBegin(); err != nil {
 		return fmt.Errorf("%T read error: %s", p, err)
 	}
@@ -1037,24 +1042,24 @@ func (p *Setting) Read(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *Setting) ReadField1(iprot thrift.TProtocol) error {
-	p.Up = &Shaping{}
+func (p *Shaping) ReadField1(iprot thrift.TProtocol) error {
+	p.Up = &LinkShaping{}
 	if err := p.Up.Read(iprot); err != nil {
 		return fmt.Errorf("%T error reading struct: %s", p.Up, err)
 	}
 	return nil
 }
 
-func (p *Setting) ReadField2(iprot thrift.TProtocol) error {
-	p.Down = &Shaping{}
+func (p *Shaping) ReadField2(iprot thrift.TProtocol) error {
+	p.Down = &LinkShaping{}
 	if err := p.Down.Read(iprot); err != nil {
 		return fmt.Errorf("%T error reading struct: %s", p.Down, err)
 	}
 	return nil
 }
 
-func (p *Setting) Write(oprot thrift.TProtocol) error {
-	if err := oprot.WriteStructBegin("Setting"); err != nil {
+func (p *Shaping) Write(oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin("Shaping"); err != nil {
 		return fmt.Errorf("%T write struct begin error: %s", p, err)
 	}
 	if err := p.writeField1(oprot); err != nil {
@@ -1072,7 +1077,7 @@ func (p *Setting) Write(oprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *Setting) writeField1(oprot thrift.TProtocol) (err error) {
+func (p *Shaping) writeField1(oprot thrift.TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("up", thrift.STRUCT, 1); err != nil {
 		return fmt.Errorf("%T write field begin error 1:up: %s", p, err)
 	}
@@ -1085,7 +1090,7 @@ func (p *Setting) writeField1(oprot thrift.TProtocol) (err error) {
 	return err
 }
 
-func (p *Setting) writeField2(oprot thrift.TProtocol) (err error) {
+func (p *Shaping) writeField2(oprot thrift.TProtocol) (err error) {
 	if err := oprot.WriteFieldBegin("down", thrift.STRUCT, 2); err != nil {
 		return fmt.Errorf("%T write field begin error 2:down: %s", p, err)
 	}
@@ -1098,11 +1103,11 @@ func (p *Setting) writeField2(oprot thrift.TProtocol) (err error) {
 	return err
 }
 
-func (p *Setting) String() string {
+func (p *Shaping) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("Setting(%+v)", *p)
+	return fmt.Sprintf("Shaping(%+v)", *p)
 }
 
 type AtcdInfo struct {
@@ -1231,7 +1236,7 @@ func (p *AtcdInfo) String() string {
 type ShapingGroup struct {
 	Id      int64    `thrift:"id,1" json:"id"`
 	Members []string `thrift:"members,2" json:"members"`
-	Shaping *Setting `thrift:"shaping,3" json:"shaping"`
+	Shaping *Shaping `thrift:"shaping,3" json:"shaping"`
 }
 
 func NewShapingGroup() *ShapingGroup {
@@ -1246,9 +1251,9 @@ func (p *ShapingGroup) GetMembers() []string {
 	return p.Members
 }
 
-var ShapingGroup_Shaping_DEFAULT *Setting
+var ShapingGroup_Shaping_DEFAULT *Shaping
 
-func (p *ShapingGroup) GetShaping() *Setting {
+func (p *ShapingGroup) GetShaping() *Shaping {
 	if !p.IsSetShaping() {
 		return ShapingGroup_Shaping_DEFAULT
 	}
@@ -1330,7 +1335,7 @@ func (p *ShapingGroup) ReadField2(iprot thrift.TProtocol) error {
 }
 
 func (p *ShapingGroup) ReadField3(iprot thrift.TProtocol) error {
-	p.Shaping = &Setting{}
+	p.Shaping = &Shaping{}
 	if err := p.Shaping.Read(iprot); err != nil {
 		return fmt.Errorf("%T error reading struct: %s", p.Shaping, err)
 	}

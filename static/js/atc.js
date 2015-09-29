@@ -76,7 +76,7 @@ var Atc = React.createClass({
   createNewProfile: function(name) {
     // FIXME SETTINGS
     this.state.client.createProfile(
-      {name:name, settings:this.state.potential.shaping}, function(rc) {
+      {name:name, shaping:this.state.potential.shaping}, function(rc) {
         if (rc.status == 200) {
           this.fetchProfiles();
         }

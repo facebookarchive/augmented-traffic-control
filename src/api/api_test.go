@@ -144,11 +144,11 @@ func TestCreatesProfile(t *testing.T) {
 
 	req := ProfileRequest{
 		Name: "asdf",
-		Settings: &atc_thrift.Setting{
-			Down: &atc_thrift.Shaping{
+		Shaping: &atc_thrift.Shaping{
+			Down: &atc_thrift.LinkShaping{
 				Rate: 64,
 			},
-			Up: &atc_thrift.Shaping{
+			Up: &atc_thrift.LinkShaping{
 				Rate: 32,
 			},
 		},
@@ -159,8 +159,8 @@ func TestCreatesProfile(t *testing.T) {
 	if resp.Id <= 0 {
 		t.Error("Wrong profile id:", resp.Id)
 	}
-	if resp.Settings.Down.Rate != 64 {
-		t.Error("Wrong profile down rate:", resp.Settings.Down.Rate)
+	if resp.Shaping.Down.Rate != 64 {
+		t.Error("Wrong profile down rate:", resp.Shaping.Down.Rate)
 	}
 }
 
@@ -169,8 +169,8 @@ func TestGetsProfiles(t *testing.T) {
 	defer srv.Cleanup()
 	cli := srv.client(Addr1)
 
-	cli.PostJson(1, ProfileRequest{Name: "foo", Settings: &atc_thrift.Setting{}}, nil, "/profile")
-	cli.PostJson(1, ProfileRequest{Name: "bar", Settings: &atc_thrift.Setting{}}, nil, "/profile")
+	cli.PostJson(1, ProfileRequest{Name: "foo", Shaping: &atc_thrift.Shaping{}}, nil, "/profile")
+	cli.PostJson(1, ProfileRequest{Name: "bar", Shaping: &atc_thrift.Shaping{}}, nil, "/profile")
 
 	var profiles Profiles
 	cli.GetJson(1, &profiles, "/profile")
@@ -195,9 +195,9 @@ func TestDeletesProfiles(t *testing.T) {
 	defer srv.Cleanup()
 	cli := srv.client(Addr1)
 
-	cli.PostJson(1, ProfileRequest{Name: "foo", Settings: &atc_thrift.Setting{}}, nil, "/profile")
+	cli.PostJson(1, ProfileRequest{Name: "foo", Shaping: &atc_thrift.Shaping{}}, nil, "/profile")
 	var profile Profile
-	cli.PostJson(1, ProfileRequest{Name: "bar", Settings: &atc_thrift.Setting{}}, &profile, "/profile")
+	cli.PostJson(1, ProfileRequest{Name: "bar", Shaping: &atc_thrift.Shaping{}}, &profile, "/profile")
 
 	cli.Delete(1, url("profile", profile.Id))
 

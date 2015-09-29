@@ -138,7 +138,7 @@ func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
 	return atcd.db.deleteMember(to_remove)
 }
 
-func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Setting, token string) (*atc_thrift.Setting, error) {
+func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Shaping, token string) (*atc_thrift.Shaping, error) {
 	group, err := atcd.db.getGroup(id)
 	if err != nil {
 		return nil, err

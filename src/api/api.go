@@ -62,7 +62,8 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErr
 		addr := GetClientAddr(r)
 		group, err := atcd.GetGroupWith(addr)
 		if err != nil {
-			return nil, HttpErrorf(http.StatusNotFound, "No group found")
+			// No group found.
+			return nil, nil
 		}
 		return group, nil
 	default:
@@ -229,7 +230,8 @@ func getSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Reque
 	addr := GetClientAddr(r)
 	group, err := atcd.GetGroupWith(addr)
 	if err != nil {
-		return nil, HttpErrorf(http.StatusNotFound, "Address not being shaped")
+		// Not being shaped
+		return nil, nil
 	}
 	return GroupShaping{
 		Id:      group.Id,
@@ -308,13 +310,13 @@ func ProfilesHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpE
 		}
 		if p.Name == "" {
 			return nil, HttpErrorf(http.StatusNotAcceptable, "Mandatory field 'name' not provided")
-		} else if p.Settings == nil {
+		} else if p.Shaping == nil {
 			return nil, HttpErrorf(http.StatusNotAcceptable, "Mandatory field 'settings' not provided")
 		}
 		prof := <-db.UpdateProfile(Profile{
-			Id:       -1,
-			Name:     p.Name,
-			Settings: p.Settings,
+			Id:      -1,
+			Name:    p.Name,
+			Shaping: p.Shaping,
 		})
 		if prof == nil {
 			return nil, HttpErrorf(http.StatusInternalServerError, "Couldn't save profile to database")

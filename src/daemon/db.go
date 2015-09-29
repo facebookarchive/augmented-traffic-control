@@ -52,7 +52,7 @@ var (
 type DbGroup struct {
 	id      int64
 	secret  string
-	tc      *atc_thrift.Setting
+	tc      *atc_thrift.Shaping
 	timeout time.Time
 }
 
@@ -421,9 +421,9 @@ func scanGroup(sc scanner) (*DbGroup, error) {
 	if err := sc.Scan(&id, &secret, &tc_bytes, &timeout); err != nil {
 		return nil, err
 	}
-	var shape *atc_thrift.Setting
+	var shape *atc_thrift.Shaping
 	if tc_bytes != nil {
-		shape = new(atc_thrift.Setting)
+		shape = &atc_thrift.Shaping{}
 		err := json.Unmarshal(tc_bytes, shape)
 		if err != nil {
 			return nil, err

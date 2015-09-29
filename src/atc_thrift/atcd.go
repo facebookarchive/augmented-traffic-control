@@ -42,7 +42,7 @@ type Atcd interface {
 	//  - Id
 	//  - Settings
 	//  - Token
-	ShapeGroup(id int64, settings *Setting, token string) (r *Setting, err error)
+	ShapeGroup(id int64, settings *Shaping, token string) (r *Shaping, err error)
 	// Parameters:
 	//  - Id
 	//  - Token
@@ -564,14 +564,14 @@ func (p *AtcdClient) recvJoinGroup() (err error) {
 //  - Id
 //  - Settings
 //  - Token
-func (p *AtcdClient) ShapeGroup(id int64, settings *Setting, token string) (r *Setting, err error) {
+func (p *AtcdClient) ShapeGroup(id int64, settings *Shaping, token string) (r *Shaping, err error) {
 	if err = p.sendShapeGroup(id, settings, token); err != nil {
 		return
 	}
 	return p.recvShapeGroup()
 }
 
-func (p *AtcdClient) sendShapeGroup(id int64, settings *Setting, token string) (err error) {
+func (p *AtcdClient) sendShapeGroup(id int64, settings *Shaping, token string) (err error) {
 	oprot := p.OutputProtocol
 	if oprot == nil {
 		oprot = p.ProtocolFactory.GetProtocol(p.Transport)
@@ -595,7 +595,7 @@ func (p *AtcdClient) sendShapeGroup(id int64, settings *Setting, token string) (
 	return oprot.Flush()
 }
 
-func (p *AtcdClient) recvShapeGroup() (value *Setting, err error) {
+func (p *AtcdClient) recvShapeGroup() (value *Shaping, err error) {
 	iprot := p.InputProtocol
 	if iprot == nil {
 		iprot = p.ProtocolFactory.GetProtocol(p.Transport)
@@ -1103,7 +1103,7 @@ func (p *atcdProcessorShapeGroup) Process(seqId int32, iprot, oprot thrift.TProt
 
 	iprot.ReadMessageEnd()
 	result := ShapeGroupResult{}
-	var retval *Setting
+	var retval *Shaping
 	var err2 error
 	if retval, err2 = p.handler.ShapeGroup(args.Id, args.Settings, args.Token); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing shape_group: "+err2.Error())
@@ -2493,7 +2493,7 @@ func (p *JoinGroupResult) String() string {
 
 type ShapeGroupArgs struct {
 	Id       int64    `thrift:"id,1" json:"id"`
-	Settings *Setting `thrift:"settings,2" json:"settings"`
+	Settings *Shaping `thrift:"settings,2" json:"settings"`
 	Token    string   `thrift:"token,3" json:"token"`
 }
 
@@ -2505,9 +2505,9 @@ func (p *ShapeGroupArgs) GetId() int64 {
 	return p.Id
 }
 
-var ShapeGroupArgs_Settings_DEFAULT *Setting
+var ShapeGroupArgs_Settings_DEFAULT *Shaping
 
-func (p *ShapeGroupArgs) GetSettings() *Setting {
+func (p *ShapeGroupArgs) GetSettings() *Shaping {
 	if !p.IsSetSettings() {
 		return ShapeGroupArgs_Settings_DEFAULT
 	}
@@ -2571,7 +2571,7 @@ func (p *ShapeGroupArgs) ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *ShapeGroupArgs) ReadField2(iprot thrift.TProtocol) error {
-	p.Settings = &Setting{}
+	p.Settings = &Shaping{}
 	if err := p.Settings.Read(iprot); err != nil {
 		return fmt.Errorf("%T error reading struct: %s", p.Settings, err)
 	}
@@ -2656,16 +2656,16 @@ func (p *ShapeGroupArgs) String() string {
 }
 
 type ShapeGroupResult struct {
-	Success *Setting `thrift:"success,0" json:"success"`
+	Success *Shaping `thrift:"success,0" json:"success"`
 }
 
 func NewShapeGroupResult() *ShapeGroupResult {
 	return &ShapeGroupResult{}
 }
 
-var ShapeGroupResult_Success_DEFAULT *Setting
+var ShapeGroupResult_Success_DEFAULT *Shaping
 
-func (p *ShapeGroupResult) GetSuccess() *Setting {
+func (p *ShapeGroupResult) GetSuccess() *Shaping {
 	if !p.IsSetSuccess() {
 		return ShapeGroupResult_Success_DEFAULT
 	}
@@ -2708,7 +2708,7 @@ func (p *ShapeGroupResult) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ShapeGroupResult) ReadField0(iprot thrift.TProtocol) error {
-	p.Success = &Setting{}
+	p.Success = &Shaping{}
 	if err := p.Success.Read(iprot); err != nil {
 		return fmt.Errorf("%T error reading struct: %s", p.Success, err)
 	}

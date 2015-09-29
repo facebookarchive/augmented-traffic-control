@@ -29,7 +29,7 @@ struct Corruption {
   2: optional double correlation = 0,
 }
 
-struct Shaping {
+struct LinkShaping {
   1: i32 rate,
   2: optional Delay delay = {"delay": 0},
   3: optional Loss loss = {"percentage": 0},
@@ -38,13 +38,14 @@ struct Shaping {
   6: optional list<string> iptables_options,
 }
 
-struct Setting {
-  1: Shaping up,
-  2: Shaping down,
+struct Shaping {
+  1: LinkShaping up,
+  2: LinkShaping down,
 }
 
 enum PlatformType {
-    LINUX = 0
+    OTHER = 0
+    LINUX = 1
 }
 
 struct AtcdInfo {
@@ -55,7 +56,7 @@ struct AtcdInfo {
 struct ShapingGroup {
     1: i64 id,
     2: list<string> members,
-    3: optional Setting shaping,
+    3: optional Shaping shaping,
 }
 
 service Atcd {
@@ -71,6 +72,6 @@ service Atcd {
     void leave_group(1: i64 id, 2: string to_remove, 3: string token),
     void join_group(1: i64 id, 2: string to_add, 3: string token),
 
-    Setting shape_group(1: i64 id, 2: Setting settings, 3: string token),
+    Shaping shape_group(1: i64 id, 2: Shaping settings, 3: string token),
     void unshape_group(1: i64 id, 2: string token),
 }

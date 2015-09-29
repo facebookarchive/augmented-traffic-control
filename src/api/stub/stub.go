@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	FakeShaping *atc_thrift.Setting = &atc_thrift.Setting{
-		Up: &atc_thrift.Shaping{
+	FakeShaping = &atc_thrift.Shaping{
+		Up: &atc_thrift.LinkShaping{
 			Rate:            1024,
 			Delay:           nil,
 			Loss:            nil,
@@ -19,7 +19,7 @@ var (
 			Corruption:      nil,
 			IptablesOptions: []string{},
 		},
-		Down: &atc_thrift.Shaping{
+		Down: &atc_thrift.LinkShaping{
 			Rate:            1024,
 			Delay:           nil,
 			Loss:            nil,
@@ -147,7 +147,7 @@ func (atcd *fake_atcd) LeaveGroup(id int64, to_remove string, token string) erro
 	return nil
 }
 
-func (atcd *fake_atcd) ShapeGroup(id int64, settings *atc_thrift.Setting, token string) (*atc_thrift.Setting, error) {
+func (atcd *fake_atcd) ShapeGroup(id int64, settings *atc_thrift.Shaping, token string) (*atc_thrift.Shaping, error) {
 	grp, ok := atcd.groups[id]
 	if !ok {
 		return nil, fmt.Errorf("Group not found: %d", id)

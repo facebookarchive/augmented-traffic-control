@@ -39,26 +39,26 @@ type Token struct {
 // used by shaping requests
 type TokenShaping struct {
 	Token   string              `json:"token"`
-	Shaping *atc_thrift.Setting `json:"shaping"`
+	Shaping *atc_thrift.Shaping `json:"shaping"`
 }
 
 // used by shaping responses
 type GroupShaping struct {
 	Id      int64               `json:"id"`
-	Shaping *atc_thrift.Setting `json:"shaping"`
+	Shaping *atc_thrift.Shaping `json:"shaping"`
 }
 
 // used by profile creation request
 type ProfileRequest struct {
-	Name     string              `json:"name"`
-	Settings *atc_thrift.Setting `json:"settings"`
+	Name    string              `json:"name"`
+	Shaping *atc_thrift.Shaping `json:"shaping"`
 }
 
 // used by profile creation response
 type Profile struct {
-	Id       int64               `json:"id"`
-	Name     string              `json:"name"`
-	Settings *atc_thrift.Setting `json:"settings"`
+	Id      int64               `json:"id"`
+	Name    string              `json:"name"`
+	Shaping *atc_thrift.Shaping `json:"shaping"`
 }
 
 // used by profile index response

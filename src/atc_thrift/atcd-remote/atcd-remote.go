@@ -27,7 +27,7 @@ func Usage() {
 	fmt.Fprintln(os.Stderr, "  string get_group_token(i64 id)")
 	fmt.Fprintln(os.Stderr, "  void leave_group(i64 id, string to_remove, string token)")
 	fmt.Fprintln(os.Stderr, "  void join_group(i64 id, string to_add, string token)")
-	fmt.Fprintln(os.Stderr, "  Setting shape_group(i64 id, Setting settings, string token)")
+	fmt.Fprintln(os.Stderr, "  Shaping shape_group(i64 id, Shaping settings, string token)")
 	fmt.Fprintln(os.Stderr, "  void unshape_group(i64 id, string token)")
 	fmt.Fprintln(os.Stderr)
 	os.Exit(0)
@@ -236,7 +236,7 @@ func main() {
 		}
 		factory36 := thrift.NewTSimpleJSONProtocolFactory()
 		jsProt37 := factory36.GetProtocol(mbTrans34)
-		argvalue1 := atc_thrift.NewSetting()
+		argvalue1 := atc_thrift.NewShaping()
 		err38 := argvalue1.Read(jsProt37)
 		if err38 != nil {
 			Usage()
