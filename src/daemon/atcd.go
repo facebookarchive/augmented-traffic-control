@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/hgfischer/go-otp"
@@ -147,7 +146,7 @@ func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Shaping, token strin
 		return nil, fmt.Errorf("Unauthorized")
 	}
 	group.tc = settings
-	log.Println("Shaping group", group.id)
+	Log.Println("Shaping group", group.id)
 	err = atcd.shaper.Shape(group.id, group.tc)
 	if err != nil {
 		return nil, err
@@ -168,7 +167,7 @@ func (atcd *Atcd) UnshapeGroup(id int64, token string) error {
 		return fmt.Errorf("Unauthorized")
 	}
 	group.tc = nil
-	log.Println("Unshaping group", group.id)
+	Log.Println("Unshaping group", group.id)
 	err = atcd.shaper.Unshape(group.id)
 	if err != nil {
 		return err

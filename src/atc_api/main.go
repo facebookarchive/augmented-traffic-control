@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"time"
 
@@ -25,20 +24,19 @@ func main() {
 
 	err := TestAtcdConnection(args.ThriftAddr, args.ThriftProtocol)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "failed to connect to atcd server:", err)
+		api.Log.Println("failed to connect to atcd server:", err)
 		if !args.WarnOnly {
 			os.Exit(1)
 		}
 	} else {
-		fmt.Fprintln(os.Stderr, "Connected to atcd socket on", args.ThriftAddr)
+		api.Log.Println("Connected to atcd socket on", args.ThriftAddr)
 	}
 
-	fmt.Fprintln(os.Stderr, "Listening on", args.BindAddr)
+	api.Log.Println("Listening on", args.BindAddr)
 
 	srv, err := api.ListenAndServe(args.BindAddr, args.ThriftAddr, args.ThriftProtocol, args.DbDriver, args.DbConnstr)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "failed to listen and serve:", err)
-		os.Exit(1)
+		api.Log.Fatalln("failed to listen and serve:", err)
 	}
 	defer srv.Kill()
 	for {

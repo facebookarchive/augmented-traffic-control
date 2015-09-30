@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -70,7 +69,6 @@ type DbRunner struct {
 }
 
 func NewDbRunner(driver, connstr string) (*DbRunner, error) {
-	//log.Printf("DB: Opening %q database\n", driver)
 	db, err := sql.Open(driver, connstr)
 	if err != nil {
 		return nil, fmt.Errorf("Could not open database connection: %v", err)
@@ -221,12 +219,12 @@ func (runner *DbRunner) Cleanup() {
 		n, err := runner.cleanupEmptyGroups()
 		runner.log(err)
 		if n > 0 {
-			log.Printf("DB: Cleaned %d empty groups\n", n)
+			Log.Printf("DB: Cleaned %d empty groups\n", n)
 		}
 		n, err = runner.cleanupOldGroups()
 		runner.log(err)
 		if n > 0 {
-			log.Printf("DB: Cleaned %d expired groups\n", n)
+			Log.Printf("DB: Cleaned %d expired groups\n", n)
 		}
 	}()
 }
@@ -237,7 +235,7 @@ func (runner *DbRunner) Cleanup() {
 
 func (runner *DbRunner) log(err error) {
 	if err != nil {
-		log.Printf("DB: error: %v\n", err)
+		Log.Printf("DB: error: %v\n", err)
 	}
 }
 

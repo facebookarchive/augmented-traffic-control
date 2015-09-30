@@ -23,14 +23,14 @@ STATIC_FILES = $(shell find static/ -print)
 .PHONY: all
 all: bin/atcd bin/atc_api
 
-bin/atcd: src/daemon/*.go src/atcd/*.go
+bin/atcd: src/daemon/*.go src/atcd/*.go src/log/*
 	@$(FMT) ${SRC}/daemon ${SRC}/atcd
 	@$(VET) ${SRC}/daemon ${SRC}/atcd
 	$(TEST) ${SRC}/daemon ${SRC}/atcd
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atcd
 
-bin/atc_api: src/api/bindata.go src/api/*.go src/atc_api/*.go
+bin/atc_api: src/api/bindata.go src/api/*.go src/atc_api/*.go src/log/*
 	@$(FMT) ${SRC}/api ${SRC}/atc_api
 	@$(VET) ${SRC}/api ${SRC}/atc_api
 	$(TEST) ${SRC}/api ${SRC}/atc_api

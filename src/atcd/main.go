@@ -2,8 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"log"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
@@ -14,16 +12,16 @@ func main() {
 	args := parseArgs()
 	db, err := daemon.NewDbRunner(args.DbDriver, args.DbConnstr)
 	if err != nil {
-		log.Fatalf("Couldn't setup database: %v", err)
+		daemon.Log.Fatalf("Couldn't setup database: %v", err)
 	}
 	var shaper daemon.Shaper
 	if !args.FakeShaping {
 		shaper, err = daemon.GetShaper()
 		if err != nil {
-			log.Fatalf("Couldn't get shaper: %v", err)
+			daemon.Log.Fatalf("Couldn't get shaper: %v", err)
 		}
 	} else {
-		log.Println("Using fake shaper. Your network isn't actually being shaped!")
+		daemon.Log.Println("Using fake shaper. Your network isn't actually being shaped!")
 		shaper = daemon.FakeShaper{}
 	}
 	defer db.Close()
@@ -71,6 +69,6 @@ func runServer(atcd atc_thrift.Atcd, addr string) error {
 	tfactory := thrift.NewTTransportFactory()
 	server := thrift.NewTSimpleServer4(processor, transport, tfactory, pfactory)
 
-	fmt.Println("Starting the thrift server on", addr)
+	daemon.Log.Println("Starting the thrift server on", addr)
 	return server.Serve()
 }
