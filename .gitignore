@@ -42,3 +42,4 @@ internal
 *.db
 src/api/bindata.go
 .gopath
+*.rpm

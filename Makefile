@@ -5,8 +5,11 @@
 # Path to install files under
 PREFIX = /usr/local
 
-TEST = go test -v
+# for static compilation:
+#BUILD = go build --ldflags '-extldflags "-static"'
 BUILD = go build
+
+TEST = go test -v
 VET = go vet
 FMT = go fmt
 GET = go get
