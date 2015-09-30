@@ -25,7 +25,16 @@ func main() {
 		shaper = daemon.FakeShaper{}
 	}
 	defer db.Close()
-	atcd := daemon.NewAtcd(db, shaper, args.Secure)
+
+	if args.OtpTimeout > 255 {
+		daemon.Log.Println("Can't use token timeout >255. Setting to 255s")
+		args.OtpTimeout = 255
+	}
+	options := &daemon.AtcdOptions{
+		Secure:     args.Secure,
+		OtpTimeout: uint8(args.OtpTimeout),
+	}
+	atcd := daemon.NewAtcd(db, shaper, options)
 	runServer(atcd, args.ThriftAddr)
 }
 
@@ -35,16 +44,18 @@ type Args struct {
 	ThriftAddr  string
 	Secure      bool
 	FakeShaping bool
+	OtpTimeout  int
 }
 
 func parseArgs() Args {
-	// Letters here mostly chosen arbitrarily
 	db_driver := flag.String("D", "sqlite3", "database driver")
-	// fixme change to actual file
 	db_connstr := flag.String("Q", "atcd.db", "database driver connection parameters")
 	thrift_addr := flag.String("B", "127.0.0.1:9090", "bind address for the thrift server")
+	// flag is `insecure` because security is the default and you should have
+	// to turn it off deliberately
 	insecure := flag.Bool("I", false, "disable secure mode")
 	fake_shaping := flag.Bool("F", false, "don't do real shaping. instead use a mock shaper")
+	otp_timeout := flag.Int("token-timeout", 60, "Token timeout in seconds")
 
 	flag.Parse()
 
@@ -54,6 +65,7 @@ func parseArgs() Args {
 		ThriftAddr:  *thrift_addr,
 		Secure:      !*insecure,
 		FakeShaping: *fake_shaping,
+		OtpTimeout:  *otp_timeout,
 	}
 }
 

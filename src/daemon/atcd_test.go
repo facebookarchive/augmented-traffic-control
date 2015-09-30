@@ -124,9 +124,12 @@ func Setup(t *testing.T, secure bool) *testAtcd {
 		t.Fatal(err)
 	}
 
+	options := DefaultAtcdOptions
+	options.Secure = secure
+
 	return &testAtcd{
 		T:    t,
-		atcd: NewAtcd(db, FakeShaper{}, secure).(*Atcd),
+		atcd: NewAtcd(db, FakeShaper{}, &options).(*Atcd),
 	}
 }
 

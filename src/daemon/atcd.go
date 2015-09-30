@@ -20,16 +20,19 @@ var (
 )
 
 type Atcd struct {
-	db     *DbRunner
-	shaper Shaper
-	secure bool
+	db      *DbRunner
+	shaper  Shaper
+	options AtcdOptions
 }
 
-func NewAtcd(db *DbRunner, shaper Shaper, secure bool) atc_thrift.Atcd {
+func NewAtcd(db *DbRunner, shaper Shaper, options *AtcdOptions) atc_thrift.Atcd {
+	if options == nil {
+		options = &DefaultAtcdOptions
+	}
 	return &Atcd{
-		db:     db,
-		shaper: shaper,
-		secure: secure,
+		db:      db,
+		shaper:  shaper,
+		options: *options,
 	}
 }
 
@@ -93,9 +96,6 @@ func (atcd *Atcd) GetGroupWith(addr string) (*atc_thrift.ShapingGroup, error) {
 }
 
 func (atcd *Atcd) GetGroupToken(id int64) (string, error) {
-	if !atcd.secure {
-		return "", nil
-	}
 	group, err := atcd.db.getGroup(id)
 	if err != nil {
 		return "", err
@@ -180,22 +180,25 @@ func (atcd *Atcd) UnshapeGroup(id int64, token string) error {
 }
 
 func (atcd *Atcd) verify(group *DbGroup, token string) bool {
-	if token == group.secret {
+	if token == group.secret || !atcd.options.Secure {
 		return true
 	}
-	t := &otp.TOTP{
-		Secret:         fmt.Sprintf("%s::%d", group.secret, group.id),
-		IsBase32Secret: true,
-	}
-	return t.Verify(token)
+	return atcd.otp(group).Verify(token)
 }
 
 func (atcd *Atcd) token(group *DbGroup) string {
-	t := &otp.TOTP{
+	if !atcd.options.Secure {
+		return ""
+	}
+	return atcd.otp(group).Get()
+}
+
+func (atcd *Atcd) otp(group *DbGroup) *otp.TOTP {
+	return &otp.TOTP{
 		Secret:         fmt.Sprintf("%s::%d", group.secret, group.id),
+		Period:         atcd.options.OtpTimeout,
 		IsBase32Secret: true,
 	}
-	return t.Get()
 }
 
 func makeSecret() string {
