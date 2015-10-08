@@ -59,7 +59,7 @@ func ParseArgs() Arguments {
 	thriftAddr := flag.String("t", "127.0.0.1:9090", "Thrift server address")
 	proto := flag.String("p", "json", "Thrift protocol")
 	db_driver := flag.String("D", "sqlite3", "database driver")
-	db_connstr := flag.String("Q", ":memory:", "database driver connection parameters")
+	db_connstr := flag.String("Q", "atc_api.db", "database driver connection parameters")
 	warn_only := flag.Bool("W", false, "only warn if the thrift server isn't reachable")
 	flag.Parse()
 
