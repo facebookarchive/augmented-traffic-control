@@ -139,6 +139,7 @@ var GroupPanel = React.createClass({
   },
 
   componentDidMount: function() {
+    this.fetchGroup();
     this.update_interval = setInterval(this.fetchGroup, 5000);
   },
 
