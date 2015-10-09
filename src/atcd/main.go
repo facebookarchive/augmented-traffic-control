@@ -10,10 +10,15 @@ import (
 
 func main() {
 	args := parseArgs()
+
+	// Setup the database
 	db, err := daemon.NewDbRunner(args.DbDriver, args.DbConnstr)
 	if err != nil {
 		daemon.Log.Fatalf("Couldn't setup database: %v", err)
 	}
+	defer db.Close()
+
+	// Setup the shaper
 	var shaper daemon.Shaper
 	if !args.FakeShaping {
 		shaper, err = daemon.GetShaper()
@@ -24,16 +29,33 @@ func main() {
 		daemon.Log.Println("Using fake shaper. Your network isn't actually being shaped!")
 		shaper = daemon.FakeShaper{}
 	}
-	defer db.Close()
+	if err := shaper.Initialize(); err != nil {
+		daemon.Log.Fatalf("Could not initialize shaping: %v", err)
+	}
 
+	// Reshape the settings from the database
+	if err := daemon.ReshapeFromDb(shaper, db); err != nil {
+		// The reason we do this is to ensure that settings from previous atcd
+		// instances are preserved across restarts/reboots or network outages.
+		// We can't gaurantee that the settings in the shaper are the same as those
+		// in the database, so we reset the shaper settings on startup.
+		daemon.Log.Fatalf("Could not reshape settings from database: %v", err)
+	}
+
+	// Setup options
 	if args.OtpTimeout > 255 {
-		daemon.Log.Println("Can't use token timeout >255. Setting to 255s")
+		// The OTP library uses an int8 for their token timeouts.
+		// If the user specifies a value > 255, this will cause an overflow
+		// error later, so we prevent them from setting it that high.
+		daemon.Log.Println("Can't use token timeout >255. Setting to 255 seconds")
 		args.OtpTimeout = 255
 	}
 	options := &daemon.AtcdOptions{
 		Secure:     args.Secure,
 		OtpTimeout: uint8(args.OtpTimeout),
 	}
+
+	// Create and run the thrift service.
 	atcd := daemon.NewAtcd(db, shaper, options)
 	runServer(atcd, args.ThriftAddr)
 }
@@ -48,6 +70,8 @@ type Args struct {
 }
 
 func parseArgs() Args {
+	// ShapingFlags sets up platform-specific flags for the shaper.
+	daemon.ShapingFlags()
 	db_driver := flag.String("D", "sqlite3", "database driver")
 	db_connstr := flag.String("Q", "atcd.db", "database driver connection parameters")
 	thrift_addr := flag.String("B", "127.0.0.1:9090", "bind address for the thrift server")

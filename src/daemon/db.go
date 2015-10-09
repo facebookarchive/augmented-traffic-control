@@ -124,6 +124,7 @@ func (runner *DbRunner) close(lock bool) {
 
 func (runner *DbRunner) GetGroup(id int64) chan *DbGroup {
 	result := make(chan *DbGroup)
+
 	go func() {
 		defer close(result)
 		group, err := runner.getGroup(id)

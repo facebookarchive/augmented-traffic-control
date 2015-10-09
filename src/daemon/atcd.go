@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"fmt"
+	"net"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/hgfischer/go-otp"
@@ -18,6 +19,48 @@ var (
 	// Make sure to change in both places
 	NoSuchItem = fmt.Errorf("NO_SUCH_ITEM")
 )
+
+func ReshapeFromDb(shaper Shaper, db *DbRunner) error {
+	groups := <-db.GetAllGroups()
+	if groups == nil || len(groups) == 0 {
+		return nil
+	}
+
+	Log.Println("Reshaping from database")
+	// Setup all the groups' shaping again
+	for _, group := range groups {
+		// First make sure the group has all the members in the DB
+		members := <-db.GetMembersOf(group.id)
+		if members == nil || len(members) == 0 {
+			// If there aren't any members, don't bother doing anything.
+			// Empty groups are cleaned regularly so this is unlikely
+			continue
+		}
+		first := false
+		for _, member := range members {
+			mem_ip := net.ParseIP(member)
+			var err error
+			if first {
+				err = shaper.CreateGroup(group.id, mem_ip)
+				first = false
+			} else {
+				err = shaper.JoinGroup(group.id, mem_ip)
+			}
+			if err != nil {
+				return err
+			}
+		}
+
+		// Second shape the group using the settings from the DB
+		// but only if the group has shaping settings to begin with
+		if group.tc != nil {
+			if err := shaper.Shape(group.id, group.tc); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
 
 type Atcd struct {
 	db      *DbRunner
@@ -45,6 +88,10 @@ func (atcd *Atcd) GetAtcdInfo() (*atc_thrift.AtcdInfo, error) {
 }
 
 func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
+	ip := net.ParseIP(member)
+	if ip == nil {
+		return nil, fmt.Errorf("Malformed IP address: %q", member)
+	}
 	grp := &atc_thrift.ShapingGroup{
 		Members: []string{member},
 		Shaping: nil,
@@ -55,6 +102,12 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 	})
 	if dbgrp == nil {
 		return nil, DbError
+	}
+	// Have to create group in database before creating the shaper since
+	// the database gives us the unique ID of the group, which the shaper
+	// needs for the mark.
+	if err := atcd.shaper.CreateGroup(dbgrp.id, ip); err != nil {
+		return nil, err
 	}
 	dbmem := <-atcd.db.UpdateMember(DbMember{
 		addr:     member,
@@ -104,12 +157,19 @@ func (atcd *Atcd) GetGroupToken(id int64) (string, error) {
 }
 
 func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
+	ip := net.ParseIP(to_add)
+	if ip == nil {
+		return fmt.Errorf("Malformed IP address: %q", to_add)
+	}
 	group, err := atcd.db.getGroup(id)
 	if err != nil {
 		return err
 	}
 	if !atcd.verify(group, token) {
 		return fmt.Errorf("Unauthorized")
+	}
+	if err := atcd.shaper.JoinGroup(id, ip); err != nil {
+		return err
 	}
 	_, err = atcd.db.updateMember(DbMember{
 		addr:     to_add,
@@ -119,6 +179,10 @@ func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
 }
 
 func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
+	ip := net.ParseIP(to_remove)
+	if ip == nil {
+		return fmt.Errorf("Malformed IP address: %q", to_remove)
+	}
 	member, err := atcd.db.getMember(to_remove)
 	if err != nil {
 		return err
@@ -133,6 +197,10 @@ func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
 	if !atcd.verify(group, token) {
 		return fmt.Errorf("Unauthorized")
 	}
+	if err := atcd.shaper.LeaveGroup(id, ip); err != nil {
+		return err
+	}
+	// FIXME: clean shaper's group too!
 	defer atcd.db.Cleanup()
 	return atcd.db.deleteMember(to_remove)
 }
