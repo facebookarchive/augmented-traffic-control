@@ -11,10 +11,6 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-const (
-	ROOT_HANDLE uint32 = 0x10000
-)
-
 var (
 	// location of the iptables binaries
 	IPTABLES  string
@@ -113,32 +109,36 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 	//class htb 1:2 root leaf 8005: prio 0 rate 4194Mbit ceil 4194Mbit burst 1048b cburst 1048b
 	htbc := netlink.NewHtbClass(netlink.ClassAttrs{
 		LinkIndex: link.Attrs().Index,
-		Handle:    ROOT_HANDLE + uint32(id),
-		Parent:    ROOT_HANDLE,
-		//Leaf:      uint32(id),
+		Handle:    netlink.MakeHandle(1, uint16(id)),
+		Parent:    netlink.MakeHandle(1, 0),
 	}, netlink.HtbClassAttrs{
-		Rate: shaping.Rate, // in kbps?
-		Ceil: shaping.Rate,
+		Rate: uint64(shaping.Rate), // in kbps?
+		Ceil: uint64(shaping.Rate),
 	})
 	if err := netlink.ClassAdd(htbc); err != nil {
 		return fmt.Errorf("Could not create htb class: %v", err)
 	}
 
 	// Add filter:
-	//filter parent 1: protocol ip pref 1 fw handle 0x2 classid 1:2  police 0x5 rate 4194Mbit burst 11010b mtu 2Kb action drop overhead 0b ref 1 bind 1
+	// filter parent 1: protocol ip pref 1 fw handle 0x2 classid 1:2  police 0x5
+	//     rate 4194Mbit burst 11010b mtu 2Kb action drop overhead 0b ref 1 bind 1
 	// filters packets with mark 0x2 to classid 1:2
-	fw := netlink.NewFw(netlink.FilterAttrs{
+	fw, err := netlink.NewFw(netlink.FilterAttrs{
 		LinkIndex: link.Attrs().Index,
-		Handle: ROOT_HANDLE + uint32(id),
-		// ZEAL START HERE
-		Parent: ,
-	}, netlink.FilterFwAttrs{})
+		Parent:    netlink.MakeHandle(1, 0),
+		Handle:    uint32(id),
+	}, netlink.FilterFwAttrs{
+		ClassId: htbc.Attrs().Handle,
+	})
+	if err != nil {
+		return fmt.Errorf("Could not create fw filter: %v", err)
+	}
 	if err := netlink.FilterAdd(fw); err != nil {
 		return fmt.Errorf("Could not create fw filter: %v", err)
 	}
 
 	// Add netem qdisc: (contains latency, packet drop, correlation, etc.)
-	//qdisc netem 8005: parent 1:2 limit 1000
+	//qdisc netem 8001: parent 1:2 limit 1000
 	return nil
 }
 
@@ -233,7 +233,7 @@ func setupRootQdisc(link_name string) error {
 	root_qdisc := netlink.NewHtb(netlink.QdiscAttrs{
 		LinkIndex: link.Attrs().Index,
 		Parent:    netlink.HANDLE_ROOT,
-		Handle:    ROOT_HANDLE,
+		Handle:    netlink.MakeHandle(1, 0),
 	})
 
 	return netlink.QdiscAdd(root_qdisc)
