@@ -1,5 +1,8 @@
 # Changelog
 
+* 0.1.3
+    * Support Django rest framework 3.2
+
 * 0.1.2
     * Fixes:
         * Better detection of logging subsystem and don't fail if /dev/log does not exist
