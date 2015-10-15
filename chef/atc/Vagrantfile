@@ -3,18 +3,18 @@
 boxes = [
     {
         :name => :precise,
-        :box    => 'chef/ubuntu-12.04',
+        :box    => 'bento/ubuntu-12.04',
         :chef_version => :latest,
     },
     {
         :name => :centos6,
-        :box    => 'chef/centos-6.6',
+        :box    => 'bento/centos-6.6',
         :chef_version => :latest,
         :python_from_source => true,
     },
     {
         :name => :trusty,
-        :box    => 'chef/ubuntu-14.04',
+        :box    => 'bento/ubuntu-14.04',
         :chef_version => :latest,
     },
 ]
