@@ -19,7 +19,7 @@ docker build -t atc .
 Once you have the image build, you can get a shell in the container by running:
 
 ```
-docker run -ti --rm -v "$PWD":/usr/src/myapp -w /usr/src/myapp -p 9090:9090 -p 8080:8080 atc bash
+docker run -ti --rm --cap-add NET_ADMIN --cap-add SYS_ADMIN --net host -v "$PWD":/usr/src/myapp -w /usr/src/myapp -p 9090:9090 -p 8080:8080 atc bash
 ```
 
 This will give you a bash prompt in the docker container and will set you in the working directory: `/usr/src/myapp`. The root of the atc project will be mounted within the container. From there, any chnages that you do in ATC repo, will be readily available in the container.
@@ -38,6 +38,9 @@ docker-compose run --service-ports atc bash
 Once you have your development environment setup, you can build/install atcd by running:
 
 ```
+./setup.sh
+GOPATH="$(pwd)/.gopath/"
+export GOPATH
 make
 ```
 
