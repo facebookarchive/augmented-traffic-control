@@ -15,8 +15,12 @@ get_depends() {
     echo "Fetching dependencies. (This might take a few minutes)."
     for x in $(depends) ; do
         echo "$x"
-        go get $x
+        go get "$x"
     done
+    # Used to run unittests
+	x="github.com/vishvananda/netns"
+	echo "$x"
+	go get "$x"
 }
 
 depends() {
