@@ -1,5 +1,9 @@
 # docker-compose spec allowing to run:
-# docker run -ti --rm -v "$PWD":/usr/src/myapp -w /usr/src/myapp -p 9090:9090 -p 8080:8080 atc bash
+# docker run -ti --rm --cap-add SYS_ADMIN --cap-add NET_ADMIN --net host -v "$PWD":/usr/src/myapp -w /usr/src/myapp -p 9090:9090 -p 8080:8080 atc bash
+# This is currently used to develop ATC and its test suite. While ATC itself
+# would only require NET_ADMIN capability, in order to be able to run test in
+# a new netns, we also need SYS_ADMIN capability.
+
 atc:
     build: .
     volumes:
@@ -8,3 +12,7 @@ atc:
     ports:
         - "9090:9090"
         - "8080:8080"
+    cap_add:
+        - NET_ADMIN # General TC/IP privileges
+        - SYS_ADMIN # New NetNS Privilege
+    net: host
