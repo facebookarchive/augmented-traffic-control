@@ -6,10 +6,13 @@ import (
 	"net"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/vishvananda/netlink"
 )
+
+var FILTER_IP_TYPE = []uint16{syscall.ETH_P_IP, syscall.ETH_P_IPV6}
 
 var (
 	// location of the iptables binaries
@@ -112,8 +115,8 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 		Handle:    netlink.MakeHandle(1, uint16(id)),
 		Parent:    netlink.MakeHandle(1, 0),
 	}, netlink.HtbClassAttrs{
-		Rate: uint64(shaping.Rate), // in kbps?
-		Ceil: uint64(shaping.Rate),
+		Rate: uint64(shaping.Rate * 1000), // in kbps
+		Ceil: uint64(shaping.Rate * 1000),
 	})
 	if err := netlink.ClassAdd(htbc); err != nil {
 		return fmt.Errorf("Could not create htb class: %v", err)
@@ -123,27 +126,65 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 	// filter parent 1: protocol ip pref 1 fw handle 0x2 classid 1:2  police 0x5
 	//     rate 4194Mbit burst 11010b mtu 2Kb action drop overhead 0b ref 1 bind 1
 	// filters packets with mark 0x2 to classid 1:2
-	fw, err := netlink.NewFw(netlink.FilterAttrs{
-		LinkIndex: link.Attrs().Index,
-		Parent:    netlink.MakeHandle(1, 0),
-		Handle:    uint32(id),
-	}, netlink.FilterFwAttrs{
-		ClassId: htbc.Attrs().Handle,
-	})
-	if err != nil {
-		return fmt.Errorf("Could not create fw filter: %v", err)
-	}
-	if err := netlink.FilterAdd(fw); err != nil {
-		return fmt.Errorf("Could not create fw filter: %v", err)
+	// We need to add the filter for both IPv4 and IPv6
+	for idx, proto := range FILTER_IP_TYPE {
+		fw, err := netlink.NewFw(netlink.FilterAttrs{
+			LinkIndex: link.Attrs().Index,
+			Parent:    netlink.MakeHandle(1, 0),
+			Handle:    uint32(id),
+			Protocol:  proto,
+			Priority:  uint16(idx + 1),
+		}, netlink.FilterFwAttrs{
+			ClassId: htbc.Attrs().Handle,
+		})
+		if err != nil {
+			return fmt.Errorf("Could not create fw filter struct: %v", err)
+		}
+		if err := netlink.FilterAdd(fw); err != nil {
+			return fmt.Errorf("Could not create fw filter: %v", err)
+		}
 	}
 
 	// Add netem qdisc: (contains latency, packet drop, correlation, etc.)
 	//qdisc netem 8001: parent 1:2 limit 1000
+	// TODO add netem qdisc
 	return nil
 }
 
 func (nl *netlinkShaper) Unshape(int64) error {
 	return fmt.Errorf("netlink shaping is not implemented")
+}
+
+func shape_off(id int64, link netlink.Link) error {
+	htbc := netlink.NewHtbClass(netlink.ClassAttrs{
+		LinkIndex: link.Attrs().Index,
+		Handle:    netlink.MakeHandle(1, uint16(id)),
+		Parent:    netlink.MakeHandle(1, 0),
+	}, netlink.HtbClassAttrs{})
+
+	for idx, proto := range FILTER_IP_TYPE {
+		fw, err := netlink.NewFw(netlink.FilterAttrs{
+			LinkIndex: link.Attrs().Index,
+			Parent:    netlink.MakeHandle(1, 0),
+			Handle:    uint32(id),
+			Protocol:  proto,
+			Priority:  uint16(idx + 1),
+		}, netlink.FilterFwAttrs{
+			ClassId: htbc.Attrs().Handle, // This is not needed really
+		})
+		if err != nil {
+			return fmt.Errorf("Could not create fw filter struct: %v", err)
+		}
+		if err := netlink.FilterDel(fw); err != nil {
+			return fmt.Errorf("Could not create fw filter: %v", err)
+		}
+	}
+
+	if err := netlink.ClassDel(htbc); err != nil {
+		return fmt.Errorf("Could not delete htb class: %v", err)
+	}
+
+	return nil
 }
 
 func mark_packets_for(net net.IP, mark string) error {
