@@ -82,4 +82,22 @@ func TestShaping(t *testing.T) {
 	if len(filters) != 2 {
 		t.Fatal("Failed to add filter")
 	}
+
+	err = shape_off(mark, link)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	filters, err = netlink.FilterList(link, netlink.MakeHandle(0x1, 0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	e("tc", []string{"qdisc", "show", "dev", "foo"})
+	e("tc", []string{"class", "show", "dev", "foo"})
+	e("tc", []string{"filter", "show", "dev", "foo"})
+
+	// We expect 0 filters to be setup: 1 for ipv4, 1 for ipv6.
+	if len(filters) != 0 {
+		t.Fatal("Failed to delete filter")
+	}
 }
