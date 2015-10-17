@@ -39,7 +39,7 @@ func TestShapeOn(t *testing.T) {
 	// Set up class + filters (ipv4/ipv6) using shape_on
 	mark := int64(5)
 	shaping := &atc_thrift.LinkShaping{Rate: 10}
-	shape_on(mark, shaping, link)
+	check(t, shape_on(mark, shaping, link), "could not enable shaping")
 
 	classes, err := netlink.ClassList(
 		link, netlink.MakeHandle(0x1, uint16(mark)),
@@ -58,11 +58,38 @@ func TestShapeOn(t *testing.T) {
 	}
 }
 
+func TestShapeOff(t *testing.T) {
+	tearDown, link := setUpNetlinkTest(t)
+	defer tearDown()
+
+	check(t, setupRootQdisc(link.Attrs().Name), "couldn't create root qdisc")
+
+	// Set up class + filters (ipv4/ipv6) using shape_on
+	mark := int64(5)
+	shaping := &atc_thrift.LinkShaping{Rate: 10}
+	check(t, shape_on(mark, shaping, link), "could not enable shaping")
+	check(t, shape_off(mark, link), "could not disable shaping")
+
+	filters, err := netlink.FilterList(link, netlink.MakeHandle(0x1, 0))
+	check(t, err, "could not list filters")
+
+	if testing.Verbose() {
+		test_cmd(t, "tc", "qdisc", "show", "dev", "foo")
+		test_cmd(t, "tc", "class", "show", "dev", "foo")
+		test_cmd(t, "tc", "filter", "show", "dev", "foo")
+	}
+
+	// We expect 0 filters to be setup: 1 for ipv4, 1 for ipv6.
+	if len(filters) != 0 {
+		t.Fatal("Failed to delete filter")
+	}
+}
+
 /**
 *** Testing Utilities
 **/
 
-func test_cmd(t *testing.T, cmd string, args []string) {
+func test_cmd(t *testing.T, cmd string, args ...string) {
 	if cmdOut, err := exec.Command(cmd, args...).CombinedOutput(); err != nil {
 		t.Fatalf("There was an error running cmd %v:\n%v\n", err, string(cmdOut))
 	} else {
