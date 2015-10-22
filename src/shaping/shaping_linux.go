@@ -1,4 +1,4 @@
-package daemon
+package shaping
 
 import (
 	"flag"
@@ -17,12 +17,14 @@ var (
 	IPTABLES  string
 	IP6TABLES string
 
-	// Names of the wan and lan interfaces
+	// Names of the wan and lan interfaces (e.g. eth0, enp6s0)
 	WAN_INT string
 	LAN_INT string
 )
 
-// Sets up platform-specific flags for the shaper.
+/*
+Sets up platform-specific flags for the shaper.
+*/
 func ShapingFlags() {
 	flag.StringVar(&IPTABLES, "iptables", "", "iptables binary location")
 	flag.StringVar(&IP6TABLES, "ip6tables", "", "ip6tables binary location")
@@ -32,7 +34,7 @@ func ShapingFlags() {
 
 /*
 Returns a shaper suitable for the current platform.
-(in this case, the shaper uses iptables)
+This build of ATC is compiled with iptables support and only works on linux.
 */
 func GetShaper() (Shaper, error) {
 	// Make sure that the location of the iptables binaries are set

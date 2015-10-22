@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/src/shaping"
 	"github.com/hgfischer/go-otp"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pborman/uuid"
@@ -20,7 +21,7 @@ var (
 	NoSuchItem = fmt.Errorf("NO_SUCH_ITEM")
 )
 
-func ReshapeFromDb(shaper Shaper, db *DbRunner) error {
+func ReshapeFromDb(shaper shaping.Shaper, db *DbRunner) error {
 	groups := <-db.GetAllGroups()
 	if groups == nil || len(groups) == 0 {
 		return nil
@@ -64,11 +65,11 @@ func ReshapeFromDb(shaper Shaper, db *DbRunner) error {
 
 type Atcd struct {
 	db      *DbRunner
-	shaper  Shaper
+	shaper  shaping.Shaper
 	options AtcdOptions
 }
 
-func NewAtcd(db *DbRunner, shaper Shaper, options *AtcdOptions) atc_thrift.Atcd {
+func NewAtcd(db *DbRunner, shaper shaping.Shaper, options *AtcdOptions) atc_thrift.Atcd {
 	if options == nil {
 		options = &DefaultAtcdOptions
 	}

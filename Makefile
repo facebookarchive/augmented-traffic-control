@@ -26,10 +26,12 @@ STATIC_FILES = $(shell find static/ -print)
 .PHONY: all
 all: bin/atcd bin/atc_api
 
-bin/atcd: src/daemon/*.go src/atcd/*.go src/log/*
-	@$(FMT) ${SRC}/daemon ${SRC}/atcd
-	@$(VET) ${SRC}/daemon ${SRC}/atcd
+bin/atcd: src/daemon/*.go src/atcd/*.go src/log/* src/shaping/*.go
+	@$(FMT) ${SRC}/shaping ${SRC}/daemon ${SRC}/atcd
+	@$(VET) ${SRC}/shaping ${SRC}/daemon ${SRC}/atcd
 	$(TEST) ${SRC}/daemon
+	@echo "[31mRunning shaping tests as root.[39m"
+	sudo GOPATH=${GOPATH} $(TEST) ${SRC}/shaping
 	$(TEST) ${SRC}/atcd
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atcd
@@ -54,7 +56,7 @@ clean:
 	rm -rf bin/
 	rm -f src/api/bindata.go
 
-# Copy built binaries into /usr/local/lib
+# Copy built binaries into /usr/local/bin/
 .PHONY: install
 install:
 	cp bin/atcd bin/atc_api "$(PREFIX)/bin/"

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/src/shaping"
 )
 
 func TestAtcdCreatesGroup(_t *testing.T) {
@@ -129,7 +130,7 @@ func Setup(t *testing.T, secure bool) *testAtcd {
 
 	return &testAtcd{
 		T:    t,
-		atcd: NewAtcd(db, FakeShaper{}, &options).(*Atcd),
+		atcd: NewAtcd(db, shaping.FakeShaper{}, &options).(*Atcd),
 	}
 }
 

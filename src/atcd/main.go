@@ -6,6 +6,7 @@ import (
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/daemon"
+	"github.com/facebook/augmented-traffic-control/src/shaping"
 )
 
 func main() {
@@ -19,15 +20,15 @@ func main() {
 	defer db.Close()
 
 	// Setup the shaper
-	var shaper daemon.Shaper
+	var shaper shaping.Shaper
 	if !args.FakeShaping {
-		shaper, err = daemon.GetShaper()
+		shaper, err = shaping.GetShaper()
 		if err != nil {
 			daemon.Log.Fatalf("Couldn't get shaper: %v", err)
 		}
 	} else {
 		daemon.Log.Println("Using fake shaper. Your network isn't actually being shaped!")
-		shaper = daemon.FakeShaper{}
+		shaper = shaping.FakeShaper{}
 	}
 	if err := shaper.Initialize(); err != nil {
 		daemon.Log.Fatalf("Could not initialize shaping: %v", err)
@@ -71,13 +72,15 @@ type Args struct {
 
 func parseArgs() Args {
 	// ShapingFlags sets up platform-specific flags for the shaper.
-	daemon.ShapingFlags()
+	shaping.ShapingFlags()
 	db_driver := flag.String("D", "sqlite3", "database driver")
 	db_connstr := flag.String("Q", "atcd.db", "database driver connection parameters")
 	thrift_addr := flag.String("B", "127.0.0.1:9090", "bind address for the thrift server")
 	// flag is `insecure` because security is the default and you should have
 	// to turn it off deliberately
-	insecure := flag.Bool("I", false, "disable secure mode")
+	// note that this means we're using a double negative. be careful what you
+	// change here.
+	insecure := flag.Bool("insecure", false, "insecure mode. disable user security checks")
 	fake_shaping := flag.Bool("F", false, "don't do real shaping. instead use a mock shaper")
 	otp_timeout := flag.Int("token-timeout", 60, "Token timeout in seconds")
 
