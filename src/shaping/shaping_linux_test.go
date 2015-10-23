@@ -21,6 +21,15 @@ func TestCreatesRootQdisc(t *testing.T) {
 	// Check that the root qdisc exists.
 	qdiscs, err := netlink.QdiscList(link)
 	check(t, err, "couldn't list qdiscs")
+
+	if testing.Verbose() {
+		test_cmd(t, "tc", "qdisc", "show", "dev", link.Attrs().Name)
+		test_cmd(t, "tc", "class", "show", "dev", link.Attrs().Name)
+		test_cmd(t, "tc", "filter", "show", "dev", link.Attrs().Name)
+	}
+
+	// FIXME Better asserts
+
 	if len(qdiscs) != 1 {
 		t.Fatal("Failed to add qdisc")
 	}
@@ -52,6 +61,14 @@ func TestShapeOn(t *testing.T) {
 	filters, err := netlink.FilterList(link, netlink.MakeHandle(0x1, 0))
 	check(t, err, "couldn't list filters")
 
+	if testing.Verbose() {
+		test_cmd(t, "tc", "qdisc", "show", "dev", link.Attrs().Name)
+		test_cmd(t, "tc", "class", "show", "dev", link.Attrs().Name)
+		test_cmd(t, "tc", "filter", "show", "dev", link.Attrs().Name)
+	}
+
+	// FIXME Better asserts
+
 	// We expect 2 filters to be setup: 1 for ipv4, 1 for ipv6.
 	if len(filters) != 2 {
 		t.Fatal("Failed to add filter")
@@ -74,10 +91,12 @@ func TestShapeOff(t *testing.T) {
 	check(t, err, "could not list filters")
 
 	if testing.Verbose() {
-		test_cmd(t, "tc", "qdisc", "show", "dev", "foo")
-		test_cmd(t, "tc", "class", "show", "dev", "foo")
-		test_cmd(t, "tc", "filter", "show", "dev", "foo")
+		test_cmd(t, "tc", "qdisc", "show", "dev", link.Attrs().Name)
+		test_cmd(t, "tc", "class", "show", "dev", link.Attrs().Name)
+		test_cmd(t, "tc", "filter", "show", "dev", link.Attrs().Name)
 	}
+
+	// FIXME Better asserts
 
 	// We expect 0 filters to be setup: 1 for ipv4, 1 for ipv6.
 	if len(filters) != 0 {
@@ -88,14 +107,6 @@ func TestShapeOff(t *testing.T) {
 /**
 *** Testing Utilities
 **/
-
-func test_cmd(t *testing.T, cmd string, args ...string) {
-	if cmdOut, err := exec.Command(cmd, args...).CombinedOutput(); err != nil {
-		t.Fatalf("There was an error running cmd %v:\n%v\n", err, string(cmdOut))
-	} else {
-		t.Logf("run_cmd %q\n%s\n", cmd+" "+strings.Join(args, " "), string(cmdOut))
-	}
-}
 
 func setUpNetlinkTest(t *testing.T) (func(), netlink.Link) {
 	if os.Getuid() != 0 {
@@ -142,5 +153,13 @@ func setUpDummyInterface(t *testing.T) netlink.Link {
 func check(t *testing.T, err error, s string) {
 	if err != nil {
 		t.Fatalf(s+": %v", err)
+	}
+}
+
+func test_cmd(t *testing.T, cmd string, args ...string) {
+	if cmdOut, err := exec.Command(cmd, args...).CombinedOutput(); err != nil {
+		t.Fatalf("There was an error running cmd %v:\n%v\n", err, string(cmdOut))
+	} else {
+		t.Logf("run_cmd %q\n%s\n", cmd+" "+strings.Join(args, " "), string(cmdOut))
 	}
 }
