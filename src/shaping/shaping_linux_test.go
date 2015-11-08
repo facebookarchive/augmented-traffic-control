@@ -99,14 +99,14 @@ func TestShapeRate0(t *testing.T) {
 	// When a rate of 0 is given, we default to not limiting the traffic by
 	// allocating the biggest rate we can. (Currently this is u32 only until
 	// the netlink implementation is supporting 64 bits).
-	if class.Rate != math.MaxUint32 {
-		t.Fatal("Failed to set unlimited rate.")
-	}
 
 	if testing.Verbose() {
 		test_cmd(t, "tc", "qdisc", "show", "dev", link.Attrs().Name)
 		test_cmd(t, "tc", "class", "show", "dev", link.Attrs().Name)
 		test_cmd(t, "tc", "filter", "show", "dev", link.Attrs().Name)
+	}
+	if class.Rate != math.MaxUint32 {
+		t.Fatal("Failed to set unlimited rate.")
 	}
 }
 

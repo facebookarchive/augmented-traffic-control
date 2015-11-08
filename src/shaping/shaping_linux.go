@@ -120,7 +120,10 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 	// Note: currently, it is implemented as a u32 by the netlink library.
 	rate := uint64(shaping.GetRate() * 1000)
 	if rate == 0 {
-		rate = math.MaxUint64
+		// rate is given in bps but under the hood it expect Bps. Multiply by 8
+		// because the netlink lib will divide it later on. That allows us to
+		// provide up to 34 Gbit of traffic.
+		rate = math.MaxUint32 * 8
 	}
 	htbc := netlink.NewHtbClass(netlink.ClassAttrs{
 		LinkIndex: link.Attrs().Index,
