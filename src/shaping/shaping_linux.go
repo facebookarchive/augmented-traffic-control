@@ -3,6 +3,7 @@ package shaping
 import (
 	"flag"
 	"fmt"
+	"math"
 	"net"
 	"os/exec"
 	"strings"
@@ -112,13 +113,22 @@ func (nl *netlinkShaper) Shape(id int64, shaping *atc_thrift.Shaping) error {
 func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) error {
 	// Add class: (contains rate)
 	//class htb 1:2 root leaf 8005: prio 0 rate 4194Mbit ceil 4194Mbit burst 1048b cburst 1048b
+
+	// Rate is a required argument for HTB class. If we are given a value of 0,
+	// rate was not set and is considered unlimited.
+	// In that case, let set the rate as high as we can.
+	// Note: currently, it is implemented as a u32 by the netlink library.
+	rate := uint64(shaping.GetRate() * 1000)
+	if rate == 0 {
+		rate = math.MaxUint64
+	}
 	htbc := netlink.NewHtbClass(netlink.ClassAttrs{
 		LinkIndex: link.Attrs().Index,
 		Handle:    netlink.MakeHandle(1, uint16(id)),
 		Parent:    netlink.MakeHandle(1, 0),
 	}, netlink.HtbClassAttrs{
-		Rate: uint64(shaping.Rate * 1000), // in kbps
-		Ceil: uint64(shaping.Rate * 1000),
+		Rate: rate, // in kbps
+		Ceil: rate,
 	})
 	if err := netlink.ClassAdd(htbc); err != nil {
 		return fmt.Errorf("Could not create htb class: %v", err)
