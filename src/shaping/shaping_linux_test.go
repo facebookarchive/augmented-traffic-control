@@ -48,7 +48,13 @@ func TestShapeOn(t *testing.T) {
 
 	// Set up class + filters (ipv4/ipv6) using shape_on
 	mark := int64(5)
-	shaping := &atc_thrift.LinkShaping{Rate: 10}
+	shaping := &atc_thrift.LinkShaping{
+		Rate:       10,
+		Delay:      &atc_thrift.Delay{Delay: 10, Jitter: 15, Correlation: 1},
+		Reorder:    &atc_thrift.Reorder{Percentage: 6, Gap: 1, Correlation: 0.6},
+		Loss:       &atc_thrift.Loss{Percentage: 10, Correlation: 6.3},
+		Corruption: &atc_thrift.Corruption{Percentage: 3.4},
+	}
 	check(t, shape_on(mark, shaping, link), "could not enable shaping")
 
 	classes, err := netlink.ClassList(
@@ -118,7 +124,11 @@ func TestShapeOff(t *testing.T) {
 
 	// Set up class + filters (ipv4/ipv6) using shape_on
 	mark := int64(5)
-	shaping := &atc_thrift.LinkShaping{Rate: 10}
+	shaping := &atc_thrift.LinkShaping{
+		Rate:  10,
+		Delay: &atc_thrift.Delay{Delay: 10},
+		Loss:  &atc_thrift.Loss{Percentage: 10},
+	}
 	check(t, shape_on(mark, shaping, link), "could not enable shaping")
 	check(t, shape_off(mark, link), "could not disable shaping")
 
