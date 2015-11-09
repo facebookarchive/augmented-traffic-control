@@ -162,7 +162,27 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 
 	// Add netem qdisc: (contains latency, packet drop, correlation, etc.)
 	//qdisc netem 8001: parent 1:2 limit 1000
-	// TODO add netem qdisc
+	htbq := netlink.NewNetem(netlink.QdiscAttrs{
+		LinkIndex: link.Attrs().Index,
+		// We can leave netlink assigning a handle for us
+		// Handle:    netlink.MakeHandle(uint16(id+0x8000), 0),
+		Parent: netlink.MakeHandle(1, uint16(id)),
+	}, netlink.NetemQdiscAttrs{
+		Latency:     uint32(shaping.GetDelay().Delay * 1000),   // in ms
+		Jitter:      uint32(shaping.GetDelay().Jitter * 1000),  // in ms
+		DelayCorr:   float32(shaping.GetDelay().Correlation),   // in %
+		Loss:        float32(shaping.GetLoss().Percentage),     // in %
+		LossCorr:    float32(shaping.GetLoss().Correlation),    // in %
+		ReorderProb: float32(shaping.GetReorder().Percentage),  // in %
+		ReorderCorr: float32(shaping.GetReorder().Correlation), // in %
+		Gap:         uint32(shaping.GetReorder().Gap),
+		CorruptProb: float32(shaping.GetCorruption().Percentage),  // in %
+		CorruptCorr: float32(shaping.GetCorruption().Correlation), // in %
+	})
+	if err := netlink.QdiscAdd(htbq); err != nil {
+		return fmt.Errorf("Could not create htb qdisc: %v", err)
+	}
+
 	return nil
 }
 
