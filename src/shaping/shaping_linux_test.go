@@ -1,6 +1,7 @@
 package shaping
 
 import (
+	"math"
 	"os"
 	"os/exec"
 	"runtime"
@@ -72,6 +73,40 @@ func TestShapeOn(t *testing.T) {
 	// We expect 2 filters to be setup: 1 for ipv4, 1 for ipv6.
 	if len(filters) != 2 {
 		t.Fatal("Failed to add filter")
+	}
+}
+
+func TestShapeRate0(t *testing.T) {
+	tearDown, link := setUpNetlinkTest(t)
+	defer tearDown()
+
+	check(t, setupRootQdisc(link.Attrs().Name), "couldn't create root qdisc")
+
+	// Set up class + filters (ipv4/ipv6) using shape_on
+	mark := int64(5)
+	shaping := &atc_thrift.LinkShaping{}
+	check(t, shape_on(mark, shaping, link), "could not enable shaping")
+
+	classes, err := netlink.ClassList(
+		link, netlink.MakeHandle(0x1, uint16(mark)),
+	)
+	check(t, err, "couldn't list classes")
+	if len(classes) != 1 {
+		t.Fatal("Failed to add class")
+	}
+	class := classes[0].(*netlink.HtbClass)
+
+	// When a rate of 0 is given, we default to not limiting the traffic by
+	// allocating the biggest rate we can. (Currently this is u32 only until
+	// the netlink implementation is supporting 64 bits).
+
+	if testing.Verbose() {
+		test_cmd(t, "tc", "qdisc", "show", "dev", link.Attrs().Name)
+		test_cmd(t, "tc", "class", "show", "dev", link.Attrs().Name)
+		test_cmd(t, "tc", "filter", "show", "dev", link.Attrs().Name)
+	}
+	if class.Rate != math.MaxUint32 {
+		t.Fatal("Failed to set unlimited rate.")
 	}
 }
 
