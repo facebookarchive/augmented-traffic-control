@@ -22,6 +22,7 @@ func TestAtcdConnection(addr, proto string) error {
 func main() {
 	args := ParseArgs()
 
+	// Make sure connection to the daemon is working.
 	err := TestAtcdConnection(args.ThriftAddr, args.ThriftProtocol)
 	if err != nil {
 		api.Log.Println("failed to connect to atcd server:", err)
@@ -32,9 +33,13 @@ func main() {
 		api.Log.Println("Connected to atcd socket on", args.ThriftAddr)
 	}
 
+	if args.IPv4 == "" || args.IPv6 == "" {
+		api.Log.Fatalln("You must provide either -4 or -6 arguments to run the API.")
+	}
+
 	api.Log.Println("Listening on", args.BindAddr)
 
-	srv, err := api.ListenAndServe(args.BindAddr, args.ThriftAddr, args.ThriftProtocol, args.DbDriver, args.DbConnstr)
+	srv, err := api.ListenAndServe(args.BindAddr, args.ThriftAddr, args.ThriftProtocol, args.DbDriver, args.DbConnstr, args.IPv4, args.IPv6)
 	if err != nil {
 		api.Log.Fatalln("failed to listen and serve:", err)
 	}
@@ -52,6 +57,8 @@ type Arguments struct {
 	DbDriver       string
 	DbConnstr      string
 	WarnOnly       bool
+	IPv4           string
+	IPv6           string
 }
 
 func ParseArgs() Arguments {
@@ -61,6 +68,8 @@ func ParseArgs() Arguments {
 	db_driver := flag.String("D", "sqlite3", "database driver")
 	db_connstr := flag.String("Q", "atc_api.db", "database driver connection parameters")
 	warn_only := flag.Bool("W", false, "only warn if the thrift server isn't reachable")
+	ipv4 := flag.String("4", "", "IPv4 address for the API")
+	ipv6 := flag.String("6", "", "IPv6 address for the API")
 	flag.Parse()
 
 	return Arguments{
@@ -70,5 +79,7 @@ func ParseArgs() Arguments {
 		DbDriver:       *db_driver,
 		DbConnstr:      *db_connstr,
 		WarnOnly:       *warn_only,
+		IPv4:           *ipv4,
+		IPv6:           *ipv6,
 	}
 }

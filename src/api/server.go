@@ -12,14 +12,8 @@ var (
 	// HTTP Connection timeouts for read/write
 	TIMEOUT = time.Second * 30
 
-	ServerData = serverData{
-		ApiUrl: "/api/v1/",
-	}
+	ROOT_URL = "/api/v1"
 )
-
-type serverData struct {
-	ApiUrl string
-}
 
 type Server struct {
 	Addr         string
@@ -30,13 +24,15 @@ type Server struct {
 	db           *DbRunner
 	thrift_proto string
 	thrift_addr  string
+	bind_info    *bindInfo
 }
 
-func ListenAndServe(addr, thrift_addr, thrift_proto, dbdriver, dbconn string) (*Server, error) {
+func ListenAndServe(addr, thrift_addr, thrift_proto, dbdriver, dbconn, v4, v6 string) (*Server, error) {
 	db, err := NewDbRunner(dbdriver, dbconn)
 	if err != nil {
 		return nil, err
 	}
+	_, port, _ := net.SplitHostPort(addr)
 	srv := &Server{
 		Addr:         addr,
 		listener:     nil,
@@ -46,6 +42,12 @@ func ListenAndServe(addr, thrift_addr, thrift_proto, dbdriver, dbconn string) (*
 		thrift_proto: thrift_proto,
 		Atcd:         nil,
 		db:           db,
+		bind_info: &bindInfo{
+			ApiUrl: ROOT_URL,
+			IP4:    v4,
+			IP6:    v6,
+			Port:   port,
+		},
 	}
 	srv.setupHandlers()
 	err = srv.ListenAndServe()
@@ -97,13 +99,13 @@ func (srv *Server) Serve() {
 
 func (srv *Server) setupHandlers() {
 	r := mux.NewRouter()
-	apir := r.PathPrefix(ServerData.ApiUrl).Subrouter()
+	apir := r.PathPrefix(ROOT_URL).Subrouter()
 	for url, f := range API_URL_MAP {
 		h := NewHandler(srv, f)
 		apir.HandleFunc(url, h)
 		apir.HandleFunc(url+"/", h)
 	}
-	r.HandleFunc("/", rootHandler)
+	r.HandleFunc("/", rootHandler(srv.bind_info))
 	r.HandleFunc("/static/{folder}/{name}", cachedAssetHandler)
 	srv.Handler = r
 }

@@ -229,7 +229,7 @@ type testServer struct {
 }
 
 func newTestServer(t *testing.T) testServer {
-	srv, err := ListenAndServe(net.JoinHostPort(ServerAddr, "0"), "", "", "sqlite3", ":memory:")
+	srv, err := ListenAndServe(net.JoinHostPort(ServerAddr, "0"), "", "", "sqlite3", ":memory:", "0.0.0.0", "::")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -249,12 +249,8 @@ func (s testServer) Cleanup() {
 }
 
 func (s testServer) client(addr string) testClient {
-	if addr == "" {
-		addr = s.GetAddr()
-	} else {
-		_, port, _ := net.SplitHostPort(s.GetAddr())
-		addr = net.JoinHostPort(addr, port)
-	}
+	_, port, _ := net.SplitHostPort(s.GetAddr())
+	addr = net.JoinHostPort(addr, port)
 	return testClient{addr, s.t}
 }
 
