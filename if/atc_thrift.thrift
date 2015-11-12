@@ -64,6 +64,7 @@ service Atcd {
 
     ShapingGroup create_group(1: string member),
 
+    list<ShapingGroup> list_groups(),
     ShapingGroup get_group(1: i64 id),
     ShapingGroup get_group_with(1: string member),
 

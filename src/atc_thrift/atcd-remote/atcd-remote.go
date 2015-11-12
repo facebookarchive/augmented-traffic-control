@@ -22,6 +22,7 @@ func Usage() {
 	fmt.Fprintln(os.Stderr, "\nFunctions:")
 	fmt.Fprintln(os.Stderr, "  AtcdInfo get_atcd_info()")
 	fmt.Fprintln(os.Stderr, "  ShapingGroup create_group(string member)")
+	fmt.Fprintln(os.Stderr, "   list_groups()")
 	fmt.Fprintln(os.Stderr, "  ShapingGroup get_group(i64 id)")
 	fmt.Fprintln(os.Stderr, "  ShapingGroup get_group_with(string member)")
 	fmt.Fprintln(os.Stderr, "  string get_group_token(i64 id)")
@@ -141,13 +142,21 @@ func main() {
 		fmt.Print(client.CreateGroup(value0))
 		fmt.Print("\n")
 		break
+	case "list_groups":
+		if flag.NArg()-1 != 0 {
+			fmt.Fprintln(os.Stderr, "ListGroups requires 0 args")
+			flag.Usage()
+		}
+		fmt.Print(client.ListGroups())
+		fmt.Print("\n")
+		break
 	case "get_group":
 		if flag.NArg()-1 != 1 {
 			fmt.Fprintln(os.Stderr, "GetGroup requires 1 args")
 			flag.Usage()
 		}
-		argvalue0, err23 := (strconv.ParseInt(flag.Arg(1), 10, 64))
-		if err23 != nil {
+		argvalue0, err26 := (strconv.ParseInt(flag.Arg(1), 10, 64))
+		if err26 != nil {
 			Usage()
 			return
 		}
@@ -170,8 +179,8 @@ func main() {
 			fmt.Fprintln(os.Stderr, "GetGroupToken requires 1 args")
 			flag.Usage()
 		}
-		argvalue0, err25 := (strconv.ParseInt(flag.Arg(1), 10, 64))
-		if err25 != nil {
+		argvalue0, err28 := (strconv.ParseInt(flag.Arg(1), 10, 64))
+		if err28 != nil {
 			Usage()
 			return
 		}
@@ -184,8 +193,8 @@ func main() {
 			fmt.Fprintln(os.Stderr, "LeaveGroup requires 3 args")
 			flag.Usage()
 		}
-		argvalue0, err26 := (strconv.ParseInt(flag.Arg(1), 10, 64))
-		if err26 != nil {
+		argvalue0, err29 := (strconv.ParseInt(flag.Arg(1), 10, 64))
+		if err29 != nil {
 			Usage()
 			return
 		}
@@ -202,8 +211,8 @@ func main() {
 			fmt.Fprintln(os.Stderr, "JoinGroup requires 3 args")
 			flag.Usage()
 		}
-		argvalue0, err29 := (strconv.ParseInt(flag.Arg(1), 10, 64))
-		if err29 != nil {
+		argvalue0, err32 := (strconv.ParseInt(flag.Arg(1), 10, 64))
+		if err32 != nil {
 			Usage()
 			return
 		}
@@ -220,25 +229,25 @@ func main() {
 			fmt.Fprintln(os.Stderr, "ShapeGroup requires 3 args")
 			flag.Usage()
 		}
-		argvalue0, err32 := (strconv.ParseInt(flag.Arg(1), 10, 64))
-		if err32 != nil {
-			Usage()
-			return
-		}
-		value0 := argvalue0
-		arg33 := flag.Arg(2)
-		mbTrans34 := thrift.NewTMemoryBufferLen(len(arg33))
-		defer mbTrans34.Close()
-		_, err35 := mbTrans34.WriteString(arg33)
+		argvalue0, err35 := (strconv.ParseInt(flag.Arg(1), 10, 64))
 		if err35 != nil {
 			Usage()
 			return
 		}
-		factory36 := thrift.NewTSimpleJSONProtocolFactory()
-		jsProt37 := factory36.GetProtocol(mbTrans34)
-		argvalue1 := atc_thrift.NewShaping()
-		err38 := argvalue1.Read(jsProt37)
+		value0 := argvalue0
+		arg36 := flag.Arg(2)
+		mbTrans37 := thrift.NewTMemoryBufferLen(len(arg36))
+		defer mbTrans37.Close()
+		_, err38 := mbTrans37.WriteString(arg36)
 		if err38 != nil {
+			Usage()
+			return
+		}
+		factory39 := thrift.NewTSimpleJSONProtocolFactory()
+		jsProt40 := factory39.GetProtocol(mbTrans37)
+		argvalue1 := atc_thrift.NewShaping()
+		err41 := argvalue1.Read(jsProt40)
+		if err41 != nil {
 			Usage()
 			return
 		}
@@ -253,8 +262,8 @@ func main() {
 			fmt.Fprintln(os.Stderr, "UnshapeGroup requires 2 args")
 			flag.Usage()
 		}
-		argvalue0, err40 := (strconv.ParseInt(flag.Arg(1), 10, 64))
-		if err40 != nil {
+		argvalue0, err43 := (strconv.ParseInt(flag.Arg(1), 10, 64))
+		if err43 != nil {
 			Usage()
 			return
 		}
