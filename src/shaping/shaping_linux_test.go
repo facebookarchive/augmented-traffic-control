@@ -18,7 +18,7 @@ func TestCreatesRootQdisc(t *testing.T) {
 	defer tearDown()
 
 	// Setup root qdisc.
-	check(t, setupRootQdisc(link.Attrs().Name), "couldn't create root qdisc")
+	check(t, setupRootQdisc(link), "couldn't create root qdisc")
 	// Check that the root qdisc exists.
 	qdiscs, err := netlink.QdiscList(link)
 	check(t, err, "couldn't list qdiscs")
@@ -44,7 +44,7 @@ func TestShapeOn(t *testing.T) {
 	tearDown, link := setUpNetlinkTest(t)
 	defer tearDown()
 
-	check(t, setupRootQdisc(link.Attrs().Name), "couldn't create root qdisc")
+	check(t, setupRootQdisc(link), "couldn't create root qdisc")
 
 	// Set up class + filters (ipv4/ipv6) using shape_on
 	mark := int64(5)
@@ -86,7 +86,7 @@ func TestShapeRate0(t *testing.T) {
 	tearDown, link := setUpNetlinkTest(t)
 	defer tearDown()
 
-	check(t, setupRootQdisc(link.Attrs().Name), "couldn't create root qdisc")
+	check(t, setupRootQdisc(link), "couldn't create root qdisc")
 
 	// Set up class + filters (ipv4/ipv6) using shape_on
 	mark := int64(5)
@@ -120,7 +120,7 @@ func TestShapeOff(t *testing.T) {
 	tearDown, link := setUpNetlinkTest(t)
 	defer tearDown()
 
-	check(t, setupRootQdisc(link.Attrs().Name), "couldn't create root qdisc")
+	check(t, setupRootQdisc(link), "couldn't create root qdisc")
 
 	// Set up class + filters (ipv4/ipv6) using shape_on
 	mark := int64(5)
