@@ -23,20 +23,27 @@ SRC = ${PROJECT}/src
 
 STATIC_FILES = $(shell find static/ -print)
 
-.PHONY: all
-all: tests bin/atcd bin/atc_api
+.PHONY: all bin
+all: tests
+bin: bin/atcd bin/atc_api bin/atc
 
-bin/atcd: src/daemon/*.go src/atcd/*.go src/log/* src/shaping/*.go
+bin/atcd: src/daemon/*.go src/atcd/*.go src/log/*.go src/shaping/*.go
 	@$(FMT) ${SRC}/shaping ${SRC}/daemon ${SRC}/atcd
 	@$(VET) ${SRC}/shaping ${SRC}/daemon ${SRC}/atcd
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atcd
 
-bin/atc_api: src/api/bindata.go src/api/*.go src/atc_api/*.go src/log/*
+bin/atc_api: src/api/bindata.go src/api/*.go src/atc_api/*.go src/log/*.go
 	@$(FMT) ${SRC}/api ${SRC}/atc_api
 	@$(VET) ${SRC}/api ${SRC}/atc_api
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atc_api
+
+bin/atc: src/log/*.go src/atc/*.go
+	@$(FMT) ${SRC}/atc
+	@$(VET) ${SRC}/atc
+	@mkdir -p bin
+	$(BUILD) -o $@ ${SRC}/atc
 
 .PHONY: tests
 tests:
