@@ -116,6 +116,7 @@ func JsonHandler(f HandlerFunc) errorFunc {
 			w.WriteHeader(204)
 			return nil
 		} else {
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(200)
 		}
 		json_err := json.NewEncoder(w).Encode(v)
@@ -123,6 +124,17 @@ func JsonHandler(f HandlerFunc) errorFunc {
 			return HttpErrorf(500, "Bad JSON: %v", json_err)
 		}
 		return nil
+	}
+}
+
+// Adds CORS headers to a response.
+func CORS(w http.ResponseWriter, methods ...string) {
+	w.Header().Set("Accept", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Del("Access-Control-Allow-Methods")
+	for _, s := range methods {
+		w.Header().Add("Access-Control-Allow-Methods", s)
 	}
 }
 
