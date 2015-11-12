@@ -26,9 +26,9 @@ func TestAtcdJoinGroup(_t *testing.T) {
 	grp := t.CreateGroup("1.2.3.4")
 	token := t.token(grp)
 
-	t.JoinGroup(grp.Id, "4.3.2.1", token)
+	t.JoinGroup(grp.ID, "4.3.2.1", token)
 
-	grp = t.GetGroup(grp.Id)
+	grp = t.GetGroup(grp.ID)
 	t.checkMembers(grp, "1.2.3.4", "4.3.2.1")
 }
 
@@ -37,11 +37,11 @@ func TestAtcdLeaveGroup(_t *testing.T) {
 	defer t.Cleanup()
 	grp := t.CreateGroup("1.2.3.4")
 	token := t.token(grp)
-	t.JoinGroup(grp.Id, "4.3.2.1", token) // Empty groups are deleted
+	t.JoinGroup(grp.ID, "4.3.2.1", token) // Empty groups are deleted
 
-	t.LeaveGroup(grp.Id, "1.2.3.4", token)
+	t.LeaveGroup(grp.ID, "1.2.3.4", token)
 
-	grp = t.GetGroup(grp.Id)
+	grp = t.GetGroup(grp.ID)
 	t.checkMembers(grp, "4.3.2.1")
 }
 
@@ -50,12 +50,12 @@ func TestAtcdCleansEmptyGroups(_t *testing.T) {
 	defer t.Cleanup()
 	grp := t.CreateGroup("1.2.3.4")
 	token := t.token(grp)
-	t.LeaveGroup(grp.Id, "1.2.3.4", token)
+	t.LeaveGroup(grp.ID, "1.2.3.4", token)
 
 	// Allow other goroutines to run
 	runtime.Gosched()
 
-	grp, err := t.atcd.GetGroup(grp.Id)
+	grp, err := t.atcd.GetGroup(grp.ID)
 	if err != NoSuchItem {
 		t.Fatalf("Group still exists (%v): %+v", err, grp)
 	}
@@ -67,12 +67,12 @@ func TestAtcdBadTokenJoin(_t *testing.T) {
 	grp := t.CreateGroup("1.2.3.4")
 	token := t.token(grp)
 
-	err := t.atcd.JoinGroup(grp.Id, "4.3.2.1", token+"invalid")
+	err := t.atcd.JoinGroup(grp.ID, "4.3.2.1", token+"invalid")
 	if err == nil {
 		t.Errorf("Joined group with bad token")
 	}
 
-	grp = t.GetGroup(grp.Id)
+	grp = t.GetGroup(grp.ID)
 	t.checkMembers(grp, "1.2.3.4")
 }
 
@@ -82,12 +82,12 @@ func TestAtcdBadTokenLeave(_t *testing.T) {
 	grp := t.CreateGroup("1.2.3.4")
 	token := t.token(grp)
 
-	err := t.atcd.LeaveGroup(grp.Id, "1.2.3.4", token+"invalid")
+	err := t.atcd.LeaveGroup(grp.ID, "1.2.3.4", token+"invalid")
 	if err == nil {
 		t.Errorf("Left group with bad token")
 	}
 
-	grp = t.GetGroup(grp.Id)
+	grp = t.GetGroup(grp.ID)
 	t.checkMembers(grp, "1.2.3.4")
 }
 
@@ -98,8 +98,8 @@ func TestAtcdGetGroupWith(_t *testing.T) {
 
 	grp2 := t.GetGroupWith("1.2.3.4")
 
-	if grp2.Id != grp.Id {
-		t.Errorf("Group IDs don't match: %d != %d", grp.Id, grp2.Id)
+	if grp2.ID != grp.ID {
+		t.Errorf("Group IDs don't match: %d != %d", grp.ID, grp2.ID)
 	}
 	t.checkMembers(grp2, "1.2.3.4")
 }
@@ -174,7 +174,7 @@ func (t *testAtcd) LeaveGroup(id int64, member, token string) {
 }
 
 func (t *testAtcd) token(grp *atc_thrift.ShapingGroup) string {
-	token, err := t.atcd.GetGroupToken(grp.Id)
+	token, err := t.atcd.GetGroupToken(grp.ID)
 	t.check(err)
 	return token
 }

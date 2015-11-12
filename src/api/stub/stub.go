@@ -30,7 +30,7 @@ var (
 	}
 
 	FakeGroup = &atc_thrift.ShapingGroup{
-		Id:      15,
+		ID:      15,
 		Members: []string{"1.2.3.4", "5.6.7.8"},
 		Shaping: FakeShaping,
 	}
@@ -46,7 +46,7 @@ func NewFakeAtcd() *fake_atcd {
 		nextId: 16,
 		groups: make(map[int64]*atc_thrift.ShapingGroup),
 	}
-	atcd.groups[FakeGroup.Id] = FakeGroup
+	atcd.groups[FakeGroup.ID] = FakeGroup
 	return atcd
 }
 
@@ -62,7 +62,7 @@ func (atcd *fake_atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, err
 	defer func() { atcd.nextId++ }()
 	id := atcd.nextId
 	atcd.groups[id] = &atc_thrift.ShapingGroup{
-		Id:      id,
+		ID:      id,
 		Members: []string{member},
 		Shaping: nil,
 	}

@@ -53,8 +53,8 @@ func TestCreatesGroup(t *testing.T) {
 	var group atc_thrift.ShapingGroup
 	cli.PostJson(1, nil, &group, "/group")
 
-	if group.Id <= 0 {
-		t.Error("Wrong group id:", group.Id)
+	if group.ID <= 0 {
+		t.Error("Wrong group id:", group.ID)
 	}
 	if group.Shaping != nil {
 		t.Error("New group is being shaped:", group.Shaping)
@@ -75,7 +75,7 @@ func TestGetsToken(t *testing.T) {
 	cli.PostJson(1, nil, &group, url("/group"))
 
 	var token Token
-	cli.GetJson(1, &token, url("group", group.Id, "token"))
+	cli.GetJson(1, &token, url("group", group.ID, "token"))
 
 	if token.Token == "" {
 		t.Errorf("Invalid token: %q", token.Token)
@@ -91,19 +91,19 @@ func TestJoinsGroup(t *testing.T) {
 	var group atc_thrift.ShapingGroup
 	cli1.PostJson(1, nil, &group, "/group")
 	var token Token
-	cli1.GetJson(1, &token, url("group", group.Id, "token"))
+	cli1.GetJson(1, &token, url("group", group.ID, "token"))
 
 	var resp MemberResponse
-	cli2.PostJson(1, token, &resp, url("group", group.Id, "join"))
+	cli2.PostJson(1, token, &resp, url("group", group.ID, "join"))
 
 	if resp.Member != Addr2 {
 		t.Errorf("Invalid member: %q != %q", Addr2, resp.Member)
 	}
-	if resp.Id != group.Id {
-		t.Errorf("Invalid group ID: %d != %d", group.Id, resp.Id)
+	if resp.Id != group.ID {
+		t.Errorf("Invalid group ID: %d != %d", group.ID, resp.Id)
 	}
 
-	cli1.GetJson(1, &group, url("group", group.Id))
+	cli1.GetJson(1, &group, url("group", group.ID))
 
 	checkSetContains(t, group.Members, Addr1, Addr2)
 }
@@ -117,21 +117,21 @@ func TestLeavesGroup(t *testing.T) {
 	var group atc_thrift.ShapingGroup
 	cli1.PostJson(1, nil, &group, "/group")
 	var token Token
-	cli1.GetJson(1, &token, url("group", group.Id, "token"))
+	cli1.GetJson(1, &token, url("group", group.ID, "token"))
 
 	var resp MemberResponse
-	cli2.PostJson(1, token, &resp, url("group", group.Id, "join"))
+	cli2.PostJson(1, token, &resp, url("group", group.ID, "join"))
 
-	cli2.PostJson(1, token, &resp, url("group", group.Id, "leave"))
+	cli2.PostJson(1, token, &resp, url("group", group.ID, "leave"))
 
 	if resp.Member != Addr2 {
 		t.Errorf("Invalid member: %q != %q", Addr2, resp.Member)
 	}
-	if resp.Id != group.Id {
-		t.Errorf("Invalid group ID: %d != %d", group.Id, resp.Id)
+	if resp.Id != group.ID {
+		t.Errorf("Invalid group ID: %d != %d", group.ID, resp.Id)
 	}
 
-	cli1.GetJson(1, &group, url("group", group.Id))
+	cli1.GetJson(1, &group, url("group", group.ID))
 
 	checkSetContains(t, group.Members, Addr1)
 

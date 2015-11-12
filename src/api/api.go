@@ -154,7 +154,7 @@ func GroupTokenHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 		}
 		return nil, HttpErrorf(http.StatusBadGateway, "Could not get group from daemon: %v", err)
 	}
-	if grp.Id != id {
+	if grp.ID != id {
 		return nil, HttpErrorf(http.StatusUnauthorized, "Invalid group")
 	}
 	token, err := atcd.GetGroupToken(id)
@@ -234,7 +234,7 @@ func getSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Reque
 		return nil, nil
 	}
 	return GroupShaping{
-		Id:      group.Id,
+		Id:      group.ID,
 		Shaping: group.Shaping,
 	}, nil
 }
@@ -254,17 +254,17 @@ func createSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Re
 	}
 	// This is allowed since the requestor is shaping their own device!
 	if req_info.Token == "" {
-		req_info.Token, err = atcd.GetGroupToken(group.Id)
+		req_info.Token, err = atcd.GetGroupToken(group.ID)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not get token from daemon: %v", err)
 		}
 	}
-	setting, err := atcd.ShapeGroup(group.Id, req_info.Shaping, req_info.Token)
+	setting, err := atcd.ShapeGroup(group.ID, req_info.Shaping, req_info.Token)
 	if err != nil {
 		return nil, HttpErrorf(http.StatusBadGateway, "Could not shape: %v", err)
 	}
 	return GroupShaping{
-		Id:      group.Id,
+		Id:      group.ID,
 		Shaping: setting,
 	}, nil
 }
@@ -282,12 +282,12 @@ func deleteSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Re
 	}
 	// This is allowed since the requestor is shaping their own device!
 	if req_info.Token == "" {
-		req_info.Token, err = atcd.GetGroupToken(group.Id)
+		req_info.Token, err = atcd.GetGroupToken(group.ID)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not get token from daemon: %v", err)
 		}
 	}
-	err = atcd.UnshapeGroup(group.Id, req_info.Token)
+	err = atcd.UnshapeGroup(group.ID, req_info.Token)
 	if err != nil {
 		return nil, HttpErrorf(http.StatusBadGateway, "Could not delete shaping from atcd: %v", err)
 	}

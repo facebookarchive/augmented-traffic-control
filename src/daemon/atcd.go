@@ -117,7 +117,7 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 	if dbmem == nil {
 		return nil, DbError
 	}
-	grp.Id = dbgrp.id
+	grp.ID = dbgrp.id
 	return grp, nil
 }
 
@@ -131,7 +131,7 @@ func (atcd *Atcd) GetGroup(id int64) (*atc_thrift.ShapingGroup, error) {
 		return nil, NoSuchItem
 	}
 	grp := &atc_thrift.ShapingGroup{
-		Id:      id,
+		ID:      id,
 		Members: members,
 		Shaping: group.tc,
 	}
