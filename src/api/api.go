@@ -50,6 +50,7 @@ func InfoHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError
 }
 
 func GroupsHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	CORS(w, "GET", "POST")
 	atcd := GetAtcd(r)
 	switch r.Method {
 	case "POST":
@@ -66,13 +67,19 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErr
 			return nil, nil
 		}
 		return group, nil
+	case "OPTIONS":
+		return nil, nil
 	default:
 		return nil, InvalidMethod
 	}
 }
 
 func GroupHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	CORS(w, "GET")
 	atcd := GetAtcd(r)
+	if r.Method == "OPTIONS" {
+		return nil, nil
+	}
 	if r.Method != "GET" {
 		return nil, InvalidMethod
 	}
@@ -91,7 +98,11 @@ func GroupHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErro
 }
 
 func GroupJoinHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	CORS(w, "POST")
 	atcd := GetAtcd(r)
+	if r.Method == "OPTIONS" {
+		return nil, nil
+	}
 	if r.Method != "POST" {
 		return nil, InvalidMethod
 	}
@@ -115,7 +126,11 @@ func GroupJoinHandler(w http.ResponseWriter, r *http.Request) (interface{}, Http
 }
 
 func GroupLeaveHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	CORS(w, "POST")
 	atcd := GetAtcd(r)
+	if r.Method == "OPTIONS" {
+		return nil, nil
+	}
 	if r.Method != "POST" {
 		return nil, InvalidMethod
 	}
@@ -139,6 +154,7 @@ func GroupLeaveHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 }
 
 func GroupTokenHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	CORS(w, "GET")
 	atcd := GetAtcd(r)
 	if r.Method != "GET" {
 		return nil, InvalidMethod
@@ -169,6 +185,7 @@ func GroupTokenHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 }
 
 func GroupShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	CORS(w, "GET", "POST", "DELETE")
 	atcd := GetAtcd(r)
 	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
@@ -213,6 +230,7 @@ func GroupShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 }
 
 func ShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	CORS(w, "GET", "POST", "DELETE")
 	atcd := GetAtcd(r)
 	switch r.Method {
 	case "GET":
@@ -295,6 +313,7 @@ func deleteSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Re
 }
 
 func ProfilesHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	CORS(w, "GET", "POST")
 	db := GetDB(r)
 	switch r.Method {
 	case "GET":
@@ -328,6 +347,7 @@ func ProfilesHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpE
 }
 
 func ProfileHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
+	CORS(w, "DELETE")
 	if r.Method != "DELETE" {
 		return nil, InvalidMethod
 	}
