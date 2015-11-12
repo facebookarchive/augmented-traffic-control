@@ -264,9 +264,8 @@ func (atcd *Atcd) token(group *DbGroup) string {
 
 func (atcd *Atcd) otp(group *DbGroup) *otp.TOTP {
 	return &otp.TOTP{
-		Secret:         fmt.Sprintf("%s::%d", group.secret, group.id),
-		Period:         atcd.options.OtpTimeout,
-		IsBase32Secret: true,
+		Secret: fmt.Sprintf("%s::%d", group.secret, group.id),
+		Period: atcd.options.OtpTimeout,
 	}
 }
 
