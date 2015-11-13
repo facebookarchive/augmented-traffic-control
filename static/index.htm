@@ -55,7 +55,7 @@ of patent rights can be found in the PATENTS file in the same directory.
         <div id="atc_demo_ui" />
         <script type="text/jsx">
           React.render(
-            <Atc endpoint={{.ApiUrl}}/>,
+            <Atc {{with .Primary}}primary={{.}}{{end}} {{with .Secondary}}secondary={{.}}{{end}} endpoint={{.ApiUrl}} />,
             document.getElementById('atc_demo_ui')
           );
         </script>

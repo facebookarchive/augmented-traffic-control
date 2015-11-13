@@ -7,7 +7,7 @@
  */
 
 
-function AtcRestClient (endpoint) {
+function AtcRestClient (primary, secondary, endpoint) {
   this.endpoint = endpoint || '/api/v1/';
   function _add_ending_slash(string) {
     if (string[string.length -1] != '/') {
@@ -18,10 +18,14 @@ function AtcRestClient (endpoint) {
 
   this.endpoint = _add_ending_slash(this.endpoint);
 
-  this.api_call = function (method, urn, callback, data) {
+  this.dual_stack = function() {
+    return secondary != "";
+  }
+
+  this.raw_call = function (addr, method, urn, callback, data) {
     urn = _add_ending_slash(urn);
     $.ajax({
-      url: this.endpoint + urn,
+      url: '//' + addr + this.endpoint + urn,
       dataType: 'json',
       type: method,
       data: data && JSON.stringify(data),
@@ -36,6 +40,14 @@ function AtcRestClient (endpoint) {
         }
       }
     });
+  };
+
+  this.api_call = function (method, urn, callback, data) {
+    this.raw_call(primary, method, urn, callback, data);
+  };
+
+  this.secondary_call = function (method, urn, callback, data) {
+    this.raw_call(secondary, method, urn, callback, data);
   };
 }
 
@@ -57,6 +69,10 @@ AtcRestClient.prototype.leaveGroup = function(id, token, callback) {
 
 AtcRestClient.prototype.joinGroup = function(id, token, callback) {
   this.api_call('POST', 'group/' + id.toString() + '/join', callback, token)
+}
+
+AtcRestClient.prototype.joinGroupSecondary = function(id, token, callback) {
+  this.secondary_call('POST', 'group/' + id.toString() + '/join', callback, token)
 }
 
 AtcRestClient.prototype.getToken = function(id, callback) {
