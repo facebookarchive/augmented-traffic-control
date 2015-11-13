@@ -88,6 +88,20 @@ func (atcd *Atcd) GetAtcdInfo() (*atc_thrift.AtcdInfo, error) {
 	return info, nil
 }
 
+func (atcd *Atcd) ListGroups() ([]*atc_thrift.ShapingGroup, error) {
+	groups := <-atcd.db.GetAllGroups()
+	results := make([]*atc_thrift.ShapingGroup, 0, len(groups))
+	for _, grp := range groups {
+		members := <-atcd.db.GetMembersOf(grp.id)
+		results = append(results, &atc_thrift.ShapingGroup{
+			ID:      grp.id,
+			Shaping: grp.tc,
+			Members: members,
+		})
+	}
+	return results, nil
+}
+
 func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 	ip := net.ParseIP(member)
 	if ip == nil {

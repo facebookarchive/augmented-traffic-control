@@ -58,6 +58,14 @@ func (atcd *fake_atcd) GetAtcdInfo() (*atc_thrift.AtcdInfo, error) {
 	return info, nil
 }
 
+func (atcd *fake_atcd) ListGroups() ([]*atc_thrift.ShapingGroup, error) {
+	groups := make([]*atc_thrift.ShapingGroup, len(atcd.groups))
+	for i, g := range atcd.groups {
+		groups[i] = g
+	}
+	return groups, nil
+}
+
 func (atcd *fake_atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 	defer func() { atcd.nextId++ }()
 	id := atcd.nextId
