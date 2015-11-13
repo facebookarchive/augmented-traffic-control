@@ -58,7 +58,11 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErr
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not create group: %v", err)
 		}
-		return grp, nil
+		token, err := atcd.GetGroupToken(grp.ID)
+		if err != nil {
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not get group token: %v", err)
+		}
+		return CreatedGroup{grp, token}, nil
 	case "GET":
 		addr := GetClientAddr(r)
 		group, err := atcd.GetGroupWith(addr)
