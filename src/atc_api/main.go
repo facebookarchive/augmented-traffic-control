@@ -33,7 +33,7 @@ func main() {
 		api.Log.Println("Connected to atcd socket on", args.ThriftAddr)
 	}
 
-	if args.IPv4 == "" || args.IPv6 == "" {
+	if args.IPv4 == "" && args.IPv6 == "" {
 		api.Log.Fatalln("You must provide either -4 or -6 arguments to run the API.")
 	}
 
