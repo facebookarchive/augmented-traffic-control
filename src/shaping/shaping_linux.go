@@ -71,16 +71,23 @@ func (nl *netlinkShaper) GetPlatform() atc_thrift.PlatformType {
 }
 
 func (nl *netlinkShaper) Initialize() error {
+	if WAN_INT == "eth0" && LAN_INT == "eth1" {
+		Log.Println("-wan and -lan were not provided. Using defaults. This is probably not what you want!")
+	}
 	// Clean out mangle's FORWARD chain. There might be remaining
 	// rules in here from past atcd instances.
 	if err := mangle_flush(); err != nil {
 		return err
 	}
 	// Setup the root qdisc
-	if err := setupRootQdisc(WAN_INT); err != nil {
+	wan, lan, err := lookupInterfaces()
+	if err != nil {
 		return err
 	}
-	return setupRootQdisc(LAN_INT)
+	if err := setupRootQdisc(wan); err != nil {
+		return err
+	}
+	return setupRootQdisc(lan)
 }
 
 /*
@@ -104,10 +111,34 @@ func (nl *netlinkShaper) DeleteGroup(id int64) error {
 }
 
 func (nl *netlinkShaper) Shape(id int64, shaping *atc_thrift.Shaping) error {
-	// Root qdisc: (already exists!)
-	//qdisc htb 1: root refcnt 2 r2q 10 default 0 direct_packets_stat 37016
+	wan, lan, err := lookupInterfaces()
+	if err != nil {
+		return err
+	}
+	// Shape on the OUTBOUND side.
+	// Traffic on the lan interface is incoming, so down.
+	if err := shape_on(id, shaping.Down, lan); err != nil {
+		return fmt.Errorf("Could not shape lan(%s) interface: %v", LAN_INT, err)
+	}
+	// Traffic on the wan interface is outgoing, so up.
+	if err := shape_on(id, shaping.Up, wan); err != nil {
+		return fmt.Errorf("Could not shape wan(%s) interface: %v", WAN_INT, err)
+	}
+	return nil
+}
 
-	return fmt.Errorf("netlink shaping is not implemented")
+func (nl *netlinkShaper) Unshape(id int64) error {
+	wan, lan, err := lookupInterfaces()
+	if err != nil {
+		return err
+	}
+	if err := shape_off(id, lan); err != nil {
+		return fmt.Errorf("Could not unshape lan(%s) interface: %v", LAN_INT, err)
+	}
+	if err := shape_off(id, wan); err != nil {
+		return fmt.Errorf("Could not unshape wan(%s) interface: %v", WAN_INT, err)
+	}
+	return nil
 }
 
 func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) error {
@@ -184,10 +215,6 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 	}
 
 	return nil
-}
-
-func (nl *netlinkShaper) Unshape(int64) error {
-	return fmt.Errorf("netlink shaping is not implemented")
 }
 
 func shape_off(id int64, link netlink.Link) error {
@@ -288,12 +315,21 @@ func run_cmd(cmd string, args ...string) error {
 	return err
 }
 
-func setupRootQdisc(link_name string) error {
-	link, err := netlink.LinkByName(link_name)
+func lookupInterfaces() (wan, lan netlink.Link, err error) {
+	wan, err = netlink.LinkByName(LAN_INT)
 	if err != nil {
-		return err
+		err = fmt.Errorf("Could not find lan(%s) interface: %v", LAN_INT, err)
+		return
 	}
+	lan, err = netlink.LinkByName(WAN_INT)
+	if err != nil {
+		err = fmt.Errorf("Could not find wan(%s) interface: %v", WAN_INT, err)
+		return
+	}
+	return
+}
 
+func setupRootQdisc(link netlink.Link) error {
 	// Clean out old qdiscs
 	qdiscs, err := netlink.QdiscList(link)
 	if err != nil {
@@ -301,7 +337,7 @@ func setupRootQdisc(link_name string) error {
 	}
 	for _, q := range qdiscs {
 		if err := netlink.QdiscDel(q); err != nil {
-			return fmt.Errorf("Could not delete qdisc: %v", err)
+			Log.Printf("warning: Could not delete root qdisc (%s): %v\n", link.Attrs().Name, err)
 		}
 	}
 
@@ -312,5 +348,8 @@ func setupRootQdisc(link_name string) error {
 		Handle:    netlink.MakeHandle(1, 0),
 	})
 
-	return netlink.QdiscAdd(root_qdisc)
+	if err := netlink.QdiscAdd(root_qdisc); err != nil {
+		return fmt.Errorf("Could not create root qdisc (%s): %v", link.Attrs().Name, err)
+	}
+	return nil
 }
