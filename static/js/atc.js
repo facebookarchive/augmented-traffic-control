@@ -51,7 +51,7 @@ var NotificationPanel = React.createClass({
 var Atc = React.createClass({
   getInitialState: function() {
     return {
-      client: new AtcRestClient(this.props.endpoint),
+      client: new AtcRestClient(this.props.primary, this.props.secondary, this.props.endpoint),
       profiles: null,
       potential: null,
       current: null,
