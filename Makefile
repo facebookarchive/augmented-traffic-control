@@ -24,25 +24,28 @@ SRC = ${PROJECT}/src
 STATIC_FILES = $(shell find static/ -print)
 
 .PHONY: all
-all: bin/atcd bin/atc_api
+all: tests bin/atcd bin/atc_api
 
 bin/atcd: src/daemon/*.go src/atcd/*.go src/log/* src/shaping/*.go
 	@$(FMT) ${SRC}/shaping ${SRC}/daemon ${SRC}/atcd
 	@$(VET) ${SRC}/shaping ${SRC}/daemon ${SRC}/atcd
-	$(TEST) ${SRC}/daemon
-	@echo "[31mRunning shaping tests as root.[39m"
-	sudo GOPATH=${GOPATH} $(TEST) ${SRC}/shaping
-	$(TEST) ${SRC}/atcd
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atcd
 
 bin/atc_api: src/api/bindata.go src/api/*.go src/atc_api/*.go src/log/*
 	@$(FMT) ${SRC}/api ${SRC}/atc_api
 	@$(VET) ${SRC}/api ${SRC}/atc_api
-	$(TEST) ${SRC}/api
-	$(TEST) ${SRC}/atc_api
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atc_api
+
+.PHONY: tests
+tests:
+	$(TEST) ${SRC}/daemon
+	@echo "[31mRunning shaping tests as root.[39m"
+	sudo GOPATH=${GOPATH} $(TEST) ${SRC}/shaping
+	$(TEST) ${SRC}/atcd
+	$(TEST) ${SRC}/api
+	$(TEST) ${SRC}/atc_api
 
 src/api/bindata.go: $(STATIC_FILES)
 	$(BINGEN) -pkg api -o $@ static/...
