@@ -3,26 +3,67 @@ package api
 import (
 	"fmt"
 	"html/template"
+	"net"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
-func rootHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := Asset("static/index.htm")
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(404)
-		return
+type bindInfo struct {
+	ApiUrl string
+	IP4    string
+	IP6    string
+	Port   string
+}
+
+type templateData struct {
+	ApiUrl    string
+	Primary   string
+	Secondary string
+}
+
+func (info *bindInfo) templateFor(r *http.Request) *templateData {
+	data := &templateData{
+		ApiUrl: info.ApiUrl,
 	}
-	tmpl, err := template.New("root").Parse(string(data))
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(500)
-		return
+	addr, _, _ := net.SplitHostPort(r.RemoteAddr)
+	if len(net.ParseIP(addr)) == net.IPv6len {
+		// client is ipv6
+		data.Primary = info.IP6
+		data.Secondary = info.IP4
+	} else {
+		// client is ipv4
+		data.Primary = info.IP4
+		data.Secondary = info.IP6
 	}
-	w.WriteHeader(200)
-	tmpl.Execute(w, ServerData)
+	// If the user didn't provide one of the two addresses, we pass the UI an
+	// empty string.
+	if data.Primary != "" {
+		data.Primary = net.JoinHostPort(data.Primary, info.Port)
+	}
+	if data.Secondary != "" {
+		data.Secondary = net.JoinHostPort(data.Secondary, info.Port)
+	}
+	return data
+}
+
+func rootHandler(info *bindInfo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data, err := Asset("static/index.htm")
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(404)
+			return
+		}
+		tmpl, err := template.New("root").Parse(string(data))
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(500)
+			return
+		}
+		w.WriteHeader(200)
+		tmpl.Execute(w, info.templateFor(r))
+	}
 }
 
 func cachedAssetHandler(w http.ResponseWriter, r *http.Request) {

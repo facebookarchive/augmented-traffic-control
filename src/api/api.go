@@ -12,7 +12,7 @@ import (
 
 var (
 	API_URL_MAP = map[string]HandlerFunc{
-		"/":                 RedirectHandler(ServerData.ApiUrl + "shape"),
+		"/":                 RedirectHandler(ROOT_URL + "/shape"),
 		"/info":             InfoHandler,
 		"/group":            GroupsHandler,
 		"/group/{id}":       GroupHandler,
