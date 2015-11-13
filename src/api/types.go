@@ -19,6 +19,12 @@ type DaemonInfo struct {
 	Version  string `json:"version"`
 }
 
+// used by group creation response
+type CreatedGroup struct {
+	*atc_thrift.ShapingGroup
+	Token string `json:"token"`
+}
+
 type GroupToken struct {
 	Token string `json:"token"`
 	Id    int64  `json:"id"`
