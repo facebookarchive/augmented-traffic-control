@@ -5,8 +5,6 @@ if [ "$(whoami)" != "root" ] ; then
     exit 0
 fi
 
-echo 0 > /proc/sys/net/ipv4/ip_forward
-
 # Remove outside interfaces
 ip link del dev cli1
 ip link del dev lan1
