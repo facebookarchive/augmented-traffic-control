@@ -34,16 +34,17 @@ func GetEnv(name, def string) string {
 }
 
 func main() {
-	thriftAddr := kingpin.Flag("thrift-addr", "thrift server address").Short('T').Default(GetEnv("ATCD_ADDR", "127.0.0.1:9090")).TCP()
-	thriftProto := kingpin.Flag("thrift-proto", "thrift server protocol").Short('P').Default(GetEnv("ATCD_PROTO", "json")).String()
+	thriftAddr := kingpin.Flag("thrift-addr", "thrift server address (env:ATCD_ADDR)").Short('T').Default(GetEnv("ATCD_ADDR", "127.0.0.1:9090")).TCP()
+	thriftProto := kingpin.Flag("thrift-proto", "thrift server protocol (env:ATCD_PROTO)").Short('P').Default(GetEnv("ATCD_PROTO", "json")).String()
 
 	var (
 		defMember = GetEnv("ATC_MEMBER", "")
 
 		// Duplicate flags/args
-		token  string
-		id     int64
-		member net.IP
+		token   string
+		id      int64
+		members []net.IP
+		member  net.IP
 	)
 
 	kingpin.Command("info", "Prints info about the ATC shaping")
@@ -54,9 +55,9 @@ func main() {
 
 	groupAdd := group.Command("create", "create a group")
 	if defMember != "" {
-		groupAdd.Arg("member", "IP address of the member").Default(defMember).IPVar(&member)
+		groupAdd.Arg("member", "IP address of the member (env:ATC_MEMBER)").Default(defMember).IPVar(&member)
 	} else {
-		groupAdd.Arg("member", "IP address of the member").Required().IPVar(&member)
+		groupAdd.Arg("member", "IP address of the member (env:ATC_MEMBER)").Required().IPVar(&member)
 	}
 
 	groupShow := group.Command("show", "show info about a group")
@@ -66,18 +67,18 @@ func main() {
 	groupJoin.Flag("token", "token").Short('t').Default("").StringVar(&token)
 	groupJoin.Arg("id", "id of the group").Required().Int64Var(&id)
 	if defMember != "" {
-		groupJoin.Arg("member", "IP address of the member").Default(defMember).IPVar(&member)
+		groupJoin.Arg("members", "IP address of the members (env:ATC_MEMBER)").Default(defMember).IPListVar(&members)
 	} else {
-		groupJoin.Arg("member", "IP address of the member").Required().IPVar(&member)
+		groupJoin.Arg("members", "IP address of the members (env:ATC_MEMBER)").Required().IPListVar(&members)
 	}
 
 	groupLeave := group.Command("leave", "leave a group")
 	groupLeave.Flag("token", "token").Short('t').Default("").StringVar(&token)
 	groupLeave.Arg("id", "id of the group").Required().Int64Var(&id)
 	if defMember != "" {
-		groupLeave.Arg("member", "IP address of the member").Default(defMember).IPVar(&member)
+		groupLeave.Arg("members", "IP address of the members (env:ATC_MEMBER)").Default(defMember).IPListVar(&members)
 	} else {
-		groupLeave.Arg("member", "IP address of the member").Required().IPVar(&member)
+		groupLeave.Arg("members", "IP address of the members (env:ATC_MEMBER)").Required().IPListVar(&members)
 	}
 
 	groupToken := group.Command("token", "get a token")
@@ -114,15 +115,19 @@ func main() {
 	case "info":
 		ServerInfo()
 	case "group create":
-		GroupAdd(member)
+		GroupJoin(id, member, token)
 	case "group show":
 		GroupShow(id)
 	case "group list":
 		GroupList()
 	case "group join":
-		GroupJoin(id, member, token)
+		for _, member := range members {
+			GroupJoin(id, member, token)
+		}
 	case "group leave":
-		GroupLeave(id, member, token)
+		for _, member := range members {
+			GroupLeave(id, member, token)
+		}
 	case "group token":
 		GroupToken(id)
 	case "group unshape":
