@@ -58,7 +58,9 @@ func main() {
 
 	// Create and run the thrift service.
 	atcd := daemon.NewAtcd(db, shaper, options)
-	runServer(atcd, args.ThriftAddr)
+	if err := runServer(atcd, args.ThriftAddr); err != nil {
+		daemon.Log.Fatalln("Server failed:", err)
+	}
 }
 
 type Args struct {
