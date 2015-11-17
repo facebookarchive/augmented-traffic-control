@@ -128,9 +128,14 @@ func Setup(t *testing.T, secure bool) *testAtcd {
 	options := DefaultAtcdOptions
 	options.Secure = secure
 
+	eng, err := buildShapingEngine(shaping.FakeShaper{}, &Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	return &testAtcd{
 		T:    t,
-		atcd: NewAtcd(db, shaping.FakeShaper{}, &options).(*Atcd),
+		atcd: NewAtcd(db, eng, &options).(*Atcd),
 	}
 }
 
