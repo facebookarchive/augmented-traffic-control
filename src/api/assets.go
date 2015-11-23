@@ -28,8 +28,8 @@ func (info *bindInfo) templateFor(r *http.Request) *templateData {
 	}
 	addr, _, _ := net.SplitHostPort(r.RemoteAddr)
 	if info.IP6 != "" && info.IP4 != "" {
-		// dual-stack
-		if len(net.ParseIP(addr)) == net.IPv6len {
+		// server is dual-stack
+		if p := net.ParseIP(addr); p.To4() == nil {
 			// client is ipv6
 			data.Primary = info.IP6
 			data.Secondary = info.IP4
@@ -39,13 +39,14 @@ func (info *bindInfo) templateFor(r *http.Request) *templateData {
 			data.Secondary = info.IP6
 		}
 	} else if info.IP6 == "" {
-		// IPv4 single-stack
+		// server is IPv4 single-stack
 		data.Primary = info.IP4
 	} else if info.IP4 == "" {
-		// IPv6 single-stack
+		// server is IPv6 single-stack
 		data.Primary = info.IP6
 	} else {
-		// IPv6 and IPv4 are nil. Should be prohibited by CLI argument validation.
+		// IPv6 and IPv4 are nil.
+		// Should be prohibited by CLI argument validation.
 		panic("Neither IPv6 nor IPv4 are set!")
 	}
 	// If the user didn't provide one of the two addresses, we pass the UI an
