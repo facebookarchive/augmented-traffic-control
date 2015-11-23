@@ -133,7 +133,6 @@ func parseConfig(filename string) (*daemon.Config, error) {
 		return nil, err
 	}
 	var config daemon.Config
-	//if err := json.NewDecoder(f).Decode(&config); err != nil {
 	if err := yaml.Unmarshal(buf.Bytes(), &config); err != nil {
 		return nil, err
 	}

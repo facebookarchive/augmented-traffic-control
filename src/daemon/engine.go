@@ -52,24 +52,24 @@ func (eng *ShapingEngine) GetPlatform() atc_thrift.PlatformType {
 }
 
 func (eng *ShapingEngine) CreateGroup(id int64, member net.IP) error {
-	if err := eng.runHooks(GROUP_JOIN, fmt.Sprintf("%d", id), member.String()); err != nil {
+	if err := eng.shaper.CreateGroup(id, member); err != nil {
 		return err
 	}
-	return eng.shaper.CreateGroup(id, member)
+	return eng.runHooks(GROUP_JOIN, fmt.Sprintf("%d", id), member.String())
 }
 
 func (eng *ShapingEngine) JoinGroup(id int64, member net.IP) error {
-	if err := eng.runHooks(GROUP_JOIN, fmt.Sprintf("%d", id), member.String()); err != nil {
+	if err := eng.shaper.JoinGroup(id, member); err != nil {
 		return err
 	}
-	return eng.shaper.JoinGroup(id, member)
+	return eng.runHooks(GROUP_JOIN, fmt.Sprintf("%d", id), member.String())
 }
 
 func (eng *ShapingEngine) LeaveGroup(id int64, member net.IP) error {
-	if err := eng.runHooks(GROUP_LEAVE, fmt.Sprintf("%d", id), member.String()); err != nil {
+	if err := eng.shaper.LeaveGroup(id, member); err != nil {
 		return err
 	}
-	return eng.shaper.LeaveGroup(id, member)
+	return eng.runHooks(GROUP_LEAVE, fmt.Sprintf("%d", id), member.String())
 }
 
 func (eng *ShapingEngine) DeleteGroup(id int64) error {
