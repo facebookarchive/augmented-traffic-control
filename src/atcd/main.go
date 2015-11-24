@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	//"encoding/json"
 	"flag"
 	"io"
 	"os"
