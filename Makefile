@@ -27,7 +27,7 @@ STATIC_FILES = $(shell find static/ -print)
 USERID = $(shell id -u)
 
 .PHONY: all bin
-all: tests
+all: bin
 bin: bin/atcd bin/atc_api bin/atc
 
 bin/atcd: src/daemon/*.go src/atcd/*.go src/log/*.go src/shaping/*.go
@@ -49,7 +49,7 @@ bin/atc: src/log/*.go src/atc/*.go
 	$(BUILD) -o $@ ${SRC}/atc
 
 .PHONY: tests
-tests:
+tests: src/api/bindata.go
 	$(TEST) ${SRC}/daemon
 	@echo "[31mRunning shaping tests as root.[39m"
 ifeq ($(USERID),0)
@@ -58,11 +58,7 @@ else
 	sudo PATH=${PATH} GOROOT=${GOROOT} GOPATH=${GOPATH} $(TEST) ${SRC}/shaping
 endif
 	$(TEST) ${SRC}/atcd
-# ::1 missing on TRAVIS VMS
-# https://github.com/travis-ci/travis-ci/issues/4964
-ifneq ($(TRAVIS),true)
 	$(TEST) ${SRC}/api
-endif
 	$(TEST) ${SRC}/atc_api
 
 src/api/bindata.go: $(STATIC_FILES)
