@@ -1,5 +1,5 @@
 # docker-compose spec allowing to run:
-# docker run -ti --rm --cap-add SYS_ADMIN --cap-add NET_ADMIN -v "$PWD":/usr/src/myapp -w /usr/src/myapp -p 9090:9090 -p 8080:8080 --env GOPATH="/usr/src/myapp/.gopath:$GOPATH" atc bash
+# docker run -ti --rm --cap-add SYS_ADMIN --cap-add NET_ADMIN -v "$PWD":/usr/src/myapp -w /usr/src/myapp -p 9090:9090 -p 8080:8080 --env GOPATH=/usr/src/myapp/.gopath atc bash
 # This is currently used to develop ATC and its test suite. While ATC itself
 # would only require NET_ADMIN capability, in order to be able to run test in
 # a new netns, we also need SYS_ADMIN capability.
@@ -10,7 +10,7 @@ atc:
         - .:/usr/src/myapp
     working_dir: /usr/src/myapp
     environment:
-        - GOPATH=/usr/src/myapp/.gopath:$GOPATH
+        - GOPATH=/usr/src/myapp/.gopath
     ports:
         - "9090:9090"
         - "8080:8080"

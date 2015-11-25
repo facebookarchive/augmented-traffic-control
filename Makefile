@@ -58,11 +58,7 @@ else
 	sudo PATH=${PATH} GOROOT=${GOROOT} GOPATH=${GOPATH} $(TEST) ${SRC}/shaping
 endif
 	$(TEST) ${SRC}/atcd
-# ::1 missing on TRAVIS VMS
-# https://github.com/travis-ci/travis-ci/issues/4964
-ifneq ($(TRAVIS),true)
 	$(TEST) ${SRC}/api
-endif
 	$(TEST) ${SRC}/atc_api
 
 src/api/bindata.go: $(STATIC_FILES)
