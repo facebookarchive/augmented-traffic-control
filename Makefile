@@ -27,7 +27,7 @@ STATIC_FILES = $(shell find static/ -print)
 USERID = $(shell id -u)
 
 .PHONY: all bin
-all: tests
+all: bin
 bin: bin/atcd bin/atc_api bin/atc
 
 bin/atcd: src/daemon/*.go src/atcd/*.go src/log/*.go src/shaping/*.go
@@ -49,7 +49,7 @@ bin/atc: src/log/*.go src/atc/*.go
 	$(BUILD) -o $@ ${SRC}/atc
 
 .PHONY: tests
-tests:
+tests: src/api/bindata.go
 	$(TEST) ${SRC}/daemon
 	@echo "[31mRunning shaping tests as root.[39m"
 ifeq ($(USERID),0)

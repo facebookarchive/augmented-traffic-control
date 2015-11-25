@@ -15,6 +15,6 @@ script:
     - docker-compose build atc
     # install dependencies
     - docker-compose run atc ./setup.sh
-    # install assets
-    - docker-compose run atc make src/api/bindata.go
+    # make binaries and test
     - docker-compose run atc make
+    - docker-compose run atc make tests
