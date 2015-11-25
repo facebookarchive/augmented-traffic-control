@@ -1,0 +1,15 @@
+# sudo is required in order to be able to run src/shaping tests
+sudo: required
+# trusty is required to support setting up dummy interfaces with netlink
+dist: trusty
+language: go
+go:
+    - 1.5
+# Enforce upstream path
+go_import_path: github.com/facebook/augmented-traffic-control
+install:
+    # install dependencies
+    - ./setup.sh
+    # install assets
+    - make src/api/bindata.go
+

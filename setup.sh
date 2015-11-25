@@ -2,8 +2,6 @@
 
 PROJECT=github.com/facebook/augmented-traffic-control
 SRC="$PROJECT/src"
-GOPATH="$(pwd)/.gopath/"
-export GOPATH
 
 make_gopath() {
     echo "Setting up GOPATH in $GOPATH"
@@ -26,8 +24,12 @@ get_depends() {
 depends() {
     # Special since it's a build-time dependency and isn't imported by any code
     echo "github.com/jteeuwen/go-bindata/go-bindata"
-    go list -f '{{range .Imports}}{{.}}{{"\n"}}{{end}}' "$SRC/daemon" "$SRC/atcd" "$SRC/api" "$SRC/atc_api" | sort -u | fgrep . | grep -v "augmented-traffic-control"
+    go list -f '{{range .Imports}}{{.}}{{"\n"}}{{end}}' "$SRC/daemon" "$SRC/atcd" "$SRC/api" "$SRC/atc_api" "$SRC/shaping" | sort -u | fgrep . | grep -v "augmented-traffic-control"
 }
 
-make_gopath
+if [ ! "$CI" == true ]; then
+    GOPATH="$(pwd)/.gopath/"
+    export GOPATH
+    make_gopath
+fi
 get_depends

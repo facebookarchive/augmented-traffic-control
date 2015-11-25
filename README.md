@@ -1,6 +1,7 @@
 # Augmented Traffic Control
 
 [![GoDoc](https://godoc.org/github.com/facebook/augmented-traffic-control?status.svg)](https://godoc.org/github.com/facebook/augmented-traffic-control)
+[![Build Status](https://travis-ci.org/facebook/augmented-traffic-control.svg?branch=master)](https://travis-ci.org/facebook/augmented-traffic-control)
 
 ## WARNING
 
