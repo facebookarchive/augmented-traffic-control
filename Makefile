@@ -7,21 +7,24 @@ PREFIX = /usr/local
 
 # for static compilation:
 #BUILD = go build --ldflags '-extldflags "-static"'
-BUILD = go build
+GO = $(shell which go)
+BUILD = $(GO) build
 
-TEST = go test -v
-VET = go vet
-FMT = go fmt
-GET = go get
-LIST = go list
+TEST = $(GO) test -v
+VET = $(GO) vet
+FMT = $(GO) fmt
+GET = $(GO) get
+LIST = $(GO) list
 BINGEN = $(GOPATH)/bin/go-bindata # github.com/jteeuwen/go-bindata
 THRIFT = thrift
 
-# The go project root
+# The $(GO) project root
 PROJECT = github.com/facebook/augmented-traffic-control
 SRC = ${PROJECT}/src
 
 STATIC_FILES = $(shell find static/ -print)
+
+USERID = $(shell id -u)
 
 .PHONY: all bin
 all: tests
@@ -49,16 +52,24 @@ bin/atc: src/log/*.go src/atc/*.go
 tests:
 	$(TEST) ${SRC}/daemon
 	@echo "[31mRunning shaping tests as root.[39m"
-	sudo GOPATH=${GOPATH} $(TEST) ${SRC}/shaping
+ifeq ($(USERID),0)
+	$(TEST) ${SRC}/shaping
+else
+	sudo PATH=${PATH} GOROOT=${GOROOT} GOPATH=${GOPATH} $(TEST) ${SRC}/shaping
+endif
 	$(TEST) ${SRC}/atcd
+# ::1 missing on TRAVIS VMS
+# https://github.com/travis-ci/travis-ci/issues/4964
+ifneq ($(TRAVIS),true)
 	$(TEST) ${SRC}/api
+endif
 	$(TEST) ${SRC}/atc_api
 
 src/api/bindata.go: $(STATIC_FILES)
 	$(BINGEN) -pkg api -o $@ static/...
 
 src/atc_thrift: if/atc_thrift.thrift
-	$(THRIFT) --out src/ --gen go if/atc_thrift.thrift
+	$(THRIFT) --out src/ --gen $(GO) if/atc_thrift.thrift
 
 # Removed compiled binaries
 .PHONY: clean
