@@ -19,7 +19,7 @@ var NoGroup = React.createClass({
   createGroupCB: function() {
     this.props.client.createGroup(function(rc) {
       if (rc.status == 200) {
-        if this.props.client.dual_stack() {
+        if (this.props.client.dual_stack()) {
           this.props.client.joinGroupSecondary(rc.json.id, {token: rc.json.token.toString()}, function(rc) {
             this.props.fetchGroup();
           });
