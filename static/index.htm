@@ -53,12 +53,12 @@ of patent rights can be found in the PATENTS file in the same directory.
       <div class="starter-template">
         <h1>Augmented Traffic Control</h1>
         <div id="atc_demo_ui" />
-        <script type="text/jsx">
-          React.render(
-            <Atc {{with .Primary}}primary={{.}}{{end}} {{with .Secondary}}secondary={{.}}{{end}} endpoint={{.ApiUrl}} />,
-            document.getElementById('atc_demo_ui')
-          );
+        <script type="text/javascript">
+            primary={{.Primary}};
+            secondary={{.Secondary}};
+            endpoint={{.ApiUrl}};
         </script>
+        <script type="text/jsx" src="/static/js/index.js"></script>
       </div>
     </div>
   </body>
