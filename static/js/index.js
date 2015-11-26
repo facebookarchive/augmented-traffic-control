@@ -32,6 +32,7 @@ function AtcRestClient(primary, secondary, endpoint) {
       data: data && JSON.stringify(data),
       contentType: 'application/json; charset=utf-8',
       complete: function complete(xhr, status) {
+        //eslint-disable-line no-unused-vars
         var rc = {
           status: xhr.status,
           json: xhr.responseJSON
@@ -170,58 +171,6 @@ var ServerInfoPanel = require('./server');
 var GroupPanel = require('./group');
 var ProfilePanel = require('./profiles');
 var ShapingPanel = require('./shaping');
-
-var ERROR_EXPIRY = 10000;
-
-var atc_status = {
-  OFFLINE: 0,
-  ACTIVE: 1,
-  INACTIVE: 2,
-  OUTDATED: 3
-};
-
-var NOTIFICATION_TYPES = {
-  "error": "danger",
-  "info": "info",
-  "warn": "warning",
-  "success": "success"
-};
-
-var NotificationPanel = React.createClass({
-  displayName: 'NotificationPanel',
-
-  render: function render() {
-    if (this.props.notifications.length == 0) {
-      return React.createElement(
-        'i',
-        null,
-        'No notifications.'
-      );
-    }
-    return this.props.notifications.map(function (item, idx, arr) {
-      var timeout = Math.floor((item.expire_at - new Date().getTime()) / 1000);
-      var cls = "alert alert-" + (NOTIFICATION_TYPES[item.type] || item.type);
-      return React.createElement(
-        'div',
-        { className: cls, role: 'alert' },
-        React.createElement(
-          'div',
-          { className: 'row' },
-          React.createElement(
-            'div',
-            { className: 'col-md-11' },
-            item.message
-          ),
-          React.createElement(
-            'div',
-            { className: 'col-md-1' },
-            timeout
-          )
-        )
-      );
-    });
-  }
-});
 
 var Atc = React.createClass({
   displayName: 'Atc',
@@ -379,6 +328,7 @@ var NoGroup = React.createClass({
       if (rc.status == 200) {
         if (this.props.client.dual_stack()) {
           this.props.client.joinGroupSecondary(rc.json.id, { token: rc.json.token.toString() }, function (rc) {
+            // eslint-disable-line no-unused-vars
             this.props.fetchGroup();
           });
         } else {
@@ -489,6 +439,7 @@ var InGroup = React.createClass({
     this.props.client.getToken(this.props.group.id, (function (rc) {
       if (rc.status == 200) {
         this.setState(function (state, props) {
+          // eslint-disable-line no-unused-vars
           return {
             token: rc.json
           };
@@ -507,6 +458,7 @@ var InGroup = React.createClass({
 
   render: function render() {
     var memberNodes = this.props.group.members.map(function (item, idx, arr) {
+      // eslint-disable-line no-unused-vars
       return React.createElement(
         "li",
         { key: idx + " " + item },
@@ -577,12 +529,14 @@ var GroupPanel = React.createClass({
     this.props.client.getGroup((function (rc) {
       if (rc.status == 200) {
         this.setState(function (state, props) {
+          // eslint-disable-line no-unused-vars
           return {
             group: rc.json
           };
         });
       } else if (rc.status == 204) {
         this.setState(function (state, props) {
+          // eslint-disable-line no-unused-vars
           return {
             group: null
           };
@@ -612,7 +566,8 @@ module.exports = GroupPanel;
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
-var React = require('react');
+// This is actually used once the JSX tag converts to javascript
+var React = require('react'); // eslint-disable-line no-unused-vars
 var ReactDOM = require('react-dom');
 var Atc = require('./atc.js');
 
@@ -660,10 +615,8 @@ var ProfilePanel = React.createClass({
   },
 
   render: function render() {
-    var profilesDisabled = "true";
     var profiles = false;
     if (this.props.profiles != null && this.props.profiles.length > 0) {
-      profilesDisabled = "false";
       profiles = this.props.profiles.map((function (item) {
         return React.createElement(
           "option",
@@ -767,12 +720,14 @@ var ServerInfoPanel = React.createClass({
     this.props.client.getServerInfo((function (rc) {
       if (rc.status == 200) {
         this.setState(function (state, props) {
+          // eslint-disable-line no-unused-vars
           return {
             info: rc.json
           };
         });
       } else {
         this.setState(function (state, props) {
+          // eslint-disable-line no-unused-vars
           return {
             info: null
           };

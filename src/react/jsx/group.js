@@ -21,7 +21,10 @@ var NoGroup = React.createClass({
     this.props.client.createGroup(function(rc) {
       if (rc.status == 200) {
         if (this.props.client.dual_stack()) {
-          this.props.client.joinGroupSecondary(rc.json.id, {token: rc.json.token.toString()}, function(rc) {
+          this.props.client.joinGroupSecondary(
+                rc.json.id,
+                {token: rc.json.token.toString()},
+                function(rc) { // eslint-disable-line no-unused-vars
             this.props.fetchGroup();
           });
         } else {
@@ -95,7 +98,7 @@ var InGroup = React.createClass({
   updateToken: function() {
     this.props.client.getToken(this.props.group.id, function(rc) {
       if (rc.status == 200) {
-        this.setState(function(state, props) {
+        this.setState(function(state, props) { // eslint-disable-line no-unused-vars
           return {
             token: rc.json,
           };
@@ -113,7 +116,7 @@ var InGroup = React.createClass({
   },
 
   render: function() {
-    var memberNodes = this.props.group.members.map(function(item, idx, arr) {
+    var memberNodes = this.props.group.members.map(function(item, idx, arr) { // eslint-disable-line no-unused-vars
       return (
         <li key={idx + " " + item}><code>{item}</code></li>
       );
@@ -158,13 +161,13 @@ var GroupPanel = React.createClass({
     // Get group from API
     this.props.client.getGroup(function(rc) {
       if (rc.status == 200) {
-        this.setState(function(state, props) {
+        this.setState(function(state, props) { // eslint-disable-line no-unused-vars
           return {
             group: rc.json,
           };
         });
       } else if (rc.status == 204) {
-        this.setState(function(state, props) {
+        this.setState(function(state, props) { // eslint-disable-line no-unused-vars
           return {
             group: null,
           };

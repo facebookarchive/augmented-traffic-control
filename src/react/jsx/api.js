@@ -29,7 +29,7 @@ function AtcRestClient (primary, secondary, endpoint) {
       type: method,
       data: data && JSON.stringify(data),
       contentType: 'application/json; charset=utf-8',
-      complete: function (xhr, status) {
+      complete: function (xhr, status) { //eslint-disable-line no-unused-vars
         var rc = {
           status: xhr.status,
           json: xhr.responseJSON,

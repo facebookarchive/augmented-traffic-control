@@ -35,10 +35,8 @@ var ProfilePanel = React.createClass({
   },
 
   render: function() {
-    var profilesDisabled = "true";
     var profiles = false;
     if (this.props.profiles != null && this.props.profiles.length > 0) {
-      profilesDisabled = "false";
       profiles = this.props.profiles.map(function(item) {
         return (
           <option key={item.id}>{item.name}</option>

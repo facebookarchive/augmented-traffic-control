@@ -28,13 +28,13 @@ var ServerInfoPanel = React.createClass({
   updateInfo: function() {
     this.props.client.getServerInfo(function(rc) {
       if (rc.status == 200) {
-        this.setState(function(state, props) {
+        this.setState(function(state, props) { // eslint-disable-line no-unused-vars
           return {
             info: rc.json,
           }
         });
       } else {
-        this.setState(function(state, props) {
+        this.setState(function(state, props) { // eslint-disable-line no-unused-vars
           return {
             info: null,
           }

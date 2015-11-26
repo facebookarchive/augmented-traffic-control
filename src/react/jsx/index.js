@@ -5,7 +5,8 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
-var React = require('react');
+// This is actually used once the JSX tag converts to javascript
+var React = require('react'); // eslint-disable-line no-unused-vars
 var ReactDOM = require('react-dom');
 var Atc = require('./atc.js');
 
