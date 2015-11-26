@@ -115,7 +115,7 @@ var InGroup = React.createClass({
   render: function() {
     var memberNodes = this.props.group.members.map(function(item, idx, arr) {
       return (
-        <li><code>{item}</code></li>
+        <li key={idx + " " + item}><code>{item}</code></li>
       );
     });
     var token = null;

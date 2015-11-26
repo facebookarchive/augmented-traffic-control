@@ -507,7 +507,7 @@ var InGroup = React.createClass({
     var memberNodes = this.props.group.members.map(function (item, idx, arr) {
       return React.createElement(
         "li",
-        null,
+        { key: idx + " " + item },
         React.createElement(
           "code",
           null,
@@ -645,7 +645,7 @@ var ProfilePanel = React.createClass({
     // Ignore index 0 because that's the None option.
     if (ev.target.selectedIndex > 0) {
       // subtract one because the None option.
-      profile = this.props.profiles[ev.target.selectedIndex - 1];
+      var profile = this.props.profiles[ev.target.selectedIndex - 1];
       // FIXME SETTINGS
       this.props.onSelect(profile.shaping);
     }
@@ -663,7 +663,7 @@ var ProfilePanel = React.createClass({
       profiles = this.props.profiles.map((function (item) {
         return React.createElement(
           "option",
-          null,
+          { key: item.id },
           item.name
         );
       }).bind(this));
