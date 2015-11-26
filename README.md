@@ -88,6 +88,5 @@ From here, navigate your web browser to `localhost:8080` (replacing `localhost` 
 ```
 cd src/react
 npm update
-npm run build-jsx
 npm run build-js
 ```

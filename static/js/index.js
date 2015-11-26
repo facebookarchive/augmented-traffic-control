@@ -150,6 +150,7 @@ AtcRestClient.prototype.defaultShaping = function () {
 };
 
 module.exports = AtcRestClient;
+
 },{}],2:[function(require,module,exports){
 'use strict';
 
@@ -348,6 +349,7 @@ var Atc = React.createClass({
 });
 
 module.exports = Atc;
+
 },{"./api":1,"./group":3,"./profiles":5,"./server":6,"./shaping":7,"./utils":8,"react":166}],3:[function(require,module,exports){
 "use strict";
 
@@ -599,6 +601,7 @@ var GroupPanel = React.createClass({
 });
 
 module.exports = GroupPanel;
+
 },{"react":166}],4:[function(require,module,exports){
 'use strict';
 
@@ -614,6 +617,7 @@ var ReactDOM = require('react-dom');
 var Atc = require('./atc.js');
 
 ReactDOM.render(React.createElement(Atc, { primary: primary, secondary: secondary, endpoint: endpoint }), document.getElementById('atc_demo_ui'));
+
 },{"./atc.js":2,"react":166,"react-dom":37}],5:[function(require,module,exports){
 "use strict";
 
@@ -726,6 +730,7 @@ var ProfilePanel = React.createClass({
 });
 
 module.exports = ProfilePanel;
+
 },{"react":166}],6:[function(require,module,exports){
 'use strict';
 
@@ -827,6 +832,7 @@ var ServerInfoPanel = React.createClass({
 });
 
 module.exports = ServerInfoPanel;
+
 },{"react":166}],7:[function(require,module,exports){
 'use strict';
 
@@ -942,6 +948,7 @@ var ShapingPanel = React.createClass({
 });
 
 module.exports = ShapingPanel;
+
 },{"./utils":8,"react":166}],8:[function(require,module,exports){
 "use strict";
 
@@ -1028,6 +1035,7 @@ module.exports = {
   JSONEdit: JSONEdit,
   JSONView: JSONView
 };
+
 },{"react":166}],9:[function(require,module,exports){
 (function (process){
 /**

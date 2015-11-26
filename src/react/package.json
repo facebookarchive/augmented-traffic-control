@@ -13,13 +13,14 @@
     "jest-cli": "^0.8.0",
     "react-addons-test-utils": "~0.14.0",
     "babel-cli": "^6.1.18",
+    "babelify": "latest",
     "browserify": "latest",
     "watchify": "latest"
   },
   "scripts": {
     "test": "jest",
     "build-jsx": "babel jsx --out-dir build",
-    "build-js": "browserify build/index.js > ../../static/js/index.js",
+    "build-js": "browserify -t [ babelify --presets [ es2015 react ] ] jsx/index.js > ../../static/js/index.js",
     "watch-js": "watchify build/index.js -o ../../static/js/index.js"
   },
   "jest": {
