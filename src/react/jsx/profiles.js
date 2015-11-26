@@ -7,6 +7,8 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
+var React = require('react');
+
 var ProfilePanel = React.createClass({
   getInitialState: function() {
     return {
@@ -71,3 +73,5 @@ var ProfilePanel = React.createClass({
     );
   },
 });
+
+module.exports = ProfilePanel

@@ -17,3 +17,10 @@ atc:
     cap_add:
         - NET_ADMIN # General TC/IP privileges
         - SYS_ADMIN # New NetNS Privilege
+
+node:
+    image: node
+    volumes:
+        - .:/usr/src/myapp
+    working_dir: /usr/src/myapp/src/react
+    command: npm run-script build

@@ -81,3 +81,13 @@ Note that downloading the dependencies may take a while depending on your connec
 You can then run `sudo make install` to copy these binaries into `/usr/local/bin/`, but this isn't required to run ATC.
 
 From here, navigate your web browser to `localhost:8080` (replacing `localhost` with the ip address or hostname of your ATC box).
+
+
+## Building API static resources
+
+```
+cd src/react
+npm update
+npm run build-jsx
+npm run build-js
+```

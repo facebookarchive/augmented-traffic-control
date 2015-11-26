@@ -7,6 +7,8 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
+var React = require('react');
+
 var NoGroup = React.createClass({
   getInitialState: function() {
     return {
@@ -183,3 +185,5 @@ var GroupPanel = React.createClass({
     }
   },
 });
+
+module.exports = GroupPanel

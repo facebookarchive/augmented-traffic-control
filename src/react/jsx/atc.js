@@ -7,6 +7,14 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
+var React = require('react');
+var AtcRestClient = require('./api');
+var CollapsePanel = require('./utils').CollapsePanel;
+var ServerInfoPanel = require('./server');
+var GroupPanel = require('./group');
+var ProfilePanel = require('./profiles');
+var ShapingPanel = require('./shaping');
+
 var ERROR_EXPIRY = 10000;
 
 var atc_status = {
@@ -114,7 +122,7 @@ var Atc = React.createClass({
         return;
       }
       if (rc.status != 200 || rc.json.shaping == null) {
-        this.setState({potential: {shaping: defaultShaping()}});
+        this.setState({potential: {shaping: this.state.client.defaultShaping()}});
       } else {
         this.setState({potential: rc.json});
       }
@@ -163,3 +171,5 @@ var Atc = React.createClass({
     );
   },
 });
+
+module.exports = Atc
