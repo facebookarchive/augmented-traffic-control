@@ -16,6 +16,33 @@ type bindInfo struct {
 	Port   string
 }
 
+func (info bindInfo) getPrimarySecondaryAddrs(r *http.Request) (primary, secondary string) {
+	addr := GetClientAddr(r)
+	if info.IP6 != "" && info.IP4 != "" {
+		// server is dual-stack
+		if p := net.ParseIP(addr); p.To4() == nil {
+			// client is ipv6
+			primary = info.IP6
+			secondary = info.IP4
+		} else {
+			// client is ipv4
+			primary = info.IP4
+			secondary = info.IP6
+		}
+	} else if info.IP6 == "" {
+		// server is IPv4 single-stack
+		primary = info.IP4
+	} else if info.IP4 == "" {
+		// server is IPv6 single-stack
+		primary = info.IP6
+	} else {
+		// IPv6 and IPv4 are nil.
+		// Should be prohibited by CLI argument validation.
+		panic("Neither IPv6 nor IPv4 are set!")
+	}
+	return
+}
+
 type templateData struct {
 	ApiUrl    string
 	Primary   string
@@ -26,29 +53,7 @@ func (info *bindInfo) templateFor(r *http.Request) *templateData {
 	data := &templateData{
 		ApiUrl: info.ApiUrl,
 	}
-	addr, _, _ := net.SplitHostPort(r.RemoteAddr)
-	if info.IP6 != "" && info.IP4 != "" {
-		// server is dual-stack
-		if p := net.ParseIP(addr); p.To4() == nil {
-			// client is ipv6
-			data.Primary = info.IP6
-			data.Secondary = info.IP4
-		} else {
-			// client is ipv4
-			data.Primary = info.IP4
-			data.Secondary = info.IP6
-		}
-	} else if info.IP6 == "" {
-		// server is IPv4 single-stack
-		data.Primary = info.IP4
-	} else if info.IP4 == "" {
-		// server is IPv6 single-stack
-		data.Primary = info.IP6
-	} else {
-		// IPv6 and IPv4 are nil.
-		// Should be prohibited by CLI argument validation.
-		panic("Neither IPv6 nor IPv4 are set!")
-	}
+	data.Primary, data.Secondary = info.getPrimarySecondaryAddrs(r)
 	// If the user didn't provide one of the two addresses, we pass the UI an
 	// empty string.
 	if data.Primary != "" {

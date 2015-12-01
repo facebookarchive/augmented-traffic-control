@@ -43,11 +43,17 @@ func InfoHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not communicate with ATC Daemon: %v", err)
 		}
+		p, s := serv.bind_info.getPrimarySecondaryAddrs(r)
 		info := ServerInfo{
 			Api: serv.GetInfo(r),
 			Atcd: DaemonInfo{
 				Platform: daemon_info.Platform.String(),
 				Version:  daemon_info.Version,
+			},
+			Client: ClientInfo{
+				Addr:      GetClientAddr(r),
+				Primary:   p,
+				Secondary: s,
 			},
 		}
 		return info, nil
