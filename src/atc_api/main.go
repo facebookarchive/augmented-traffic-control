@@ -23,7 +23,7 @@ func main() {
 	args := ParseArgs()
 
 	// Make sure connection to the daemon is working.
-	err := TestAtcdConnection(args.ThriftAddr, args.ThriftProtocol)
+	err := TestAtcdConnection(args.ThriftAddr, args.ThriftProto)
 	if err != nil {
 		api.Log.Println("failed to connect to atcd server:", err)
 		if !args.WarnOnly {
@@ -33,13 +33,13 @@ func main() {
 		api.Log.Println("Connected to atcd socket on", args.ThriftAddr)
 	}
 
-	if args.IPv4 == "" && args.IPv6 == "" {
+	if args.V4 == "" && args.V6 == "" {
 		api.Log.Fatalln("You must provide either -4 or -6 arguments to run the API.")
 	}
 
-	api.Log.Println("Listening on", args.BindAddr)
+	api.Log.Println("Listening on", args.Addr)
 
-	srv, err := api.ListenAndServe(args.BindAddr, args.ThriftAddr, args.ThriftProtocol, args.DbDriver, args.DbConnstr, args.IPv4, args.IPv6)
+	srv, err := api.ListenAndServe(args.AtcApiOptions)
 	if err != nil {
 		api.Log.Fatalln("failed to listen and serve:", err)
 	}
@@ -51,14 +51,8 @@ func main() {
 }
 
 type Arguments struct {
-	BindAddr       string
-	ThriftAddr     string
-	ThriftProtocol string
-	DbDriver       string
-	DbConnstr      string
-	WarnOnly       bool
-	IPv4           string
-	IPv6           string
+	api.AtcApiOptions
+	WarnOnly bool
 }
 
 func ParseArgs() Arguments {
@@ -73,13 +67,15 @@ func ParseArgs() Arguments {
 	flag.Parse()
 
 	return Arguments{
-		BindAddr:       *bindAddr,
-		ThriftAddr:     *thriftAddr,
-		ThriftProtocol: *proto,
-		DbDriver:       *db_driver,
-		DbConnstr:      *db_connstr,
-		WarnOnly:       *warn_only,
-		IPv4:           *ipv4,
-		IPv6:           *ipv6,
+		AtcApiOptions: api.AtcApiOptions{
+			Addr:        *bindAddr,
+			ThriftAddr:  *thriftAddr,
+			ThriftProto: *proto,
+			DBDriver:    *db_driver,
+			DBConn:      *db_connstr,
+			V4:          *ipv4,
+			V6:          *ipv6,
+		},
+		WarnOnly: *warn_only,
 	}
 }
