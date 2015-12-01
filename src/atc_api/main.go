@@ -1,11 +1,11 @@
 package main
 
 import (
-	"flag"
 	"os"
 	"time"
 
 	"github.com/facebook/augmented-traffic-control/src/api"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 func TestAtcdConnection(addr, proto string) error {
@@ -56,26 +56,18 @@ type Arguments struct {
 }
 
 func ParseArgs() Arguments {
-	bindAddr := flag.String("b", "0.0.0.0:8080", "Bind address")
-	thriftAddr := flag.String("t", "127.0.0.1:9090", "Thrift server address")
-	proto := flag.String("p", "json", "Thrift protocol")
-	db_driver := flag.String("D", "sqlite3", "database driver")
-	db_connstr := flag.String("Q", "atc_api.db", "database driver connection parameters")
-	warn_only := flag.Bool("W", false, "only warn if the thrift server isn't reachable")
-	ipv4 := flag.String("4", "", "IPv4 address for the API")
-	ipv6 := flag.String("6", "", "IPv6 address for the API")
-	flag.Parse()
+	args := Arguments{}
+	// FIXME: this should be a TCPVar
+	kingpin.Flag("listen", "Bind address for the HTTP server").Short('b').Default("0.0.0.0:8080").StringVar(&args.Addr)
+	// FIXME: this should be a TCPVar
+	kingpin.Flag("atcd", "ATCD thrift server address").Short('t').Default("127.0.0.1:9090").StringVar(&args.ThriftAddr)
+	kingpin.Flag("atcd-proto", "ATCD thrift server protocol").Short('p').Default("json").StringVar(&args.ThriftProto)
+	kingpin.Flag("dbdrv", "Database driver").Short('D').Default("sqlite3").StringVar(&args.DBDriver)
+	kingpin.Flag("dbconn", "Database connection string").Short('Q').Default("atc_api.db").StringVar(&args.DBConn)
+	kingpin.Flag("ipv4", "IPv4 address (or hostname) of the ATC API").Short('4').Default("").StringVar(&args.DBConn)
+	kingpin.Flag("ipv6", "IPv6 address (or hostname) of the ATC API").Short('6').Default("").StringVar(&args.DBConn)
+	kingpin.Flag("warn", "Only warn if the thrift server isn't reachable").Short('Q').Default("false").BoolVar(&args.WarnOnly)
+	kingpin.Parse()
 
-	return Arguments{
-		AtcApiOptions: api.AtcApiOptions{
-			Addr:        *bindAddr,
-			ThriftAddr:  *thriftAddr,
-			ThriftProto: *proto,
-			DBDriver:    *db_driver,
-			DBConn:      *db_connstr,
-			V4:          *ipv4,
-			V6:          *ipv6,
-		},
-		WarnOnly: *warn_only,
-	}
+	return args
 }
