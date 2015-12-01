@@ -144,6 +144,27 @@ Gets the IP address of the client
 func GetClientAddr(r *http.Request) string {
 	// FIXME: check headers for X_HTTP_CLIENT_IP or something
 	// FIXME: error handling (third return value)
-	host, _, _ := net.SplitHostPort(r.RemoteAddr)
-	return host
+	srv := GetServer(r)
+	addr, _ := getProxiedClientAddr(srv, r)
+	return addr
+}
+
+func getProxiedClientAddr(srv *Server, r *http.Request) (string, error) {
+	srv_proxy := srv.proxy_addr
+	remote_addr, _, _ := net.SplitHostPort(r.RemoteAddr)
+	if real_ip, ok := r.Header["X_HTTP_REAL_IP"]; ok {
+		// Request was proxied
+		if srv_proxy == "" || srv_proxy == remote_addr {
+			if len(real_ip) == 0 {
+				return "", fmt.Errorf("Invalid proxy info")
+			}
+			return real_ip[0], nil
+		} else {
+			Log.Printf("Invalid proxy address: %s", remote_addr)
+			return "", fmt.Errorf("Invalid proxy address")
+		}
+	} else {
+		// Request was direct
+		return remote_addr, nil
+	}
 }

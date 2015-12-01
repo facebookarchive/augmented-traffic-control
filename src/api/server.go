@@ -21,6 +21,7 @@ type AtcApiOptions struct {
 	ThriftProto      string
 	DBDriver, DBConn string
 	V4, V6           string
+	ProxyAddr        string
 }
 
 type Server struct {
@@ -51,6 +52,7 @@ func ListenAndServe(options AtcApiOptions) (*Server, error) {
 			IP6:    options.V6,
 			Port:   strconv.Itoa(options.Addr.Port),
 		},
+		proxy_addr: proxy_addr,
 	}
 	srv.setupHandlers()
 	err = srv.ListenAndServe()
