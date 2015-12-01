@@ -37,13 +37,14 @@ func InfoHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError
 	CORS(w, "GET")
 	switch r.Method {
 	case "GET":
+		serv := GetServer(r)
 		atcd := GetAtcd(r)
 		daemon_info, err := atcd.GetAtcdInfo()
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not communicate with ATC Daemon: %v", err)
 		}
 		info := ServerInfo{
-			Api: APIInfo{Version: VERSION},
+			Api: serv.GetInfo(r),
 			Atcd: DaemonInfo{
 				Platform: daemon_info.Platform.String(),
 				Version:  daemon_info.Version,

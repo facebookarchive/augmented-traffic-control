@@ -12,6 +12,8 @@ type ServerInfo struct {
 
 type APIInfo struct {
 	Version string `json:"version"`
+	IPv4    string `json:"ipv4_addr"`
+	IPv6    string `json:"ipv6_addr"`
 }
 
 type DaemonInfo struct {

@@ -57,6 +57,14 @@ func ListenAndServe(addr, thrift_addr, thrift_proto, dbdriver, dbconn, v4, v6 st
 	return srv, nil
 }
 
+func (srv *Server) GetInfo(r *http.Request) APIInfo {
+	return APIInfo{
+		Version: VERSION,
+		IPv4:    srv.bind_info.IP4,
+		IPv6:    srv.bind_info.IP6,
+	}
+}
+
 func (srv *Server) GetAtcd() (AtcdCloser, HttpError) {
 	if srv.Atcd != nil {
 		return srv.Atcd, nil
