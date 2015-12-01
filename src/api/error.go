@@ -13,8 +13,7 @@ var (
 )
 
 var (
-	ServerError   = HttpErrorf(http.StatusInternalServerError, "Internal Server Error")
-	InvalidMethod = HttpErrorf(http.StatusMethodNotAllowed, "Method not allowed")
+	ServerError = HttpErrorf(http.StatusInternalServerError, "Internal Server Error")
 
 	// Used to indicate to the error handler that the request already wrote the
 	// HTTP status
@@ -45,4 +44,8 @@ func HttpErrorf(status int, f string, things ...interface{}) HttpError {
 
 func IsNoSuchItem(err error) bool {
 	return NoSuchItemRegex.MatchString(err.Error())
+}
+
+func InvalidMethod(r *http.Request) HttpError {
+	return HttpErrorf(http.StatusMethodNotAllowed, "Method not allowed: %s %v", r.Method, r.URL)
 }

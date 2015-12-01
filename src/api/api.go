@@ -34,19 +34,27 @@ func RedirectHandler(url string) HandlerFunc {
 }
 
 func InfoHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	atcd := GetAtcd(r)
-	daemon_info, err := atcd.GetAtcdInfo()
-	if err != nil {
-		return nil, HttpErrorf(http.StatusBadGateway, "Could not communicate with ATC Daemon: %v", err)
+	CORS(w, "GET")
+	switch r.Method {
+	case "GET":
+		atcd := GetAtcd(r)
+		daemon_info, err := atcd.GetAtcdInfo()
+		if err != nil {
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not communicate with ATC Daemon: %v", err)
+		}
+		info := ServerInfo{
+			Api: APIInfo{Version: VERSION},
+			Atcd: DaemonInfo{
+				Platform: daemon_info.Platform.String(),
+				Version:  daemon_info.Version,
+			},
+		}
+		return info, nil
+	case "OPTIONS":
+		return nil, nil
+	default:
+		return nil, InvalidMethod(r)
 	}
-	info := ServerInfo{
-		Api: APIInfo{Version: VERSION},
-		Atcd: DaemonInfo{
-			Platform: daemon_info.Platform.String(),
-			Version:  daemon_info.Version,
-		},
-	}
-	return info, nil
 }
 
 func GroupsHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
@@ -74,118 +82,125 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErr
 	case "OPTIONS":
 		return nil, nil
 	default:
-		return nil, InvalidMethod
+		return nil, InvalidMethod(r)
 	}
 }
 
 func GroupHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
 	CORS(w, "GET")
 	atcd := GetAtcd(r)
-	if r.Method == "OPTIONS" {
-		return nil, nil
-	}
-	if r.Method != "GET" {
-		return nil, InvalidMethod
-	}
-	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
-	if err != nil {
-		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
-	}
-	group, err := atcd.GetGroup(id)
-	if err != nil {
-		if IsNoSuchItem(err) {
-			return nil, HttpErrorf(http.StatusNotFound, "Invalid group")
+	switch r.Method {
+	case "GET":
+		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+		if err != nil {
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
 		}
-		return nil, HttpErrorf(http.StatusBadGateway, "Could not get group from daemon: %v", err)
+		group, err := atcd.GetGroup(id)
+		if err != nil {
+			if IsNoSuchItem(err) {
+				return nil, HttpErrorf(http.StatusNotFound, "Invalid group")
+			}
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not get group from daemon: %v", err)
+		}
+		return group, nil
+	case "OPTIONS":
+		return nil, nil
+	default:
+		return nil, InvalidMethod(r)
 	}
-	return group, nil
 }
 
 func GroupJoinHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
 	CORS(w, "POST")
 	atcd := GetAtcd(r)
-	if r.Method == "OPTIONS" {
+	switch r.Method {
+	case "POST":
+		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+		if err != nil {
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+		}
+		req_info := &Token{}
+		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
+		}
+		member := GetClientAddr(r)
+		err = atcd.JoinGroup(id, member, req_info.Token)
+		if err != nil {
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not join group: %v", err)
+		}
+		return MemberResponse{
+			Id:     id,
+			Member: member,
+		}, nil
+	case "OPTIONS":
 		return nil, nil
+	default:
+		return nil, InvalidMethod(r)
 	}
-	if r.Method != "POST" {
-		return nil, InvalidMethod
-	}
-	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
-	if err != nil {
-		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
-	}
-	req_info := &Token{}
-	if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
-		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
-	}
-	member := GetClientAddr(r)
-	err = atcd.JoinGroup(id, member, req_info.Token)
-	if err != nil {
-		return nil, HttpErrorf(http.StatusBadGateway, "Could not join group: %v", err)
-	}
-	return MemberResponse{
-		Id:     id,
-		Member: member,
-	}, nil
 }
 
 func GroupLeaveHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
 	CORS(w, "POST")
 	atcd := GetAtcd(r)
-	if r.Method == "OPTIONS" {
+	switch r.Method {
+	case "POST":
+		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+		if err != nil {
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+		}
+		req_info := &Token{}
+		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
+		}
+		member := GetClientAddr(r)
+		err = atcd.LeaveGroup(id, member, req_info.Token)
+		if err != nil {
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not join group: %v", err)
+		}
+		return MemberResponse{
+			Id:     id,
+			Member: member,
+		}, nil
+	case "OPTIONS":
 		return nil, nil
+	default:
+		return nil, InvalidMethod(r)
 	}
-	if r.Method != "POST" {
-		return nil, InvalidMethod
-	}
-	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
-	if err != nil {
-		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
-	}
-	req_info := &Token{}
-	if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
-		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
-	}
-	member := GetClientAddr(r)
-	err = atcd.LeaveGroup(id, member, req_info.Token)
-	if err != nil {
-		return nil, HttpErrorf(http.StatusBadGateway, "Could not join group: %v", err)
-	}
-	return MemberResponse{
-		Id:     id,
-		Member: member,
-	}, nil
 }
 
 func GroupTokenHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
 	CORS(w, "GET")
 	atcd := GetAtcd(r)
-	if r.Method != "GET" {
-		return nil, InvalidMethod
-	}
-	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
-	if err != nil {
-		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
-	}
-	grp, err := atcd.GetGroupWith(GetClientAddr(r))
-	if err != nil {
-		if IsNoSuchItem(err) {
+	switch r.Method {
+	case "GET":
+		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+		if err != nil {
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+		}
+		grp, err := atcd.GetGroupWith(GetClientAddr(r))
+		if err != nil {
+			if IsNoSuchItem(err) {
+				return nil, HttpErrorf(http.StatusUnauthorized, "Invalid group")
+			}
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not get group from daemon: %v", err)
+		}
+		if grp.ID != id {
 			return nil, HttpErrorf(http.StatusUnauthorized, "Invalid group")
 		}
-		return nil, HttpErrorf(http.StatusBadGateway, "Could not get group from daemon: %v", err)
-	}
-	if grp.ID != id {
-		return nil, HttpErrorf(http.StatusUnauthorized, "Invalid group")
-	}
-	token, err := atcd.GetGroupToken(id)
-	if err != nil {
-		return nil, HttpErrorf(http.StatusBadGateway, "Could not get token from daemon: %v", err)
-	}
+		token, err := atcd.GetGroupToken(id)
+		if err != nil {
+			return nil, HttpErrorf(http.StatusBadGateway, "Could not get token from daemon: %v", err)
+		}
 
-	return GroupToken{
-		Token: token,
-		Id:    id,
-	}, nil
+		return GroupToken{
+			Token: token,
+			Id:    id,
+		}, nil
+	case "OPTIONS":
+		return nil, nil
+	default:
+		return nil, InvalidMethod(r)
+	}
 }
 
 func GroupShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
@@ -228,8 +243,10 @@ func GroupShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not delete shaping from atcd: %v", err)
 		}
 		return nil, nil
+	case "OPTIONS":
+		return nil, nil
 	default:
-		return nil, InvalidMethod
+		return nil, InvalidMethod(r)
 	}
 }
 
@@ -243,8 +260,10 @@ func ShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErro
 		return createSimpleShaping(atcd, w, r)
 	case "DELETE":
 		return deleteSimpleShaping(atcd, w, r)
+	case "OPTIONS":
+		return nil, nil
 	default:
-		return nil, InvalidMethod
+		return nil, InvalidMethod(r)
 	}
 }
 
@@ -345,21 +364,27 @@ func ProfilesHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpE
 			return nil, HttpErrorf(http.StatusInternalServerError, "Couldn't save profile to database")
 		}
 		return prof, nil
+	case "OPTIONS":
+		return nil, nil
 	default:
-		return nil, InvalidMethod
+		return nil, InvalidMethod(r)
 	}
 }
 
 func ProfileHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
 	CORS(w, "DELETE")
-	if r.Method != "DELETE" {
-		return nil, InvalidMethod
+	switch r.Method {
+	case "DELETE":
+		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+		if err != nil {
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+		}
+		db := GetDB(r)
+		db.DeleteProfile(id)
+		return nil, nil
+	case "OPTIONS":
+		return nil, nil
+	default:
+		return nil, InvalidMethod(r)
 	}
-	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
-	if err != nil {
-		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
-	}
-	db := GetDB(r)
-	db.DeleteProfile(id)
-	return nil, nil
 }
