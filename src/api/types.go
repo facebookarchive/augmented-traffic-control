@@ -6,17 +6,26 @@ import (
 
 // Used for server info request
 type ServerInfo struct {
-	Api  APIInfo    `json:"atc_api"`
-	Atcd DaemonInfo `json:"atc_daemon"`
+	Api    APIInfo    `json:"atc_api"`
+	Atcd   DaemonInfo `json:"atc_daemon"`
+	Client ClientInfo `json:"client"`
 }
 
 type APIInfo struct {
 	Version string `json:"version"`
+	IPv4    string `json:"ipv4_addr"`
+	IPv6    string `json:"ipv6_addr"`
 }
 
 type DaemonInfo struct {
 	Platform string `json:"platform"`
 	Version  string `json:"version"`
+}
+
+type ClientInfo struct {
+	Addr      string `json:"client_addr"`
+	Primary   string `json:"server_primary"`
+	Secondary string `json:"server_secondary"`
 }
 
 // used by group creation response
