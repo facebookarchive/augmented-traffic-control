@@ -83,10 +83,16 @@ You can then run `sudo make install` to copy these binaries into `/usr/local/bin
 From here, navigate your web browser to `localhost:8080` (replacing `localhost` with the ip address or hostname of your ATC box).
 
 
-## Building API static resources
+## Building UI static resources
 
+To provide a HTTP UI to the ATC api we use [react](https://facebook.github.io/react/) and javascript.
+
+A precompiled .js is available in `static/js`, but if you wish to modify the UI, you will need to get a testing environment up and running.
+
+React comes with its own syntax [JSX](https://facebook.github.io/react/docs/getting-started.html) that needs to be converted to javascript. It also makes use of the [modular system](https://nodejs.org/api/modules.html) of nodejs.
+
+In order to be able to convert the jsx to a js that is usable for a web browser, you will to get npm up and running on your machine or use the provided Docker spec.
 ```
-cd src/react
-npm update
-npm run build-js
+docker-compose build node
+docker-compose run node make jsx
 ```

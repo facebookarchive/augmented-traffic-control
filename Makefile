@@ -17,6 +17,7 @@ GET = $(GO) get
 LIST = $(GO) list
 BINGEN = $(GOPATH)/bin/go-bindata # github.com/jteeuwen/go-bindata
 THRIFT = thrift
+NPM = npm
 
 # The $(GO) project root
 PROJECT = github.com/facebook/augmented-traffic-control
@@ -47,6 +48,12 @@ bin/atc: src/log/*.go src/atc/*.go
 	@$(VET) ${SRC}/atc
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atc
+
+jsx: src/react/jsx/*.js
+	@cd src/react && $(NPM) run build-js
+
+npm_env:
+	@cd src/react && $(NPM) install
 
 .PHONY: tests
 tests: src/api/bindata.go

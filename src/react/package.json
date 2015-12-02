@@ -1,15 +1,36 @@
 {
   "name": "react-atc",
   "version": "0.0.1",
+  "description": "A package providing a react UI for ATC API",
+  "author": "atc@fb.com",
+  "contributors": [
+    {
+      "name": "Zeal Jagannatha",
+      "email": "zeal@fb.com"
+    },
+    {
+      "name": "Emmanuel Bretelle",
+      "email": "chantra@fb.com"
+    }
+  ],
   "main": "js/index.js",
+  "bugs": "https://github.com/facebook/augmented-traffic-control/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/facebook/augmented-traffic-control"
+  },
+  "keywords": [
+    "atc",
+    "react"
+  ],
   "dependencies": {
     "react": "~0.14.3",
-    "react-dom": "~0.14.3",
-    "babel-preset-es2015": "^6.1.18",
-    "babel-preset-react": "^6.1.18"
+    "react-dom": "~0.14.3"
   },
   "devDependencies": {
     "babel-jest": "^5.3.0",
+    "babel-preset-es2015": "^6.1.18",
+    "babel-preset-react": "^6.1.18",
     "jest-cli": "^0.8.0",
     "react-addons-test-utils": "~0.14.0",
     "babel-cli": "^6.1.18",
@@ -23,7 +44,7 @@
     "test": "jest",
     "build-jsx": "babel jsx --out-dir build",
     "build-js": "browserify -t [ babelify --presets [ es2015 react ] ] jsx/index.js > ../../static/js/index.js",
-    "watch-js": "watchify build/index.js -o ../../static/js/index.js"
+    "watch": "watchify --poll -v -t babelify jsx/ -o ../../static/js/index.js"
   },
   "jest": {
     "scriptPreprocessor": "<rootDir>/node_modules/babel-jest",
@@ -33,5 +54,6 @@
       "<rootDir>/node_modules/react-addons-test-utils",
       "<rootDir>/node_modules/fbjs"
     ]
-  }
+  },
+  "license": "BSD"
 }
