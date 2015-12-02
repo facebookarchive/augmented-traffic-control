@@ -49,7 +49,7 @@ bin/atc: src/log/*.go src/atc/*.go
 	$(BUILD) -o $@ ${SRC}/atc
 
 src/atc_thrift: if/atc_thrift.thrift
-	$(THRIFT) --out src/ --gen $(GO) if/atc_thrift.thrift
+	$(THRIFT) --out src/ --gen go if/atc_thrift.thrift
 
 ###
 ### UI
@@ -116,12 +116,16 @@ lint-client:
 ### Helpers
 ###
 
+.PHONY: install clean
+
 # Removed compiled binaries
-.PHONY: clean
 clean:
 	rm -rf bin/
 
+# Remove all generated files and binaries
+clean-all: clean
+	rm -rf src/atc_thrift src/api/bindata.go
+
 # Copy built binaries into /usr/local/bin/
-.PHONY: install
 install:
 	cp bin/atcd bin/atc_api "$(PREFIX)/bin/"
