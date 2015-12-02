@@ -50,10 +50,10 @@ bin/atc: src/log/*.go src/atc/*.go
 	$(BUILD) -o $@ ${SRC}/atc
 
 jsx: src/react/jsx/*.js
-	@cd src/react && $(NPM) run build-js
+	cd src/react && $(NPM) run build-js
 
 npm_env:
-	@cd src/react && $(NPM) install
+	cd src/react && $(NPM) install
 
 .PHONY: tests
 tests: src/api/bindata.go
