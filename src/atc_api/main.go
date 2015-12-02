@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net"
 	"os"
 	"time"
 
@@ -8,7 +9,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-func TestAtcdConnection(addr, proto string) error {
+func TestAtcdConnection(addr *net.TCPAddr, proto string) error {
 	atcd := api.NewAtcdConn(addr, proto)
 	if err := atcd.Open(); err != nil {
 		return err
@@ -57,10 +58,8 @@ type Arguments struct {
 
 func ParseArgs() Arguments {
 	args := Arguments{}
-	// FIXME: this should be a TCPVar
-	kingpin.Flag("listen", "Bind address for the HTTP server").Short('b').Default("0.0.0.0:8080").StringVar(&args.Addr)
-	// FIXME: this should be a TCPVar
-	kingpin.Flag("atcd", "ATCD thrift server address").Short('t').Default("127.0.0.1:9090").StringVar(&args.ThriftAddr)
+	kingpin.Flag("listen", "Bind address for the HTTP server").Short('b').Default("0.0.0.0:8080").TCPVar(&args.Addr)
+	kingpin.Flag("atcd", "ATCD thrift server address").Short('t').Default("127.0.0.1:9090").TCPVar(&args.ThriftAddr)
 	kingpin.Flag("atcd-proto", "ATCD thrift server protocol").Short('p').Default("json").StringVar(&args.ThriftProto)
 	kingpin.Flag("dbdrv", "Database driver").Short('D').Default("sqlite3").StringVar(&args.DBDriver)
 	kingpin.Flag("dbconn", "Database connection string").Short('Q').Default("atc_api.db").StringVar(&args.DBConn)

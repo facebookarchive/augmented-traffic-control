@@ -3,6 +3,7 @@ package api
 import (
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -16,10 +17,10 @@ var (
 )
 
 type AtcApiOptions struct {
-	Addr                    string
-	ThriftAddr, ThriftProto string
-	DBDriver, DBConn        string
-	V4, V6                  string
+	Addr, ThriftAddr *net.TCPAddr
+	ThriftProto      string
+	DBDriver, DBConn string
+	V4, V6           string
 }
 
 type Server struct {
@@ -37,7 +38,6 @@ func ListenAndServe(options AtcApiOptions) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, port, _ := net.SplitHostPort(options.Addr)
 	srv := &Server{
 		AtcApiOptions: options,
 		listener:      nil,
@@ -49,7 +49,7 @@ func ListenAndServe(options AtcApiOptions) (*Server, error) {
 			ApiUrl: ROOT_URL,
 			IP4:    options.V4,
 			IP6:    options.V6,
-			Port:   port,
+			Port:   strconv.Itoa(options.Addr.Port),
 		},
 	}
 	srv.setupHandlers()
@@ -81,7 +81,7 @@ func (srv *Server) GetAtcd() (AtcdCloser, HttpError) {
 
 func (srv *Server) ListenAndServe() error {
 	var err error
-	srv.listener, err = net.Listen("tcp", srv.Addr)
+	srv.listener, err = net.ListenTCP("tcp", srv.Addr)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (srv *Server) Kill() {
 
 func (srv *Server) Serve() {
 	_srv := &http.Server{
-		Addr:         srv.Addr,
+		Addr:         srv.Addr.String(),
 		Handler:      srv.Handler,
 		ReadTimeout:  TIMEOUT,
 		WriteTimeout: TIMEOUT,
