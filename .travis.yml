@@ -3,13 +3,30 @@ sudo: required
 services:
     - docker
 
-env:
-    COMPOSE_VERSION: 1.5.0
+language: node_js
+node_js:
+    - "4.1"
+
+env: COMPOSE_VERSION=1.5.0
 
 before_install:
     - curl -L https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
     - chmod +x docker-compose
     - sudo mv docker-compose /usr/local/bin
+
+matrix:
+    include:
+        - node_js: "4.1"
+          sudo: false
+          env: COMPOSE_VERSION=1.5.0
+          before_install:
+          cache:
+            directories:
+              - src/react/node_modules
+          script:
+            - make npm_env
+            - make jsx-lint
+            - make jsx
 
 script:
     - docker-compose build atc

@@ -44,7 +44,8 @@
     "test": "jest",
     "build-jsx": "babel jsx --out-dir build",
     "build-js": "browserify -t [ babelify --presets [ es2015 react ] ] jsx/index.js > ../../static/js/index.js",
-    "watch": "watchify --poll -v -t babelify jsx/ -o ../../static/js/index.js"
+    "watch": "watchify --poll -v -t babelify jsx/ -o ../../static/js/index.js",
+    "lint": "eslint jsx/*.js"
   },
   "jest": {
     "scriptPreprocessor": "<rootDir>/node_modules/babel-jest",
