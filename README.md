@@ -95,6 +95,6 @@ In order to be able to convert the jsx to a js that is usable for a web browser,
 
 ```
 make npm_env
-make jsx-lint
-make jsx
+make lint-ui
+make static/js/index.js
 ```

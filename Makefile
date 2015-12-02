@@ -23,67 +23,109 @@ NPM = npm
 PROJECT = github.com/facebook/augmented-traffic-control
 SRC = ${PROJECT}/src
 
-STATIC_FILES = $(shell find static/ -print)
-
 USERID = $(shell id -u)
 
-.PHONY: all bin
-all: bin
+.PHONY: all bin tests ui lint
 bin: bin/atcd bin/atc_api bin/atc
+all: src/atc_thrift lint ui tests bin
+test: test-daemon test-api test-shaping
+ui: src/api/bindata.go
+lint: lint-ui lint-daemon lint-api lint-client
+
+###
+### Binaries
+###
 
 bin/atcd: src/daemon/*.go src/atcd/*.go src/log/*.go src/shaping/*.go
-	@$(FMT) ${SRC}/shaping ${SRC}/daemon ${SRC}/atcd
-	@$(VET) ${SRC}/shaping ${SRC}/daemon ${SRC}/atcd
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atcd
 
-bin/atc_api: src/api/bindata.go src/api/*.go src/atc_api/*.go src/log/*.go
-	@$(FMT) ${SRC}/api ${SRC}/atc_api
-	@$(VET) ${SRC}/api ${SRC}/atc_api
+bin/atc_api: src/api/*.go src/atc_api/*.go src/log/*.go
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atc_api
 
 bin/atc: src/log/*.go src/atc/*.go
-	@$(FMT) ${SRC}/atc
-	@$(VET) ${SRC}/atc
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atc
 
-jsx: src/react/jsx/*.js
+src/atc_thrift: if/atc_thrift.thrift
+	$(THRIFT) --out src/ --gen go if/atc_thrift.thrift
+
+###
+### UI
+###
+
+.PHONY: npm_env
+
+static/js/index.js: src/react/jsx/*.js
 	cd src/react && $(NPM) run build-js
 
-jsx-lint:
-	cd src/react && $(NPM) run lint
+src/api/bindata.go: static/js/index.js
+	$(BINGEN) -pkg api -o $@ static/...
 
 npm_env:
 	cd src/react && $(NPM) install
 
-.PHONY: tests
-tests: src/api/bindata.go
+###
+### Tests
+###
+
+.PHONY: test-daemon test-shaping test-api
+
+test-daemon:
 	$(TEST) ${SRC}/daemon
+	$(TEST) ${SRC}/atcd
+
+test-shaping:
 	@echo "[31mRunning shaping tests as root.[39m"
 ifeq ($(USERID),0)
 	$(TEST) ${SRC}/shaping
 else
 	sudo PATH=${PATH} GOROOT=${GOROOT} GOPATH=${GOPATH} $(TEST) ${SRC}/shaping
 endif
-	$(TEST) ${SRC}/atcd
+
+test-api:
 	$(TEST) ${SRC}/api
 	$(TEST) ${SRC}/atc_api
 
-src/api/bindata.go: $(STATIC_FILES)
-	$(BINGEN) -pkg api -o $@ static/...
+###
+### Lint
+###
 
-src/atc_thrift: if/atc_thrift.thrift
-	$(THRIFT) --out src/ --gen $(GO) if/atc_thrift.thrift
+.PHONY: lint-ui lint-daemon lint-api lint-client
+
+lint-ui:
+	cd src/react && $(NPM) run lint
+
+lint-daemon:
+	@$(FMT) ${SRC}/shaping ${SRC}/daemon ${SRC}/atcd
+	$(VET) ${SRC}/shaping
+	$(VET) ${SRC}/daemon
+	$(VET) ${SRC}/atcd
+
+lint-api:
+	@$(FMT) ${SRC}/api ${SRC}/atc_api
+	$(VET) ${SRC}/api
+	$(VET) ${SRC}/atc_api
+
+lint-client:
+	@$(FMT) ${SRC}/atc
+	$(VET) ${SRC}/atc
+
+###
+### Helpers
+###
+
+.PHONY: install clean
 
 # Removed compiled binaries
-.PHONY: clean
 clean:
 	rm -rf bin/
-	rm -f src/api/bindata.go
+
+# Remove all generated files and binaries
+clean-all: clean
+	rm -rf src/atc_thrift src/api/bindata.go
 
 # Copy built binaries into /usr/local/bin/
-.PHONY: install
 install:
 	cp bin/atcd bin/atc_api "$(PREFIX)/bin/"
