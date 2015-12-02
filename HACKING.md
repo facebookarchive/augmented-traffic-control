@@ -55,3 +55,31 @@ After you have built ATC, you can run it by running (from within the default wor
 ```
 
 You can now access the ATC UI from http://<dockerip>:8080/
+
+## Building the UI
+
+A pre-built .js is provided in `static/js`, but if you want to modify it, you will need to change the [JSX](https://facebook.github.io/react/docs/getting-started.html) files in `src/react/jsx` and re-generate `static/js/index.js`.
+
+There is a bunch of tools that need to be installed in order to be able to generate this `index.js` that is consumable by a web browser. At a high level, we need `npm`, `babel`, `react` and `browserify`.
+
+The steps below are going to make use of [docker-compose](https://docs.docker.com/compose/) to set up the dev environment. If you do not want to use docker, the instructions will still apply but for the docker part (e.g you dont need the `docker-compose run node` bit).
+
+To build the docker image used to develop on jsx run:
+```
+docker-compose build node
+```
+
+Once you have the image built, you can install the dependencies:
+```
+docker-compose run node make npm_env
+```
+
+To build the js file:
+```
+docker-compose run node make jsx
+```
+
+If you want to have the `static/js/index.js` file automatically generated as you modify the jsx files, you can run:
+```
+docker-compose run node bash -c 'cd src/react; npm run watch'
+```

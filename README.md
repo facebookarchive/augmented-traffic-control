@@ -92,7 +92,9 @@ A precompiled .js is available in `static/js`, but if you wish to modify the UI,
 React comes with its own syntax [JSX](https://facebook.github.io/react/docs/getting-started.html) that needs to be converted to javascript. It also makes use of the [modular system](https://nodejs.org/api/modules.html) of nodejs.
 
 In order to be able to convert the jsx to a js that is usable for a web browser, you will to get npm up and running on your machine or use the provided Docker spec.
+
 ```
-docker-compose build node
-docker-compose run node make jsx
+make npm_env
+make jsx-lint
+make jsx
 ```
