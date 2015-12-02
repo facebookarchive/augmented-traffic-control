@@ -105,7 +105,7 @@ func main() {
 
 	cmd := kingpin.Parse()
 
-	atcd = api.NewAtcdConn((*thriftAddr).String(), *thriftProto)
+	atcd = api.NewAtcdConn(*thriftAddr, *thriftProto)
 	if err := atcd.Open(); err != nil {
 		Log.Fatalln("Could not open connection to atcd:", err)
 	}
