@@ -3,9 +3,9 @@ sudo: required
 services:
     - docker
 
-language: go
-go:
-    - tip
+language: node_js
+node_js:
+    - "4.1"
 
 env: COMPOSE_VERSION=1.5.0
 
@@ -16,13 +16,13 @@ before_install:
 
 matrix:
     include:
-        - go: tip
+        - node_js: "4.1"
+          sudo: false
           env: COMPOSE_VERSION=1.5.0
-          dist: trusty
+          before_install:
           script:
-            - docker-compose build node
-            - docker-compose run node make npm_env
-            - docker-compose run node make jsx
+            - make npm_env
+            - make jsx
 
 script:
     - docker-compose build atc
