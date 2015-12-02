@@ -25,6 +25,7 @@ matrix:
               - src/react/node_modules
           script:
             - make npm_env
+            - make jsx-lint
             - make jsx
 
 script:

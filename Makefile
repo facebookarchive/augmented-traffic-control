@@ -52,6 +52,9 @@ bin/atc: src/log/*.go src/atc/*.go
 jsx: src/react/jsx/*.js
 	cd src/react && $(NPM) run build-js
 
+jsx-lint:
+	@cd src/react && $(NPM) run lint
+
 npm_env:
 	cd src/react && $(NPM) install
 
