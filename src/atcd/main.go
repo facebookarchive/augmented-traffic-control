@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"io"
+	"net"
 	"os"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
@@ -71,7 +72,7 @@ func main() {
 type Args struct {
 	DbDriver    string
 	DbConnstr   string
-	ThriftAddr  string
+	ThriftAddr  *net.TCPAddr
 	Insecure    bool
 	FakeShaping bool
 	OtpTimeout  int
@@ -84,9 +85,7 @@ func parseArgs() Args {
 
 	args := Args{}
 
-	// FIXME: this should be a TCPVar
-	kingpin.Flag("listen", "Bind address for the thrift server").Short('b').Default("127.0.0.1:9090").StringVar(&args.ThriftAddr)
-	// FIXME: this should be a TCPVar
+	kingpin.Flag("listen", "Bind address for the thrift server").Short('b').Default("127.0.0.1:9090").TCPVar(&args.ThriftAddr)
 	kingpin.Flag("dbdrv", "Database driver").Short('D').Default("sqlite3").StringVar(&args.DbDriver)
 	kingpin.Flag("dbconn", "Database connection string").Short('Q').Default("atcd.db").StringVar(&args.DbConnstr)
 	kingpin.Flag("config", "location of the json config file").Short('c').Default("/etc/atc/atcd.conf").StringVar(&args.ConfigFile)
@@ -105,8 +104,8 @@ func parseArgs() Args {
 }
 
 // Runs the ATCD thrift server on the provided address.
-func runServer(atcd atc_thrift.Atcd, addr string) error {
-	transport, err := thrift.NewTServerSocket(addr)
+func runServer(atcd atc_thrift.Atcd, addr *net.TCPAddr) error {
+	transport, err := thrift.NewTServerSocket(addr.String())
 	if err != nil {
 		return err
 	}
@@ -116,7 +115,7 @@ func runServer(atcd atc_thrift.Atcd, addr string) error {
 	tfactory := thrift.NewTTransportFactory()
 	server := thrift.NewTSimpleServer4(processor, transport, tfactory, pfactory)
 
-	daemon.Log.Println("Starting the thrift server on", addr)
+	daemon.Log.Printf("Starting the thrift server on %v\n", addr)
 	return server.Serve()
 }
 
@@ -125,6 +124,7 @@ func parseConfig(filename string) (*daemon.Config, error) {
 	if err != nil {
 		return nil, os.ErrNotExist
 	}
+	defer f.Close()
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, f); err != nil {
 		return nil, err
