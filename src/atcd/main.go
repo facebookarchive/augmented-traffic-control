@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"io"
 	"os"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/daemon"
 	"github.com/facebook/augmented-traffic-control/src/shaping"
+	"gopkg.in/alecthomas/kingpin.v2"
 	"gopkg.in/yaml.v2"
 )
 
@@ -57,7 +57,7 @@ func main() {
 		args.OtpTimeout = 255
 	}
 	options := &daemon.AtcdOptions{
-		Secure:     args.Secure,
+		Secure:     !args.Insecure,
 		OtpTimeout: uint8(args.OtpTimeout),
 	}
 
@@ -72,7 +72,7 @@ type Args struct {
 	DbDriver    string
 	DbConnstr   string
 	ThriftAddr  string
-	Secure      bool
+	Insecure    bool
 	FakeShaping bool
 	OtpTimeout  int
 	ConfigFile  string
@@ -81,29 +81,27 @@ type Args struct {
 func parseArgs() Args {
 	// ShapingFlags sets up platform-specific flags for the shaper.
 	shaping.ShapingFlags()
-	db_driver := flag.String("D", "sqlite3", "database driver")
-	db_connstr := flag.String("Q", "atcd.db", "database driver connection parameters")
-	thrift_addr := flag.String("B", "127.0.0.1:9090", "bind address for the thrift server")
-	config_file := flag.String("c", "/etc/atc/atcd.conf", "location of json config file")
+
+	args := Args{}
+
+	// FIXME: this should be a TCPVar
+	kingpin.Flag("listen", "Bind address for the thrift server").Short('b').Default("127.0.0.1:9090").StringVar(&args.ThriftAddr)
+	// FIXME: this should be a TCPVar
+	kingpin.Flag("dbdrv", "Database driver").Short('D').Default("sqlite3").StringVar(&args.DbDriver)
+	kingpin.Flag("dbconn", "Database connection string").Short('Q').Default("atcd.db").StringVar(&args.DbConnstr)
+	kingpin.Flag("config", "location of the json config file").Short('c').Default("/etc/atc/atcd.conf").StringVar(&args.ConfigFile)
+
 	// flag is `insecure` because security is the default and you should have
 	// to turn it off deliberately
 	// note that this means we're using a double negative. be careful what you
 	// change here.
-	insecure := flag.Bool("insecure", false, "insecure mode. disable user security checks")
-	fake_shaping := flag.Bool("F", false, "don't do real shaping. instead use a mock shaper")
-	otp_timeout := flag.Int("token-timeout", 60, "Token timeout in seconds")
+	kingpin.Flag("insecure", "insecure mode. disable user security checks").Default("false").BoolVar(&args.Insecure)
+	kingpin.Flag("fake-shaping", "don't do real shaping. instead use a mock shaper").Short('F').Default("false").BoolVar(&args.FakeShaping)
+	kingpin.Flag("token-timeout", "OTP Token timeout in seconds").Default("60").IntVar(&args.OtpTimeout)
 
-	flag.Parse()
+	kingpin.Parse()
 
-	return Args{
-		DbDriver:    *db_driver,
-		DbConnstr:   *db_connstr,
-		ThriftAddr:  *thrift_addr,
-		Secure:      !*insecure,
-		FakeShaping: *fake_shaping,
-		OtpTimeout:  *otp_timeout,
-		ConfigFile:  *config_file,
-	}
+	return args
 }
 
 // Runs the ATCD thrift server on the provided address.
