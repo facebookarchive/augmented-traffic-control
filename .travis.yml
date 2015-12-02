@@ -20,6 +20,9 @@ matrix:
           sudo: false
           env: COMPOSE_VERSION=1.5.0
           before_install:
+          cache:
+            directories:
+              - src/react/node_modules
           script:
             - make npm_env
             - make jsx
