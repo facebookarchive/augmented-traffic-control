@@ -77,42 +77,40 @@ func TestHandlesThrownError(t *testing.T) {
 }
 
 func TestGetsProxiedAddr(t *testing.T) {
-	r, _ := http.NewRequest("GET", "/", nil)
-	r.RemoteAddr = "1.1.1.1:1234"
-	srv := &Server{proxy_addr: ""}
+	testProxy := func(client_addr, header_addr, server_addr string) (string, error) {
+		r, _ := http.NewRequest("GET", "/", nil)
+		r.RemoteAddr = client_addr + ":0" // net.SplitHostPort requires a port
+		if header_addr != "" {
+			r.Header.Set("X_HTTP_REAL_IP", header_addr)
+		}
+		srv := &Server{AtcApiOptions: AtcApiOptions{ProxyAddr: server_addr}}
+		return getProxiedClientAddr(srv, r)
+	}
 
-	// Non-proxied request should work
-	addr, err := getProxiedClientAddr(srv, r)
+	// Neither the server nor the client are proxied.
+	addr, err := testProxy("1.1.1.1", "", "")
 	if err != nil {
 		t.Error(err)
 	} else if addr != "1.1.1.1" {
 		t.Errorf("Wrong proxy address: %q", addr)
 	}
 
-	// Simulate a proxied request
-	r.Header.Set("X_HTTP_REAL_IP", "2.2.2.2")
-
-	// Works without a proxy address set
-	addr, err = getProxiedClientAddr(srv, r)
+	// Both the client and the server are proxied.
+	addr, err = testProxy("1.1.1.1", "2.2.2.2", "1.1.1.1")
 	if err != nil {
 		t.Error(err)
 	} else if addr != "2.2.2.2" {
 		t.Errorf("Wrong proxy address: %q", addr)
 	}
 
-	// Works with correct proxy address set
-	srv.proxy_addr = "1.1.1.1"
-	addr, err = getProxiedClientAddr(srv, r)
-	if err != nil {
-		t.Error(err)
-	} else if addr != "2.2.2.2" {
-		t.Errorf("Wrong proxy address: %q", addr)
+	// Server expects a proxy, but client doesn't send one
+	addr, err = testProxy("this.message.ok.in.tests", "", "2.2.2.2")
+	if err == nil {
+		t.Errorf("Proxy address should be invalid: %q", addr)
 	}
 
-	srv.proxy_addr = "3.3.3.3"
-	r.RemoteAddr = "message.ok.in.tests:1234"
-	// Shouldn't work if proxy address is set wrong
-	_, err = getProxiedClientAddr(srv, r)
+	// Client sends a proxy, but the server doesn't expect it
+	addr, err = testProxy("this.message.ok.in.tests", "2.2.2.2", "")
 	if err == nil {
 		t.Errorf("Proxy address should be invalid: %q", addr)
 	}

@@ -52,7 +52,6 @@ func ListenAndServe(options AtcApiOptions) (*Server, error) {
 			IP6:    options.V6,
 			Port:   strconv.Itoa(options.Addr.Port),
 		},
-		proxy_addr: proxy_addr,
 	}
 	srv.setupHandlers()
 	err = srv.ListenAndServe()
