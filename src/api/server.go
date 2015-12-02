@@ -3,6 +3,7 @@ package api
 import (
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -15,38 +16,40 @@ var (
 	ROOT_URL = "/api/v1"
 )
 
-type Server struct {
-	Addr         string
-	Timeout      time.Duration
-	Handler      http.Handler
-	listener     net.Listener
-	Atcd         AtcdCloser
-	db           *DbRunner
-	thrift_proto string
-	thrift_addr  string
-	bind_info    *bindInfo
+type AtcApiOptions struct {
+	Addr, ThriftAddr *net.TCPAddr
+	ThriftProto      string
+	DBDriver, DBConn string
+	V4, V6           string
 }
 
-func ListenAndServe(addr, thrift_addr, thrift_proto, dbdriver, dbconn, v4, v6 string) (*Server, error) {
-	db, err := NewDbRunner(dbdriver, dbconn)
+type Server struct {
+	AtcApiOptions
+	Timeout   time.Duration
+	Handler   http.Handler
+	listener  net.Listener
+	Atcd      AtcdCloser
+	db        *DbRunner
+	bind_info *bindInfo
+}
+
+func ListenAndServe(options AtcApiOptions) (*Server, error) {
+	db, err := NewDbRunner(options.DBDriver, options.DBConn)
 	if err != nil {
 		return nil, err
 	}
-	_, port, _ := net.SplitHostPort(addr)
 	srv := &Server{
-		Addr:         addr,
-		listener:     nil,
-		Handler:      nil,
-		Timeout:      TIMEOUT,
-		thrift_addr:  thrift_addr,
-		thrift_proto: thrift_proto,
-		Atcd:         nil,
-		db:           db,
+		AtcApiOptions: options,
+		listener:      nil,
+		Handler:       nil,
+		Timeout:       TIMEOUT,
+		Atcd:          nil,
+		db:            db,
 		bind_info: &bindInfo{
 			ApiUrl: ROOT_URL,
-			IP4:    v4,
-			IP6:    v6,
-			Port:   port,
+			IP4:    options.V4,
+			IP6:    options.V6,
+			Port:   strconv.Itoa(options.Addr.Port),
 		},
 	}
 	srv.setupHandlers()
@@ -69,7 +72,7 @@ func (srv *Server) GetAtcd() (AtcdCloser, HttpError) {
 	if srv.Atcd != nil {
 		return srv.Atcd, nil
 	}
-	atcd := NewAtcdConn(srv.thrift_addr, srv.thrift_proto)
+	atcd := NewAtcdConn(srv.ThriftAddr, srv.ThriftProto)
 	if err := atcd.Open(); err != nil {
 		return nil, HttpErrorf(502, "Could not connect to atcd: %v", err)
 	}
@@ -78,7 +81,7 @@ func (srv *Server) GetAtcd() (AtcdCloser, HttpError) {
 
 func (srv *Server) ListenAndServe() error {
 	var err error
-	srv.listener, err = net.Listen("tcp", srv.Addr)
+	srv.listener, err = net.ListenTCP("tcp", srv.Addr)
 	if err != nil {
 		return err
 	}
@@ -97,7 +100,7 @@ func (srv *Server) Kill() {
 
 func (srv *Server) Serve() {
 	_srv := &http.Server{
-		Addr:         srv.Addr,
+		Addr:         srv.Addr.String(),
 		Handler:      srv.Handler,
 		ReadTimeout:  TIMEOUT,
 		WriteTimeout: TIMEOUT,

@@ -1,13 +1,14 @@
 package shaping
 
 import (
-	"flag"
 	"fmt"
 	"math"
 	"net"
 	"os/exec"
 	"strings"
 	"syscall"
+
+	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/vishvananda/netlink"
@@ -29,10 +30,10 @@ var (
 Sets up platform-specific flags for the shaper.
 */
 func ShapingFlags() {
-	flag.StringVar(&IPTABLES, "iptables", "", "iptables binary location")
-	flag.StringVar(&IP6TABLES, "ip6tables", "", "ip6tables binary location")
-	flag.StringVar(&WAN_INT, "wan", "eth0", "ATCD WAN interface")
-	flag.StringVar(&LAN_INT, "lan", "eth1", "ATCD LAN interface")
+	kingpin.Flag("iptables", "location of the iptables binary").StringVar(&IPTABLES)
+	kingpin.Flag("ip6tables", "location of the ip6tables binary").StringVar(&IP6TABLES)
+	kingpin.Flag("wan", "name of the WAN interface").StringVar(&WAN_INT)
+	kingpin.Flag("lan", "name of the LAN interface").StringVar(&LAN_INT)
 }
 
 /*

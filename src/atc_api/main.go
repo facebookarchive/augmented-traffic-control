@@ -1,14 +1,15 @@
 package main
 
 import (
-	"flag"
+	"net"
 	"os"
 	"time"
 
 	"github.com/facebook/augmented-traffic-control/src/api"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-func TestAtcdConnection(addr, proto string) error {
+func TestAtcdConnection(addr *net.TCPAddr, proto string) error {
 	atcd := api.NewAtcdConn(addr, proto)
 	if err := atcd.Open(); err != nil {
 		return err
@@ -23,7 +24,7 @@ func main() {
 	args := ParseArgs()
 
 	// Make sure connection to the daemon is working.
-	err := TestAtcdConnection(args.ThriftAddr, args.ThriftProtocol)
+	err := TestAtcdConnection(args.ThriftAddr, args.ThriftProto)
 	if err != nil {
 		api.Log.Println("failed to connect to atcd server:", err)
 		if !args.WarnOnly {
@@ -33,13 +34,13 @@ func main() {
 		api.Log.Println("Connected to atcd socket on", args.ThriftAddr)
 	}
 
-	if args.IPv4 == "" && args.IPv6 == "" {
+	if args.V4 == "" && args.V6 == "" {
 		api.Log.Fatalln("You must provide either -4 or -6 arguments to run the API.")
 	}
 
-	api.Log.Println("Listening on", args.BindAddr)
+	api.Log.Println("Listening on", args.Addr)
 
-	srv, err := api.ListenAndServe(args.BindAddr, args.ThriftAddr, args.ThriftProtocol, args.DbDriver, args.DbConnstr, args.IPv4, args.IPv6)
+	srv, err := api.ListenAndServe(args.AtcApiOptions)
 	if err != nil {
 		api.Log.Fatalln("failed to listen and serve:", err)
 	}
@@ -51,35 +52,21 @@ func main() {
 }
 
 type Arguments struct {
-	BindAddr       string
-	ThriftAddr     string
-	ThriftProtocol string
-	DbDriver       string
-	DbConnstr      string
-	WarnOnly       bool
-	IPv4           string
-	IPv6           string
+	api.AtcApiOptions
+	WarnOnly bool
 }
 
 func ParseArgs() Arguments {
-	bindAddr := flag.String("b", "0.0.0.0:8080", "Bind address")
-	thriftAddr := flag.String("t", "127.0.0.1:9090", "Thrift server address")
-	proto := flag.String("p", "json", "Thrift protocol")
-	db_driver := flag.String("D", "sqlite3", "database driver")
-	db_connstr := flag.String("Q", "atc_api.db", "database driver connection parameters")
-	warn_only := flag.Bool("W", false, "only warn if the thrift server isn't reachable")
-	ipv4 := flag.String("4", "", "IPv4 address for the API")
-	ipv6 := flag.String("6", "", "IPv6 address for the API")
-	flag.Parse()
+	args := Arguments{}
+	kingpin.Flag("listen", "Bind address for the HTTP server").Short('b').Default("0.0.0.0:8080").TCPVar(&args.Addr)
+	kingpin.Flag("atcd", "ATCD thrift server address").Short('t').Default("127.0.0.1:9090").TCPVar(&args.ThriftAddr)
+	kingpin.Flag("atcd-proto", "ATCD thrift server protocol").Short('p').Default("json").StringVar(&args.ThriftProto)
+	kingpin.Flag("dbdrv", "Database driver").Short('D').Default("sqlite3").StringVar(&args.DBDriver)
+	kingpin.Flag("dbconn", "Database connection string").Short('Q').Default("atc_api.db").StringVar(&args.DBConn)
+	kingpin.Flag("ipv4", "IPv4 address (or hostname) of the ATC API").Short('4').Default("").StringVar(&args.DBConn)
+	kingpin.Flag("ipv6", "IPv6 address (or hostname) of the ATC API").Short('6').Default("").StringVar(&args.DBConn)
+	kingpin.Flag("warn", "Only warn if the thrift server isn't reachable").Short('Q').Default("false").BoolVar(&args.WarnOnly)
+	kingpin.Parse()
 
-	return Arguments{
-		BindAddr:       *bindAddr,
-		ThriftAddr:     *thriftAddr,
-		ThriftProtocol: *proto,
-		DbDriver:       *db_driver,
-		DbConnstr:      *db_connstr,
-		WarnOnly:       *warn_only,
-		IPv4:           *ipv4,
-		IPv6:           *ipv6,
-	}
+	return args
 }
