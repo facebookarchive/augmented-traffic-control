@@ -15,7 +15,9 @@ import (
 )
 
 // IP address for test server to bind to.
-var ServerAddr = ""
+// This IP address must be reachable from both the addresses provided below.
+// IPv4zero works for this since it actually binds to all ipv4 and ipv6 addresses
+var ServerAddr = net.IPv4zero
 
 // Client addresses to use to connect to atc.
 // Need to provide two in order to simulate two different clients connecting
@@ -229,7 +231,19 @@ type testServer struct {
 }
 
 func newTestServer(t *testing.T) testServer {
-	srv, err := ListenAndServe(net.JoinHostPort(ServerAddr, "0"), "", "", "sqlite3", ":memory:", "0.0.0.0", "::")
+	opts := AtcApiOptions{
+		Addr: &net.TCPAddr{
+			IP:   ServerAddr,
+			Port: 0,
+		},
+		ThriftAddr:  nil,
+		ThriftProto: "",
+		DBDriver:    "sqlite3",
+		DBConn:      ":memory:",
+		V4:          "0.0.0.0",
+		V6:          "::",
+	}
+	srv, err := ListenAndServe(opts)
 	if err != nil {
 		t.Fatal(err)
 	}
