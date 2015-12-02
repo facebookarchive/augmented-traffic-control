@@ -7,6 +7,8 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
+var React = require('react');
+
 var ServerInfoPanel = React.createClass({
   getInitialState: function() {
     return {
@@ -26,13 +28,13 @@ var ServerInfoPanel = React.createClass({
   updateInfo: function() {
     this.props.client.getServerInfo(function(rc) {
       if (rc.status == 200) {
-        this.setState(function(state, props) {
+        this.setState(function(state, props) { // eslint-disable-line no-unused-vars
           return {
             info: rc.json,
           }
         });
       } else {
-        this.setState(function(state, props) {
+        this.setState(function(state, props) { // eslint-disable-line no-unused-vars
           return {
             info: null,
           }
@@ -65,3 +67,5 @@ var ServerInfoPanel = React.createClass({
     }
   },
 });
+
+module.exports = ServerInfoPanel

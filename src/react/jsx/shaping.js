@@ -7,6 +7,10 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
+var React = require('react');
+var JSONEdit = require('./utils').JSONEdit;
+var JSONView = require('./utils').JSONView;
+
 var ShapingPanel = React.createClass({
   setPotential: function(ev) {
     this.props.onSetPotential(JSON.parse(ev.target.value));
@@ -70,3 +74,5 @@ var ShapingPanel = React.createClass({
     );
   },
 });
+
+module.exports = ShapingPanel

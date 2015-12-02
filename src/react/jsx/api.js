@@ -29,7 +29,7 @@ function AtcRestClient (primary, secondary, endpoint) {
       type: method,
       data: data && JSON.stringify(data),
       contentType: 'application/json; charset=utf-8',
-      complete: function (xhr, status) {
+      complete: function (xhr, status) { //eslint-disable-line no-unused-vars
         var rc = {
           status: xhr.status,
           json: xhr.responseJSON,
@@ -98,7 +98,7 @@ AtcRestClient.prototype.createProfile = function(profile, callback) {
   this.api_call('POST', 'profile', callback, profile)
 }
 
-function defaultShaping() {
+AtcRestClient.prototype.defaultShaping = function () {
   return {
     'down': {
       'rate': 100,
@@ -146,3 +146,5 @@ function defaultShaping() {
     }
   };
 }
+
+module.exports = AtcRestClient

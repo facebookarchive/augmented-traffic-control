@@ -7,6 +7,8 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
+var React = require('react');
+
 var ProfilePanel = React.createClass({
   getInitialState: function() {
     return {
@@ -22,7 +24,7 @@ var ProfilePanel = React.createClass({
     // Ignore index 0 because that's the None option.
     if (ev.target.selectedIndex > 0) {
       // subtract one because the None option.
-      profile = this.props.profiles[ev.target.selectedIndex-1];
+      var profile = this.props.profiles[ev.target.selectedIndex-1];
       // FIXME SETTINGS
       this.props.onSelect(profile.shaping);
     }
@@ -33,13 +35,11 @@ var ProfilePanel = React.createClass({
   },
 
   render: function() {
-    var profilesDisabled = "true";
     var profiles = false;
     if (this.props.profiles != null && this.props.profiles.length > 0) {
-      profilesDisabled = "false";
       profiles = this.props.profiles.map(function(item) {
         return (
-          <option>{item.name}</option>
+          <option key={item.id}>{item.name}</option>
         );
       }.bind(this));
     }
@@ -71,3 +71,5 @@ var ProfilePanel = React.createClass({
     );
   },
 });
+
+module.exports = ProfilePanel

@@ -20,17 +20,6 @@ of patent rights can be found in the PATENTS file in the same directory.
     <!-- React.js -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/es5-shim/2.2.0/es5-shim.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/es5-shim/2.2.0/es5-sham.min.js"></script>
-    <script src="//fb.me/react-0.13.3.min.js"></script>
-    <script src="//fb.me/JSXTransformer-0.13.3.js"></script>
-
-    <script type="text/jsx" src="/static/js/api.js"></script>
-    <script type="text/jsx" src="/static/js/group.js"></script>
-    <script type="text/jsx" src="/static/js/utils.js"></script>
-    <script type="text/jsx" src="/static/js/shaping.js"></script>
-    <script type="text/jsx" src="/static/js/profiles.js"></script>
-    <script type="text/jsx" src="/static/js/atc.js"></script>
-    <script type="text/jsx" src="/static/js/server.js"></script>
-
     <link rel="stylesheet" href="/static/css/atc.css" />
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
@@ -53,12 +42,12 @@ of patent rights can be found in the PATENTS file in the same directory.
       <div class="starter-template">
         <h1>Augmented Traffic Control</h1>
         <div id="atc_demo_ui" />
-        <script type="text/jsx">
-          React.render(
-            <Atc {{with .Primary}}primary={{.}}{{end}} {{with .Secondary}}secondary={{.}}{{end}} endpoint={{.ApiUrl}} />,
-            document.getElementById('atc_demo_ui')
-          );
+        <script type="text/javascript">
+            primary={{.Primary}};
+            secondary={{.Secondary}};
+            endpoint={{.ApiUrl}};
         </script>
+        <script src="/static/js/index.js"></script>
       </div>
     </div>
   </body>

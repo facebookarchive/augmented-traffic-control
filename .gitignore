@@ -43,3 +43,4 @@ internal
 src/api/bindata.go
 .gopath
 *.rpm
+**/node_modules/

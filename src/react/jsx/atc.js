@@ -7,45 +7,13 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
-var ERROR_EXPIRY = 10000;
-
-var atc_status = {
-  OFFLINE: 0,
-  ACTIVE: 1,
-  INACTIVE: 2,
-  OUTDATED: 3,
-};
-
-
-var NOTIFICATION_TYPES = {
-  "error": "danger",
-  "info": "info",
-  "warn": "warning",
-  "success": "success",
-};
-
-
-var NotificationPanel = React.createClass({
-  render: function () {
-    if (this.props.notifications.length == 0) {
-      return (
-        <i>No notifications.</i>
-      );
-    }
-    return this.props.notifications.map(function(item, idx, arr) {
-      var timeout = Math.floor((item.expire_at - new Date().getTime()) / 1000)
-      var cls = "alert alert-" + (NOTIFICATION_TYPES[item.type] || item.type);
-      return (
-        <div className={cls} role="alert">
-          <div className="row">
-            <div className="col-md-11">{item.message}</div>
-            <div className="col-md-1">{timeout}</div>
-          </div>
-        </div>
-      );
-    });
-  },
-});
+var React = require('react');
+var AtcRestClient = require('./api');
+var CollapsePanel = require('./utils').CollapsePanel;
+var ServerInfoPanel = require('./server');
+var GroupPanel = require('./group');
+var ProfilePanel = require('./profiles');
+var ShapingPanel = require('./shaping');
 
 var Atc = React.createClass({
   getInitialState: function() {
@@ -114,7 +82,7 @@ var Atc = React.createClass({
         return;
       }
       if (rc.status != 200 || rc.json.shaping == null) {
-        this.setState({potential: {shaping: defaultShaping()}});
+        this.setState({potential: {shaping: this.state.client.defaultShaping()}});
       } else {
         this.setState({potential: rc.json});
       }
@@ -163,3 +131,5 @@ var Atc = React.createClass({
     );
   },
 });
+
+module.exports = Atc

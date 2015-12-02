@@ -7,6 +7,7 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
+var React = require('react')
 
 var JSONView = React.createClass({
   render: function() {
@@ -58,3 +59,9 @@ var CollapsePanel = React.createClass({
     );
   },
 });
+
+module.exports = {
+    CollapsePanel: CollapsePanel,
+    JSONEdit: JSONEdit,
+    JSONView: JSONView
+}
