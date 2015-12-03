@@ -115,17 +115,17 @@ var Atc = React.createClass({
   render: function () {
     return (
       <div>
-        <CollapsePanel title="Server Info">
-          <ServerInfoPanel client={this.state.client} />
-        </CollapsePanel>
-        <CollapsePanel title="Group">
-          <GroupPanel client={this.state.client} />
-        </CollapsePanel>
         <CollapsePanel title="Profiles">
           <ProfilePanel profiles={this.state.profiles} onSave={this.createNewProfile} onSelect={this.selectProfile} />
         </CollapsePanel>
         <CollapsePanel title="Shaping">
           <ShapingPanel current={this.state.current} potential={this.state.potential} shapingDisabled={!this.state.changed} onPerformShaping={this.performShaping} onClearShaping={this.clearShaping} onSetPotential={this.selectProfile} />
+        </CollapsePanel>
+        <CollapsePanel title="Group">
+          <GroupPanel client={this.state.client} />
+        </CollapsePanel>
+        <CollapsePanel title="Server Info">
+          <ServerInfoPanel client={this.state.client} />
         </CollapsePanel>
       </div>
     );
