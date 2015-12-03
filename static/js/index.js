@@ -275,8 +275,13 @@ var Atc = React.createClass({
       null,
       React.createElement(
         CollapsePanel,
-        { title: 'Server Info' },
-        React.createElement(ServerInfoPanel, { client: this.state.client })
+        { title: 'Profiles' },
+        React.createElement(ProfilePanel, { profiles: this.state.profiles, onSave: this.createNewProfile, onSelect: this.selectProfile })
+      ),
+      React.createElement(
+        CollapsePanel,
+        { title: 'Shaping' },
+        React.createElement(ShapingPanel, { current: this.state.current, potential: this.state.potential, shapingDisabled: !this.state.changed, onPerformShaping: this.performShaping, onClearShaping: this.clearShaping, onSetPotential: this.selectProfile })
       ),
       React.createElement(
         CollapsePanel,
@@ -285,13 +290,8 @@ var Atc = React.createClass({
       ),
       React.createElement(
         CollapsePanel,
-        { title: 'Profiles' },
-        React.createElement(ProfilePanel, { profiles: this.state.profiles, onSave: this.createNewProfile, onSelect: this.selectProfile })
-      ),
-      React.createElement(
-        CollapsePanel,
-        { title: 'Shaping' },
-        React.createElement(ShapingPanel, { current: this.state.current, potential: this.state.potential, shapingDisabled: !this.state.changed, onPerformShaping: this.performShaping, onClearShaping: this.clearShaping, onSetPotential: this.selectProfile })
+        { title: 'Server Info' },
+        React.createElement(ServerInfoPanel, { client: this.state.client })
       )
     );
   }
