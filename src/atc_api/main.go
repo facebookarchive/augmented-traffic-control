@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net"
 	"os"
 	"time"
@@ -34,8 +35,8 @@ func main() {
 		api.Log.Println("Connected to atcd socket on", args.ThriftAddr)
 	}
 
-	if args.V4 == "" && args.V6 == "" {
-		api.Log.Fatalln("You must provide either -4 or -6 arguments to run the API.")
+	if err := validateArgs(args); err != nil {
+		api.Log.Fatalln(err)
 	}
 
 	api.Log.Println("Listening on", args.Addr)
@@ -49,6 +50,16 @@ func main() {
 		// Let the server run
 		time.Sleep(100 * time.Second)
 	}
+}
+
+func validateArgs(args Arguments) error {
+	if args.V4 == "" && args.V6 == "" {
+		return errors.New(
+			"You must provide either -4 or -6 arguments to run the API.",
+		)
+	}
+
+	return nil
 }
 
 type Arguments struct {
