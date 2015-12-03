@@ -29,6 +29,7 @@ func main() {
 	if err != nil {
 		api.Log.Println("failed to connect to atcd server:", err)
 		if !args.WarnOnly {
+			api.Log.Println("Use --warn if you want to ignore this failure.")
 			os.Exit(1)
 		}
 	} else {
