@@ -31,6 +31,7 @@ func GetAtcd(r *http.Request) atc_thrift.Atcd {
 	if rv := context.Get(r, atcd_context_key); rv != nil {
 		return rv.(atc_thrift.Atcd)
 	}
+	log.Printf("Error: could not GetAtcd for request %v\n", r)
 	return nil
 }
 
@@ -38,6 +39,7 @@ func GetServer(r *http.Request) *Server {
 	if rv := context.Get(r, srv_context_key); rv != nil {
 		return rv.(*Server)
 	}
+	log.Printf("Error: could not GetServer for request %v\n", r)
 	return nil
 }
 
@@ -45,6 +47,7 @@ func GetDB(r *http.Request) *DbRunner {
 	if rv := context.Get(r, db_context_key); rv != nil {
 		return rv.(*DbRunner)
 	}
+	log.Printf("Error: could not GetDB for request %v\n", r)
 	return nil
 }
 
