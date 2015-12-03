@@ -21,6 +21,7 @@ type AtcApiOptions struct {
 	ThriftProto      string
 	DBDriver, DBConn string
 	V4, V6           string
+	ProxyAddr        string
 }
 
 type Server struct {

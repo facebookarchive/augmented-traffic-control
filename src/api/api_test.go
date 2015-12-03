@@ -242,6 +242,7 @@ func newTestServer(t *testing.T) testServer {
 		DBConn:      ":memory:",
 		V4:          "0.0.0.0",
 		V6:          "::",
+		ProxyAddr:   "",
 	}
 	srv, err := ListenAndServe(opts)
 	if err != nil {

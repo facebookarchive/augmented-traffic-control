@@ -65,6 +65,7 @@ func ParseArgs() Arguments {
 	kingpin.Flag("dbconn", "Database connection string").Short('Q').Default("atc_api.db").StringVar(&args.DBConn)
 	kingpin.Flag("ipv4", "IPv4 address (or hostname) of the ATC API").Short('4').Default("").StringVar(&args.DBConn)
 	kingpin.Flag("ipv6", "IPv6 address (or hostname) of the ATC API").Short('6').Default("").StringVar(&args.DBConn)
+	kingpin.Flag("proxy-addr", "IP address of authorized HTTP reverse proxy").Default("").StringVar(&args.ProxyAddr)
 	kingpin.Flag("warn", "Only warn if the thrift server isn't reachable").Short('Q').Default("false").BoolVar(&args.WarnOnly)
 	kingpin.Parse()
 

@@ -75,3 +75,43 @@ func TestHandlesThrownError(t *testing.T) {
 		t.Errorf("Expected error message %q != %q", ServerError.Error(), actual_message)
 	}
 }
+
+func TestGetsProxiedAddr(t *testing.T) {
+	testProxy := func(client_addr, header_addr, server_addr string) (string, error) {
+		r, _ := http.NewRequest("GET", "/", nil)
+		r.RemoteAddr = client_addr + ":0" // net.SplitHostPort requires a port
+		if header_addr != "" {
+			r.Header.Set("X_HTTP_REAL_IP", header_addr)
+		}
+		srv := &Server{AtcApiOptions: AtcApiOptions{ProxyAddr: server_addr}}
+		return getProxiedClientAddr(srv, r)
+	}
+
+	// Neither the server nor the client are proxied.
+	addr, err := testProxy("1.1.1.1", "", "")
+	if err != nil {
+		t.Error(err)
+	} else if addr != "1.1.1.1" {
+		t.Errorf("Wrong proxy address: %q", addr)
+	}
+
+	// Both the client and the server are proxied.
+	addr, err = testProxy("1.1.1.1", "2.2.2.2", "1.1.1.1")
+	if err != nil {
+		t.Error(err)
+	} else if addr != "2.2.2.2" {
+		t.Errorf("Wrong proxy address: %q", addr)
+	}
+
+	// Server expects a proxy, but client doesn't send one
+	addr, err = testProxy("this.message.ok.in.tests", "", "2.2.2.2")
+	if err == nil {
+		t.Errorf("Proxy address should be invalid: %q", addr)
+	}
+
+	// Client sends a proxy, but the server doesn't expect it
+	addr, err = testProxy("this.message.ok.in.tests", "2.2.2.2", "")
+	if err == nil {
+		t.Errorf("Proxy address should be invalid: %q", addr)
+	}
+}
