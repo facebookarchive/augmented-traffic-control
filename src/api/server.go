@@ -117,7 +117,7 @@ func (srv *Server) setupHandlers() {
 		apir.HandleFunc(url, h)
 		apir.HandleFunc(url+"/", h)
 	}
-	r.HandleFunc("/", rootHandler(srv.bind_info))
+	r.HandleFunc("/", rootHandler(srv))
 	r.HandleFunc("/static/{folder}/{name}", cachedAssetHandler)
 	srv.Handler = r
 }

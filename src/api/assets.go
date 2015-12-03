@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 )
 
@@ -65,7 +66,7 @@ func (info *bindInfo) templateFor(r *http.Request) *templateData {
 	return data
 }
 
-func rootHandler(info *bindInfo) http.HandlerFunc {
+func rootHandler(srv *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, err := Asset("static/index.htm")
 		if err != nil {
@@ -73,6 +74,7 @@ func rootHandler(info *bindInfo) http.HandlerFunc {
 			w.WriteHeader(404)
 			return
 		}
+		context.Set(r, srv_context_key, srv)
 		tmpl, err := template.New("root").Parse(string(data))
 		if err != nil {
 			fmt.Println(err)
@@ -80,7 +82,7 @@ func rootHandler(info *bindInfo) http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(200)
-		tmpl.Execute(w, info.templateFor(r))
+		tmpl.Execute(w, srv.bind_info.templateFor(r))
 	}
 }
 

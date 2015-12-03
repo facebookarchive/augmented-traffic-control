@@ -28,6 +28,19 @@ var ServerAddr = net.IPv4zero
 var Addr1 = "::1"
 var Addr2 = "127.0.0.1"
 
+// Test that we can fetch the index page
+func TestIndex(t *testing.T) {
+	srv := newTestServer(t)
+	defer srv.Cleanup()
+	cli := srv.client(Addr1)
+
+	resp := cli.GetIndex()
+
+	if resp.StatusCode != 200 {
+		t.Error("Wrong status code:", resp.StatusCode)
+	}
+}
+
 func TestGetsServerInfo(t *testing.T) {
 	srv := newTestServer(t)
 	defer srv.Cleanup()
@@ -281,6 +294,14 @@ func (c testClient) Get(version int, url string) *http.Response {
 	resp, err := http.Get(fmt.Sprintf("http://%s/api/v%d%s", c.addr, version, url))
 	if err != nil {
 		c.t.Fatalf("Couldn't fetch url %q: %v", url, err)
+	}
+	return resp
+}
+
+func (c testClient) GetIndex() *http.Response {
+	resp, err := http.Get(fmt.Sprintf("http://%s/", c.addr))
+	if err != nil {
+		c.t.Fatalf("Couldn't fetch url /: %v", err)
 	}
 	return resp
 }
