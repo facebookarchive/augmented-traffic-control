@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/facebook/augmented-traffic-control/src/assets"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 )
@@ -68,7 +69,7 @@ func (info *bindInfo) templateFor(r *http.Request) *templateData {
 
 func rootHandler(srv *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := Asset("static/index.htm")
+		data, err := assets.Asset("static/index.htm")
 		if err != nil {
 			fmt.Println(err)
 			w.WriteHeader(404)
@@ -97,7 +98,7 @@ func cachedAssetHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	data, err := Asset(fmt.Sprintf("static/%s/%s", folder, name))
+	data, err := assets.Asset(fmt.Sprintf("static/%s/%s", folder, name))
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(404)
