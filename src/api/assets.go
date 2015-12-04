@@ -25,7 +25,7 @@ func (info bindInfo) getPrimarySecondaryAddrs(r *http.Request) (primary, seconda
 	}
 	if info.IP6 != "" && info.IP4 != "" {
 		// server is dual-stack
-		if p := net.ParseIP(addr); p.To4() == nil {
+		if addr.To4() == nil {
 			// client is ipv6
 			primary = info.IP6
 			secondary = info.IP4

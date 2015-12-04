@@ -84,7 +84,12 @@ func TestGetsProxiedAddr(t *testing.T) {
 			r.Header.Set("X_HTTP_REAL_IP", header_addr)
 		}
 		srv := &Server{AtcApiOptions: AtcApiOptions{ProxyAddr: server_addr}}
-		return getProxiedClientAddr(srv, r)
+		addr, err := getProxiedClientAddr(srv, r)
+		if addr != nil {
+			return addr.String(), err
+		} else {
+			return "", err
+		}
 	}
 
 	// Neither the server nor the client are proxied.
