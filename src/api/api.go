@@ -39,11 +39,18 @@ func InfoHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError
 	case "GET":
 		serv := GetServer(r)
 		atcd := GetAtcd(r)
+		addr, cerr := GetClientAddr(r)
+		if cerr != nil {
+			return nil, cerr
+		}
 		daemon_info, err := atcd.GetAtcdInfo()
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not communicate with ATC Daemon: %v", err)
 		}
-		p, s := serv.bind_info.getPrimarySecondaryAddrs(r)
+		p, s, cerr := serv.bind_info.getPrimarySecondaryAddrs(r)
+		if cerr != nil {
+			return nil, cerr
+		}
 		info := ServerInfo{
 			Api: serv.GetInfo(r),
 			Atcd: DaemonInfo{
@@ -51,7 +58,7 @@ func InfoHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError
 				Version:  daemon_info.Version,
 			},
 			Client: ClientInfo{
-				Addr:      GetClientAddr(r),
+				Addr:      addr,
 				Primary:   p,
 				Secondary: s,
 			},
@@ -69,7 +76,11 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErr
 	atcd := GetAtcd(r)
 	switch r.Method {
 	case "POST":
-		grp, err := atcd.CreateGroup(GetClientAddr(r))
+		addr, cerr := GetClientAddr(r)
+		if cerr != nil {
+			return nil, cerr
+		}
+		grp, err := atcd.CreateGroup(addr)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not create group: %v", err)
 		}
@@ -79,7 +90,10 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErr
 		}
 		return CreatedGroup{grp, token}, nil
 	case "GET":
-		addr := GetClientAddr(r)
+		addr, cerr := GetClientAddr(r)
+		if cerr != nil {
+			return nil, cerr
+		}
 		group, err := atcd.GetGroupWith(addr)
 		if err != nil {
 			// No group found.
@@ -130,7 +144,10 @@ func GroupJoinHandler(w http.ResponseWriter, r *http.Request) (interface{}, Http
 		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
 			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 		}
-		member := GetClientAddr(r)
+		member, cerr := GetClientAddr(r)
+		if cerr != nil {
+			return nil, cerr
+		}
 		err = atcd.JoinGroup(id, member, req_info.Token)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not join group: %v", err)
@@ -159,7 +176,10 @@ func GroupLeaveHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
 			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 		}
-		member := GetClientAddr(r)
+		member, cerr := GetClientAddr(r)
+		if cerr != nil {
+			return nil, cerr
+		}
 		err = atcd.LeaveGroup(id, member, req_info.Token)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not join group: %v", err)
@@ -180,11 +200,15 @@ func GroupTokenHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 	atcd := GetAtcd(r)
 	switch r.Method {
 	case "GET":
+		addr, cerr := GetClientAddr(r)
+		if cerr != nil {
+			return nil, cerr
+		}
 		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
 		}
-		grp, err := atcd.GetGroupWith(GetClientAddr(r))
+		grp, err := atcd.GetGroupWith(addr)
 		if err != nil {
 			if IsNoSuchItem(err) {
 				return nil, HttpErrorf(http.StatusUnauthorized, "Invalid group")
@@ -275,7 +299,10 @@ func ShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErro
 }
 
 func getSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	addr := GetClientAddr(r)
+	addr, cerr := GetClientAddr(r)
+	if cerr != nil {
+		return nil, cerr
+	}
 	group, err := atcd.GetGroupWith(addr)
 	if err != nil {
 		// Not being shaped
@@ -288,7 +315,10 @@ func getSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Reque
 }
 
 func createSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	addr := GetClientAddr(r)
+	addr, cerr := GetClientAddr(r)
+	if cerr != nil {
+		return nil, cerr
+	}
 	group, err := atcd.GetGroupWith(addr)
 	if err != nil {
 		group, err = atcd.CreateGroup(addr)
@@ -318,7 +348,10 @@ func createSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Re
 }
 
 func deleteSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	addr := GetClientAddr(r)
+	addr, cerr := GetClientAddr(r)
+	if cerr != nil {
+		return nil, cerr
+	}
 	group, err := atcd.GetGroupWith(addr)
 	if err != nil {
 		return nil, HttpErrorf(http.StatusNotFound, "Address not being shaped")

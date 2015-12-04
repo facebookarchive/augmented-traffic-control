@@ -144,13 +144,12 @@ func CORS(w http.ResponseWriter, methods ...string) {
 /*
 Gets the IP address of the client
 */
-func GetClientAddr(r *http.Request) string {
+func GetClientAddr(r *http.Request) (string, HttpError) {
 	srv := GetServer(r)
-	addr, _ := getProxiedClientAddr(srv, r)
-	return addr
+	return getProxiedClientAddr(srv, r)
 }
 
-func getProxiedClientAddr(srv *Server, r *http.Request) (string, error) {
+func getProxiedClientAddr(srv *Server, r *http.Request) (string, HttpError) {
 	srv_proxy := srv.ProxyAddr
 	remote_addr, _, _ := net.SplitHostPort(r.RemoteAddr)
 	real_ip, ok := r.Header["X_HTTP_REAL_IP"]
@@ -162,16 +161,16 @@ func getProxiedClientAddr(srv *Server, r *http.Request) (string, error) {
 			return real_ip[0], nil
 		} else {
 			Log.Printf("Unauthorized proxied request from %s on behalf of %v", remote_addr, real_ip[0])
-			return "", fmt.Errorf("Invalid proxy address")
+			return "", HttpErrorf(http.StatusBadRequest, "Invalid proxy address")
 		}
 	} else if proxy_request {
 		// Client was proxied but the server wasn't
 		Log.Printf("Unexpected proxied request from %s on behalf of %v", remote_addr, real_ip[0])
-		return "", fmt.Errorf("Invalid proxy address")
+		return "", HttpErrorf(http.StatusBadRequest, "Invalid proxy address")
 	} else if proxy_server {
 		// Server was proxied, but the client wasn't
 		Log.Printf("Unexpected non-proxied request from %s", remote_addr)
-		return "", fmt.Errorf("Invalid proxy address")
+		return "", HttpErrorf(http.StatusBadRequest, "Invalid proxy address")
 	} else {
 		// Neither the server nor the client were proxied.
 		return remote_addr, nil
