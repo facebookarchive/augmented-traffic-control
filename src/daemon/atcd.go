@@ -38,13 +38,12 @@ func ReshapeFromDb(shaper *ShapingEngine, db *DbRunner) error {
 		}
 		first := false
 		for _, member := range members {
-			mem_ip := net.ParseIP(member)
 			var err error
 			if first {
-				err = shaper.CreateGroup(group.id, mem_ip)
+				err = shaper.CreateGroup(group.id, member)
 				first = false
 			} else {
-				err = shaper.JoinGroup(group.id, mem_ip)
+				err = shaper.JoinGroup(group.id, member)
 			}
 			if err != nil {
 				return err
@@ -95,7 +94,7 @@ func (atcd *Atcd) ListGroups() ([]*atc_thrift.ShapingGroup, error) {
 		results = append(results, &atc_thrift.ShapingGroup{
 			ID:      grp.id,
 			Shaping: grp.tc,
-			Members: members,
+			Members: IPsToStrings(members),
 		})
 	}
 	return results, nil
@@ -124,7 +123,7 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 		return nil, err
 	}
 	dbmem := <-atcd.db.UpdateMember(DbMember{
-		addr:     member,
+		addr:     ip,
 		group_id: dbgrp.id,
 	})
 	if dbmem == nil {
@@ -145,14 +144,18 @@ func (atcd *Atcd) GetGroup(id int64) (*atc_thrift.ShapingGroup, error) {
 	}
 	grp := &atc_thrift.ShapingGroup{
 		ID:      id,
-		Members: members,
+		Members: IPsToStrings(members),
 		Shaping: group.tc,
 	}
 	return grp, nil
 }
 
 func (atcd *Atcd) GetGroupWith(addr string) (*atc_thrift.ShapingGroup, error) {
-	member, err := atcd.db.getMember(addr)
+	ip := net.ParseIP(addr)
+	if ip == nil {
+		return nil, fmt.Errorf("Malformed IP address: %q", addr)
+	}
+	member, err := atcd.db.getMember(ip)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +189,7 @@ func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
 		return err
 	}
 	_, err = atcd.db.updateMember(DbMember{
-		addr:     to_add,
+		addr:     ip,
 		group_id: group.id,
 	})
 	return err
@@ -197,7 +200,7 @@ func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
 	if ip == nil {
 		return fmt.Errorf("Malformed IP address: %q", to_remove)
 	}
-	member, err := atcd.db.getMember(to_remove)
+	member, err := atcd.db.getMember(ip)
 	if err != nil {
 		return err
 	}
@@ -216,7 +219,7 @@ func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
 	}
 	// FIXME: clean shaper's group too!
 	defer atcd.db.Cleanup()
-	return atcd.db.deleteMember(to_remove)
+	return atcd.db.deleteMember(ip)
 }
 
 func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Shaping, token string) (*atc_thrift.Shaping, error) {
@@ -285,4 +288,12 @@ func (atcd *Atcd) otp(group *DbGroup) *otp.TOTP {
 func makeSecret() string {
 	// Can probably find a better source of random secrets than this...
 	return uuid.New()
+}
+
+func IPsToStrings(ips []net.IP) []string {
+	s := make([]string, len(ips))
+	for i, ip := range ips {
+		s[i] = ip.String()
+	}
+	return s
 }
