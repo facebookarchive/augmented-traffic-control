@@ -29,7 +29,7 @@ USERID = $(shell id -u)
 bin: bin/atcd bin/atc_api bin/atc
 all: src/atc_thrift lint ui tests bin
 test: test-daemon test-api test-shaping
-ui: src/api/bindata.go
+ui: src/assets/bindata.go
 lint: lint-ui lint-daemon lint-api lint-client
 
 ###
@@ -60,8 +60,9 @@ src/atc_thrift: if/atc_thrift.thrift
 static/js/index.js: src/react/jsx/*.js
 	cd src/react && $(NPM) run build-js
 
-src/api/bindata.go: static/js/index.js
-	$(BINGEN) -pkg api -o $@ static/...
+src/assets/bindata.go: static/js/index.js
+	mkdir -p src/assets/
+	$(BINGEN) -pkg assets -o $@ static/...
 
 npm_env:
 	cd src/react && $(NPM) install
