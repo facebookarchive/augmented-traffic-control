@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net"
 	"sync"
 	"time"
 
@@ -56,7 +57,7 @@ type DbGroup struct {
 }
 
 type DbMember struct {
-	addr     string
+	addr     net.IP
 	group_id int64
 }
 
@@ -169,7 +170,7 @@ func (runner *DbRunner) UpdateGroup(group DbGroup) chan *DbGroup {
 	return result
 }
 
-func (runner *DbRunner) GetMember(addr string) chan *DbMember {
+func (runner *DbRunner) GetMember(addr net.IP) chan *DbMember {
 	result := make(chan *DbMember)
 	go func() {
 		defer close(result)
@@ -195,15 +196,15 @@ func (runner *DbRunner) UpdateMember(member DbMember) chan *DbMember {
 	return result
 }
 
-func (runner *DbRunner) DeleteMember(addr string) {
+func (runner *DbRunner) DeleteMember(addr net.IP) {
 	go func() {
 		err := runner.deleteMember(addr)
 		runner.log(err)
 	}()
 }
 
-func (runner *DbRunner) GetMembersOf(id int64) chan []string {
-	result := make(chan []string)
+func (runner *DbRunner) GetMembersOf(id int64) chan []net.IP {
+	result := make(chan []net.IP)
 	go func() {
 		defer close(result)
 		members, err := runner.getMembersOf(id)
@@ -327,10 +328,10 @@ func (runner *DbRunner) updateGroup(group DbGroup) (*DbGroup, error) {
 	return &group, nil
 }
 
-func (runner *DbRunner) getMember(addr string) (*DbMember, error) {
+func (runner *DbRunner) getMember(addr net.IP) (*DbMember, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
-	row := runner.prep("member").QueryRow(addr)
+	row := runner.prep("member").QueryRow(addr.String())
 	member, err := scanMember(row)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -341,35 +342,37 @@ func (runner *DbRunner) getMember(addr string) (*DbMember, error) {
 func (runner *DbRunner) updateMember(member DbMember) (*DbMember, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
-	_, err := runner.prep("member update").Exec(member.addr, member.group_id)
+	_, err := runner.prep("member update").Exec(member.addr.String(), member.group_id)
 	if err != nil {
 		return nil, err
 	}
 	return &member, nil
 }
 
-func (runner *DbRunner) deleteMember(addr string) error {
+func (runner *DbRunner) deleteMember(addr net.IP) error {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
-	_, err := runner.prep("member delete").Exec(addr)
+	_, err := runner.prep("member delete").Exec(addr.String())
 	return err
 }
 
-func (runner *DbRunner) getMembersOf(id int64) ([]string, error) {
+func (runner *DbRunner) getMembersOf(id int64) ([]net.IP, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	rows, err := runner.prep("members in group").Query(id)
 	if err != nil {
 		return nil, err
 	}
-	members := make([]string, 0, 10)
+	members := make([]net.IP, 0, 10)
 	for rows.Next() {
 		var s string
 		err := rows.Scan(&s)
 		if err != nil {
 			return nil, err
 		}
-		members = append(members, s)
+		// ParseIP returns nil if addr isn't a valid IP.
+		// This should never happen since atcd serializes IPs to the DB
+		members = append(members, net.ParseIP(s))
 	}
 	return members, nil
 }
@@ -445,7 +448,9 @@ func scanMember(sc scanner) (*DbMember, error) {
 		return nil, err
 	}
 	return &DbMember{
-		addr:     addr,
+		// ParseIP returns nil if addr isn't a valid IP.
+		// This should never happen since atcd serializes IPs to the DB
+		addr:     net.ParseIP(addr),
 		group_id: gid,
 	}, nil
 }

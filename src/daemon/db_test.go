@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"net"
 	"testing"
 	"time"
 
@@ -16,6 +17,9 @@ var (
 		Up:   nil,
 		Down: &atc_thrift.LinkShaping{},
 	}
+
+	IP1 = net.IPv4(1, 2, 3, 4)
+	IP2 = net.IPv4(2, 3, 4, 5)
 )
 
 func TestDBCreatesSchema(t *testing.T) {
@@ -151,15 +155,15 @@ func TestDBInsertsMember(t *testing.T) {
 	if group, err = db.updateGroup(DbGroup{tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if member, err = db.updateMember(DbMember{"1.2.3.4", group.id}); err != nil {
+	if member, err = db.updateMember(DbMember{IP1, group.id}); err != nil {
 		t.Fatal(err)
 	}
 
 	if member.group_id != group.id {
 		t.Fatalf("Wrong group id: %d != %d", group.id, member.group_id)
 	}
-	if member.addr != "1.2.3.4" {
-		t.Fatalf(`Wrong member address: "1.2.3.4" != %q`, member.addr)
+	if member.addr.String() != IP1.String() {
+		t.Fatalf(`Wrong member address: %q != %q`, IP1, member.addr)
 	}
 }
 
@@ -177,19 +181,19 @@ func TestDBGetsMember(t *testing.T) {
 	if group, err = db.updateGroup(DbGroup{tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = db.updateMember(DbMember{"1.2.3.4", group.id}); err != nil {
+	if _, err = db.updateMember(DbMember{IP1, group.id}); err != nil {
 		t.Fatal(err)
 	}
 
-	if member, err = db.getMember("1.2.3.4"); err != nil {
+	if member, err = db.getMember(IP1); err != nil {
 		t.Fatal(err)
 	}
 
 	if member.group_id != group.id {
 		t.Fatalf("Wrong group id: %d != %d", group.id, member.group_id)
 	}
-	if member.addr != "1.2.3.4" {
-		t.Fatalf(`Wrong member address: "1.2.3.4" != %q`, member.addr)
+	if member.addr.String() != IP1.String() {
+		t.Fatalf(`Wrong member address: %q != %q`, IP1, member.addr)
 	}
 }
 
@@ -202,15 +206,15 @@ func TestDBGetsMembersForGroup(t *testing.T) {
 
 	var (
 		group   *DbGroup
-		members []string
+		members []net.IP
 	)
 	if group, err = db.updateGroup(DbGroup{tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = db.updateMember(DbMember{"1.2.3.4", group.id}); err != nil {
+	if _, err = db.updateMember(DbMember{IP1, group.id}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = db.updateMember(DbMember{"2.3.4.5", group.id}); err != nil {
+	if _, err = db.updateMember(DbMember{IP2, group.id}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -236,7 +240,7 @@ func TestDBCleansEmptyGroups(t *testing.T) {
 	if group, err = db.updateGroup(DbGroup{secret: "asdf"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = db.updateMember(DbMember{"1.2.3.4", group.id}); err != nil {
+	if _, err = db.updateMember(DbMember{IP1, group.id}); err != nil {
 		t.Fatal(err)
 	}
 

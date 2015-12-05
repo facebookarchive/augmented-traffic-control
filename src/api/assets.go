@@ -18,11 +18,14 @@ type bindInfo struct {
 	Port   string
 }
 
-func (info bindInfo) getPrimarySecondaryAddrs(r *http.Request) (primary, secondary string) {
-	addr := GetClientAddr(r)
+func (info bindInfo) getPrimarySecondaryAddrs(r *http.Request) (primary, secondary string, err HttpError) {
+	addr, err := GetClientAddr(r)
+	if err != nil {
+		return "", "", err
+	}
 	if info.IP6 != "" && info.IP4 != "" {
 		// server is dual-stack
-		if p := net.ParseIP(addr); p.To4() == nil {
+		if addr.To4() == nil {
 			// client is ipv6
 			primary = info.IP6
 			secondary = info.IP4
@@ -51,11 +54,15 @@ type templateData struct {
 	Secondary string
 }
 
-func (info *bindInfo) templateFor(r *http.Request) *templateData {
+func (info *bindInfo) templateFor(r *http.Request) (*templateData, HttpError) {
 	data := &templateData{
 		ApiUrl: info.ApiUrl,
 	}
-	data.Primary, data.Secondary = info.getPrimarySecondaryAddrs(r)
+	var err HttpError
+	data.Primary, data.Secondary, err = info.getPrimarySecondaryAddrs(r)
+	if err != nil {
+		return nil, err
+	}
 	// If the user didn't provide one of the two addresses, we pass the UI an
 	// empty string.
 	if data.Primary != "" {
@@ -64,7 +71,7 @@ func (info *bindInfo) templateFor(r *http.Request) *templateData {
 	if data.Secondary != "" {
 		data.Secondary = net.JoinHostPort(data.Secondary, info.Port)
 	}
-	return data
+	return data, nil
 }
 
 func rootHandler(srv *Server) http.HandlerFunc {
@@ -82,8 +89,14 @@ func rootHandler(srv *Server) http.HandlerFunc {
 			w.WriteHeader(500)
 			return
 		}
+		tmpl_data, err := srv.bind_info.templateFor(r)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(400)
+			return
+		}
 		w.WriteHeader(200)
-		tmpl.Execute(w, srv.bind_info.templateFor(r))
+		tmpl.Execute(w, tmpl_data)
 	}
 }
 
