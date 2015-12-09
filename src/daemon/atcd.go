@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/src/iptables"
 	"github.com/hgfischer/go-otp"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pborman/uuid"
@@ -40,10 +41,10 @@ func ReshapeFromDb(shaper *ShapingEngine, db *DbRunner) error {
 		for _, member := range members {
 			var err error
 			if first {
-				err = shaper.CreateGroup(group.id, member)
+				err = shaper.CreateGroup(group.id, iptables.IPTarget(member))
 				first = false
 			} else {
-				err = shaper.JoinGroup(group.id, member)
+				err = shaper.JoinGroup(group.id, iptables.IPTarget(member))
 			}
 			if err != nil {
 				return err
@@ -119,7 +120,7 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 	// Have to create group in database before creating the shaper since
 	// the database gives us the unique ID of the group, which the shaper
 	// needs for the mark.
-	if err := atcd.shaper.CreateGroup(dbgrp.id, ip); err != nil {
+	if err := atcd.shaper.CreateGroup(dbgrp.id, iptables.IPTarget(ip)); err != nil {
 		return nil, err
 	}
 	dbmem := <-atcd.db.UpdateMember(DbMember{
@@ -185,7 +186,7 @@ func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
 	if !atcd.verify(group, token) {
 		return fmt.Errorf("Unauthorized")
 	}
-	if err := atcd.shaper.JoinGroup(id, ip); err != nil {
+	if err := atcd.shaper.JoinGroup(id, iptables.IPTarget(ip)); err != nil {
 		return err
 	}
 	_, err = atcd.db.updateMember(DbMember{
@@ -214,7 +215,7 @@ func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
 	if !atcd.verify(group, token) {
 		return fmt.Errorf("Unauthorized")
 	}
-	if err := atcd.shaper.LeaveGroup(id, ip); err != nil {
+	if err := atcd.shaper.LeaveGroup(id, iptables.IPTarget(ip)); err != nil {
 		return err
 	}
 	// FIXME: clean shaper's group too!

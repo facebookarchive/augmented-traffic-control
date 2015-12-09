@@ -2,16 +2,24 @@ package shaping
 
 import (
 	"math"
+	"net"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 	"testing"
 
+	assertlib "github.com/alecthomas/assert"
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/src/iptables"
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netns"
 )
+
+func init() {
+	IPTABLES = "iptables"
+	IP6TABLES = "ip6tables"
+}
 
 func TestCreatesRootQdisc(t *testing.T) {
 	tearDown, link := setUpNetlinkTest(t)
@@ -143,15 +151,100 @@ func TestShapeOff(t *testing.T) {
 
 	// FIXME Better asserts
 
-	// We expect 0 filters to be setup: 1 for ipv4, 1 for ipv6.
+	// We expect 0 filters to be setup
 	if len(filters) != 0 {
 		t.Fatal("Failed to delete filter")
+	}
+}
+
+func TestGroupCreate(t *testing.T) {
+	assert, tearDown, shaper := setUpShaperTest(t)
+	defer tearDown()
+
+	target := iptables.IPTarget(net.IPv4(1, 2, 3, 4))
+	err := shaper.CreateGroup(5, target)
+	assert.NoError(err, "could not create group")
+
+	markings, err := shaper.ip4t.Table("mangle").Chain("FORWARD").GetRules(nil)
+	assert.NoError(err)
+	assert.Len(markings, 2, "wrong number of iptables rules")
+
+	for _, mark := range markings {
+		switch mark.In {
+		case "wan":
+			assert.Equal(mark.Source.String(), "0.0.0.0/0")
+			assert.Equal(mark.Destination, target)
+		case "lan":
+			assert.Equal(mark.Source, target)
+			assert.Equal(mark.Destination.String(), "0.0.0.0/0")
+		default:
+			assert.Fail("Mark has the wrong interface: %v", mark.In)
+		}
+		assert.Equal(mark.Args, []string{"MARK", "set", "0x5"})
+	}
+}
+
+func TestGroupJoin(t *testing.T) {
+	assert, tearDown, shaper := setUpShaperTest(t)
+	defer tearDown()
+
+	err := shaper.CreateGroup(5, iptables.IPTarget(net.IPv4(1, 2, 3, 4)))
+	assert.NoError(err, "could not create group")
+
+	err = shaper.JoinGroup(5, iptables.IPTarget(net.IPv4(2, 3, 4, 5)))
+
+	target := iptables.IPTarget(net.IPv4(2, 3, 4, 5))
+	markings, err := shaper.ip4t.Table("mangle").Chain("FORWARD").GetRules(target)
+	assert.NoError(err)
+	assert.Len(markings, 2, "wrong number of iptables rules")
+
+	for _, mark := range markings {
+		switch mark.In {
+		case "wan":
+			assert.Equal(mark.Source.String(), "0.0.0.0/0")
+			assert.Equal(mark.Destination, target)
+		case "lan":
+			assert.Equal(mark.Source, target)
+			assert.Equal(mark.Destination.String(), "0.0.0.0/0")
+		default:
+			assert.Fail("Mark has the wrong interface: %v", mark.In)
+		}
+		assert.Equal(mark.Args, []string{"MARK", "set", "0x5"})
 	}
 }
 
 /**
 *** Testing Utilities
 **/
+
+func setUpShaperTest(t *testing.T) (*assertlib.Assertions, func(), *netlinkShaper) {
+	if os.Getuid() != 0 {
+		t.Skip("Skipped test because it requires root privileges")
+	}
+	assert := assertlib.New(t)
+
+	// new temporary namespace so we don't pollute the host
+	// lock thread since the namespace is thread local
+	runtime.LockOSThread()
+	ns, err := netns.New()
+	if err != nil {
+		runtime.UnlockOSThread()
+		t.Fatalf("Failed to create new network namespace: %v", err)
+	}
+
+	setUpDummyInterface(t, "wan")
+	setUpDummyInterface(t, "lan")
+	LAN_INT = "lan"
+	WAN_INT = "wan"
+
+	shaper, err := GetShaper()
+	assert.NoError(err, "could not get shaper")
+
+	return assert, func() {
+		ns.Close()
+		runtime.UnlockOSThread()
+	}, shaper.(*netlinkShaper)
+}
 
 func setUpNetlinkTest(t *testing.T) (func(), netlink.Link) {
 	if os.Getuid() != 0 {
@@ -167,7 +260,7 @@ func setUpNetlinkTest(t *testing.T) (func(), netlink.Link) {
 		t.Fatalf("Failed to create new network namespace: %v", err)
 	}
 
-	link := setUpDummyInterface(t)
+	link := setUpDummyInterface(t, "foo")
 
 	return func() {
 		ns.Close()
@@ -175,17 +268,17 @@ func setUpNetlinkTest(t *testing.T) (func(), netlink.Link) {
 	}, link
 }
 
-func setUpDummyInterface(t *testing.T) netlink.Link {
+func setUpDummyInterface(t *testing.T, name string) netlink.Link {
 	// Use a Dummy interface for testing as boot2docker 1.8.1 does not suport
 	// Ifb interfaces
 	if err := netlink.LinkAdd(
 		&netlink.Dummy{
-			LinkAttrs: netlink.LinkAttrs{Name: "foo"},
+			LinkAttrs: netlink.LinkAttrs{Name: name},
 		}); err != nil {
 		t.Fatal(err)
 	}
 
-	link, err := netlink.LinkByName("foo")
+	link, err := netlink.LinkByName(name)
 	if err != nil {
 		t.Fatal(err)
 	}

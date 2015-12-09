@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"fmt"
-	"net"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/shaping"
@@ -51,25 +50,25 @@ func (eng *ShapingEngine) GetPlatform() atc_thrift.PlatformType {
 	return eng.shaper.GetPlatform()
 }
 
-func (eng *ShapingEngine) CreateGroup(id int64, member net.IP) error {
-	if err := eng.shaper.CreateGroup(id, member); err != nil {
+func (eng *ShapingEngine) CreateGroup(id int64, target shaping.Target) error {
+	if err := eng.shaper.CreateGroup(id, target); err != nil {
 		return err
 	}
-	return eng.runHooks(GROUP_JOIN, fmt.Sprintf("%d", id), member.String())
+	return eng.runHooks(GROUP_JOIN, fmt.Sprintf("%d", id), target.String())
 }
 
-func (eng *ShapingEngine) JoinGroup(id int64, member net.IP) error {
-	if err := eng.shaper.JoinGroup(id, member); err != nil {
+func (eng *ShapingEngine) JoinGroup(id int64, target shaping.Target) error {
+	if err := eng.shaper.JoinGroup(id, target); err != nil {
 		return err
 	}
-	return eng.runHooks(GROUP_JOIN, fmt.Sprintf("%d", id), member.String())
+	return eng.runHooks(GROUP_JOIN, fmt.Sprintf("%d", id), target.String())
 }
 
-func (eng *ShapingEngine) LeaveGroup(id int64, member net.IP) error {
-	if err := eng.shaper.LeaveGroup(id, member); err != nil {
+func (eng *ShapingEngine) LeaveGroup(id int64, target shaping.Target) error {
+	if err := eng.shaper.LeaveGroup(id, target); err != nil {
 		return err
 	}
-	return eng.runHooks(GROUP_LEAVE, fmt.Sprintf("%d", id), member.String())
+	return eng.runHooks(GROUP_LEAVE, fmt.Sprintf("%d", id), target.String())
 }
 
 func (eng *ShapingEngine) DeleteGroup(id int64) error {
