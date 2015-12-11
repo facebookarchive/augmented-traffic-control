@@ -9,6 +9,7 @@
 <li><strong>A Network Gateway</strong>: ATC will shape the traffic that is forwarded through it. To do this, ATC will typically have 1 network interface conencted to your local network and an other that connects you to the internet.</li>
 <li><strong>Linux</strong>: ATC makes uses of both iptables and the tc subsystem. As such, Linux is a hard requirement.</li>
 <li><strong>Python 2.7</strong>: Currently, ATC is only supported on python version 2.7.</li>
+<li><strong>Django 1.7</strong>: Currently, ATC is only supported using django version 1.7.</li>
 
 </ul>
 </div>
@@ -18,7 +19,7 @@
 </p>
   <h3>Requirements</h3>
   <h4>Architecture</h4>
-<p>In order to be able to shape traffic, <em>atcd</em> must be running on a router that forward the packets to the internet. Because shaping is done at the networking layer level, <em>atcd</em> must be able to see the real IP of the devices being shaped. If the devices are behing a NAT, all traffic will be shaped for all devices as if they were one.
+<p>In order to be able to shape traffic, <em>atcd</em> must be running on a router that forward the packets to the internet. Because shaping is done at the networking layer level, <em>atcd</em> must be able to see the real IP of the devices being shaped. If the devices are behind a NAT, all traffic will be shaped for all devices as if they were one.
 </p>
   <h4>Software</h4>
 <p>
