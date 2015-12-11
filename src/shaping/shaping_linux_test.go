@@ -1,7 +1,10 @@
 package shaping
 
 import (
+	crand "crypto/rand"
+	"fmt"
 	"math"
+	mrand "math/rand"
 	"net"
 	"os"
 	"os/exec"
@@ -157,65 +160,110 @@ func TestShapeOff(t *testing.T) {
 	}
 }
 
-func TestGroupCreate(t *testing.T) {
+func TestGroupCreateJoin(t *testing.T) {
+	// Do this all in the same network namespace so all the groups exist at once.
 	assert, tearDown, shaper := setUpShaperTest(t)
 	defer tearDown()
 
-	target := iptables.IPTarget(net.IPv4(1, 2, 3, 4))
-	err := shaper.CreateGroup(5, target)
-	assert.NoError(err, "could not create group")
+	// Test most common group setups
+	testGroupCreateJoin(assert, shaper, ip4)
+	testGroupCreateJoin(assert, shaper, ip4, ip4)
+	testGroupCreateJoin(assert, shaper, ip6)
+	testGroupCreateJoin(assert, shaper, ip6, ip6)
+	testGroupCreateJoin(assert, shaper, ip4, ip6)
+	testGroupCreateJoin(assert, shaper, ip6, ip4)
 
-	markings, err := shaper.ip4t.Table("mangle").Chain("FORWARD").GetRules(nil)
-	assert.NoError(err)
-	assert.Len(markings, 2, "wrong number of iptables rules")
-
-	for _, mark := range markings {
-		switch mark.In {
-		case "wan":
-			assert.Equal(mark.Source.String(), "0.0.0.0/0")
-			assert.Equal(mark.Destination, target)
-		case "lan":
-			assert.Equal(mark.Source, target)
-			assert.Equal(mark.Destination.String(), "0.0.0.0/0")
-		default:
-			assert.Fail("Mark has the wrong interface: %v", mark.In)
-		}
-		assert.Equal(mark.Args, []string{"MARK", "set", "0x5"})
-	}
-}
-
-func TestGroupJoin(t *testing.T) {
-	assert, tearDown, shaper := setUpShaperTest(t)
-	defer tearDown()
-
-	err := shaper.CreateGroup(5, iptables.IPTarget(net.IPv4(1, 2, 3, 4)))
-	assert.NoError(err, "could not create group")
-
-	err = shaper.JoinGroup(5, iptables.IPTarget(net.IPv4(2, 3, 4, 5)))
-
-	target := iptables.IPTarget(net.IPv4(2, 3, 4, 5))
-	markings, err := shaper.ip4t.Table("mangle").Chain("FORWARD").GetRules(target)
-	assert.NoError(err)
-	assert.Len(markings, 2, "wrong number of iptables rules")
-
-	for _, mark := range markings {
-		switch mark.In {
-		case "wan":
-			assert.Equal(mark.Source.String(), "0.0.0.0/0")
-			assert.Equal(mark.Destination, target)
-		case "lan":
-			assert.Equal(mark.Source, target)
-			assert.Equal(mark.Destination.String(), "0.0.0.0/0")
-		default:
-			assert.Fail("Mark has the wrong interface: %v", mark.In)
-		}
-		assert.Equal(mark.Args, []string{"MARK", "set", "0x5"})
+	// Test some random setups.
+	// 10 IPs in each group, between 0 and 10 IPv4 addresses per group
+	for f := 0; f <= 10; f += 1 {
+		testGroupCreateJoin(assert, shaper, randIPGens(10, f)...)
 	}
 }
 
 /**
 *** Testing Utilities
 **/
+
+func randIPGens(n, v4 int) []func() iptables.Target {
+	v := mrand.Perm(n)
+	gens := make([]func() iptables.Target, n)
+	for i := 0; i < n; i++ {
+		if v[i] < v4 {
+			gens[i] = ip4
+		} else {
+			gens[i] = ip6
+		}
+	}
+	return gens
+}
+
+func testGroupCreateJoin(assert *assertlib.Assertions, shaper *netlinkShaper, gens ...func() iptables.Target) {
+	mark := int64(mrand.Int31())
+
+	targets := make([]iptables.Target, 0, len(gens))
+	for _, g := range gens {
+		// hope there aren't collisions
+		targets = append(targets, g())
+	}
+
+	for i, t := range targets {
+		if i == 0 {
+			err := shaper.CreateGroup(mark, t)
+			assert.NoError(err, "could not create group with %v", t)
+		} else {
+			err := shaper.JoinGroup(mark, t)
+			assert.NoError(err, "%v could not join group 0x%x", t, mark)
+		}
+	}
+
+	for _, t := range targets {
+		assertPacketsMarked(assert, shaper, mark, t)
+	}
+}
+
+func ip6() iptables.Target {
+	return randIP(net.IPv6len)
+}
+
+func ip4() iptables.Target {
+	return randIP(net.IPv4len)
+}
+
+func randIP(l int) iptables.Target {
+	b := make([]byte, l)
+	_, err := crand.Read(b)
+	if err != nil {
+		panic(err)
+	}
+	return iptables.IPTarget(net.IP(b))
+}
+
+func assertPacketsMarked(assert *assertlib.Assertions, shaper *netlinkShaper, id int64, target iptables.Target) {
+	t := shaper.ip4t
+	world := "0.0.0.0/0"
+	if target.V6() {
+		t = shaper.ip6t
+		world = "::/0"
+	}
+
+	markings, err := t.Table("mangle").Chain("FORWARD").GetRules(target)
+	assert.NoError(err)
+	assert.Len(markings, 2, "wrong number of iptables rules for %v", target)
+
+	for _, mark := range markings {
+		switch mark.In {
+		case "wan":
+			assert.Equal(world, mark.Source.String())
+			assert.Equal(target, mark.Destination)
+		case "lan":
+			assert.Equal(target, mark.Source)
+			assert.Equal(world, mark.Destination.String())
+		default:
+			assert.Fail("Mark has the wrong interface: %v", mark.In)
+		}
+		assert.Equal([]string{"MARK", "set", fmt.Sprintf("0x%x", id)}, mark.Args)
+	}
+}
 
 func setUpShaperTest(t *testing.T) (*assertlib.Assertions, func(), *netlinkShaper) {
 	if os.Getuid() != 0 {

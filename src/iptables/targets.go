@@ -34,7 +34,14 @@ func (t CIDRTarget) String() string {
 
 func parseTarget(s string) (Target, error) {
 	if ip := net.ParseIP(s); ip != nil {
-		return IPTarget(ip), nil
+		// ParseIP returns IPv4 addresses as 0::ff:ff:w:x:y:z for some reason
+		// this causes issues with unit tests since they compare byte arrays
+		// work around by truncating when the address is a v4 address.
+		if v4 := ip.To4(); v4 == nil {
+			return IPTarget(ip), nil
+		} else {
+			return IPTarget(v4), nil
+		}
 	}
 	if _, net, err := net.ParseCIDR(s); err == nil {
 		return &CIDRTarget{net}, nil

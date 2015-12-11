@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
-	"strings"
 )
 
 const (
@@ -30,7 +29,6 @@ func (t *IPTables) Chain(name string) *Chain {
 }
 
 func (t *IPTables) cmd(argv ...string) (*bytes.Buffer, error) {
-	fmt.Println("Command:", t.Command, strings.Join(argv, " "))
 	cmd := exec.Command(t.Command, argv...)
 	var (
 		out_err = &bytes.Buffer{}
