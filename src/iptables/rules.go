@@ -69,19 +69,41 @@ func parseRule(target Target, line string) (*Rule, error) {
 		Bytes:       0,
 		Target:      line_tokens[3],
 		Proto:       line_tokens[4],
-		Opts:        line_tokens[5],
-		In:          line_tokens[6],
-		Out:         line_tokens[7],
+		Opts:        "",
+		In:          "",
+		Out:         "",
 		Source:      nil,
 		Destination: nil,
 		Args:        []string{},
 	}
-	var err error
-	m.Source, err = parseTarget(line_tokens[8])
+
+	// IPv6 rules can sometimes skip the options field.
+	// If the rule has an options field, position 7 will be the source
+	// otherwise position 7 will be the output interface (usually '*' for atc)
+	// we can determine if the rule has an options field by parsing field 7
+	// as an IP
+	// all positions are 0-indexed, fyi
+
+	_, err := parseTarget(line_tokens[7])
+	// optPos is the position of the options field, or the position where it would
+	// be relative to fields after it.
+	// This way we can parse fields by a constant offset after the option position.
+	var optPos int
+	if err == nil {
+		optPos = 4
+	} else {
+		optPos = 5
+		m.Opts = line_tokens[5]
+	}
+
+	m.In = line_tokens[optPos+1]
+	m.Out = line_tokens[optPos+2]
+
+	m.Source, err = parseTarget(line_tokens[optPos+3])
 	if err != nil {
 		return nil, err
 	}
-	m.Destination, err = parseTarget(line_tokens[9])
+	m.Destination, err = parseTarget(line_tokens[optPos+4])
 	if err != nil {
 		return nil, err
 	}
@@ -102,8 +124,8 @@ func parseRule(target Target, line string) (*Rule, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Could not parse byte count: %v", err)
 	}
-	if len(line_tokens) > 10 {
-		m.Args = line_tokens[10:]
+	if len(line_tokens) > optPos+5 {
+		m.Args = line_tokens[optPos+5:]
 	}
 	return m, nil
 }
