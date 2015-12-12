@@ -33,8 +33,8 @@ By splitting `ATC` in sub-components, it make it easier to hack on it or build o
 
 Most requirements are handled automatically by [pip](https://pip.pypa.io), the packaging system used by ATC, and each `ATC` package may have different requirements and the README.md files of the respective packages should be checked for more details. Anyhow, some requirements apply to the overall codebase:
 
-* Python 2.7+
-* Django 1.7+
+* Python 2.7: Currently, ATC is only supported on python version 2.7.
+* Django 1.7: Currently, ATC is only supported using django version 1.7.
 
 
 ## Installing ATC
