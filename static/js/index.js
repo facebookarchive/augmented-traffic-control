@@ -8,8 +8,10 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
-function AtcRestClient(primary, secondary, endpoint) {
+function AtcRestClient(endpoint) {
   this.endpoint = endpoint || '/api/v1/';
+  this.addresses = { 'primary': "", 'secondary': "" };
+
   function _add_ending_slash(string) {
     if (string[string.length - 1] != '/') {
       string += '/';
@@ -20,13 +22,24 @@ function AtcRestClient(primary, secondary, endpoint) {
   this.endpoint = _add_ending_slash(this.endpoint);
 
   this.dual_stack = function () {
-    return secondary != "";
+    return this.addresses['secondary'] != "";
   };
 
   this.raw_call = function (addr, method, urn, callback, data) {
+    /**
+    * If addr is empty, default to using the one from the url we connected to.
+    * Also wrap ipv6 with square brackets and set a sane default port.
+    */
+    if (addr == "") {
+      addr = document.location["hostname"];
+    }
+    var port = document.location["port"];
+    if (addr.indexOf(':') >= 0) {
+      addr = '[' + addr + ']';
+    }
     urn = _add_ending_slash(urn);
     $.ajax({
-      url: '//' + addr + this.endpoint + urn,
+      url: '//' + addr + (port != "" ? ":" + port : "") + this.endpoint + urn,
       dataType: 'json',
       type: method,
       data: data && JSON.stringify(data),
@@ -45,12 +58,20 @@ function AtcRestClient(primary, secondary, endpoint) {
   };
 
   this.api_call = function (method, urn, callback, data) {
-    this.raw_call(primary, method, urn, callback, data);
+    this.raw_call(this.addresses['primary'], method, urn, callback, data);
   };
 
   this.secondary_call = function (method, urn, callback, data) {
-    this.raw_call(secondary, method, urn, callback, data);
+    this.raw_call(this.addresses['secondary'], method, urn, callback, data);
   };
+
+  function discover_addresses(rc) {
+    var c = rc['json']['client'];
+    this.addresses['primary'] = c['server_primary'];
+    this.addresses['secondary'] = c['server_secondary'];
+  }
+
+  this.api_call('GET', 'info', discover_addresses.bind(this));
 }
 
 AtcRestClient.prototype.getServerInfo = function (callback) {
@@ -177,7 +198,7 @@ var Atc = React.createClass({
 
   getInitialState: function getInitialState() {
     return {
-      client: new AtcRestClient(this.props.primary, this.props.secondary, this.props.endpoint),
+      client: new AtcRestClient(),
       profiles: null,
       potential: null,
       current: null,
@@ -299,7 +320,7 @@ var Atc = React.createClass({
 
 module.exports = Atc;
 
-},{"./api":1,"./group":3,"./profiles":5,"./server":6,"./shaping":7,"./utils":8,"react":166}],3:[function(require,module,exports){
+},{"./api":1,"./group":3,"./profiles":4,"./server":5,"./shaping":6,"./utils":7,"react":166}],3:[function(require,module,exports){
 "use strict";
 
 /**
@@ -557,23 +578,6 @@ var GroupPanel = React.createClass({
 module.exports = GroupPanel;
 
 },{"react":166}],4:[function(require,module,exports){
-'use strict';
-
-/**
- * Copyright (c) 2014, Facebook, Inc.
- * All rights reserved.  * *  This source code is licensed under the BSD-style license found in the
- *  LICENSE file in the root directory of this source tree. An additional grant
- *  of patent rights can be found in the PATENTS file in the same directory.
- */
-
-// This is actually used once the JSX tag converts to javascript
-var React = require('react'); // eslint-disable-line no-unused-vars
-var ReactDOM = require('react-dom');
-var Atc = require('./atc.js');
-
-ReactDOM.render(React.createElement(Atc, { primary: primary, secondary: secondary, endpoint: endpoint }), document.getElementById('atc_demo_ui'));
-
-},{"./atc.js":2,"react":166,"react-dom":37}],5:[function(require,module,exports){
 "use strict";
 
 /**
@@ -684,7 +688,7 @@ var ProfilePanel = React.createClass({
 
 module.exports = ProfilePanel;
 
-},{"react":166}],6:[function(require,module,exports){
+},{"react":166}],5:[function(require,module,exports){
 'use strict';
 
 /**
@@ -788,7 +792,7 @@ var ServerInfoPanel = React.createClass({
 
 module.exports = ServerInfoPanel;
 
-},{"react":166}],7:[function(require,module,exports){
+},{"react":166}],6:[function(require,module,exports){
 'use strict';
 
 /**
@@ -904,7 +908,7 @@ var ShapingPanel = React.createClass({
 
 module.exports = ShapingPanel;
 
-},{"./utils":8,"react":166}],8:[function(require,module,exports){
+},{"./utils":7,"react":166}],7:[function(require,module,exports){
 "use strict";
 
 /**
@@ -991,7 +995,24 @@ module.exports = {
   JSONView: JSONView
 };
 
-},{"react":166}],9:[function(require,module,exports){
+},{"react":166}],8:[function(require,module,exports){
+'use strict';
+
+/**
+ * Copyright (c) 2014, Facebook, Inc.
+ * All rights reserved.  * *  This source code is licensed under the BSD-style license found in the
+ *  LICENSE file in the root directory of this source tree. An additional grant
+ *  of patent rights can be found in the PATENTS file in the same directory.
+ */
+
+// This is actually used once the JSX tag converts to javascript
+var React = require('react'); // eslint-disable-line no-unused-vars
+var ReactDOM = require('react-dom');
+var Atc = require('./atc.js');
+
+ReactDOM.render(React.createElement(Atc, null), document.getElementById('atc_demo_ui'));
+
+},{"./atc.js":2,"react":166,"react-dom":37}],9:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -20009,4 +20030,4 @@ module.exports = validateDOMNesting;
 
 module.exports = require('./lib/React');
 
-},{"./lib/React":61}]},{},[4]);
+},{"./lib/React":61}]},{},[8]);

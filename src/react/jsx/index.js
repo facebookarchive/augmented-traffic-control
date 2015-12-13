@@ -11,6 +11,6 @@ var ReactDOM = require('react-dom');
 var Atc = require('./atc.js');
 
 ReactDOM.render(
-    <Atc primary={primary} secondary={secondary} endpoint={endpoint} />,
+    <Atc />,
     document.getElementById('atc_demo_ui')
 );
