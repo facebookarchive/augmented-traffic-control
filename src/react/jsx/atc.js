@@ -18,7 +18,7 @@ var ShapingPanel = require('./shaping');
 var Atc = React.createClass({
   getInitialState: function() {
     return {
-      client: new AtcRestClient(this.props.primary, this.props.secondary, this.props.endpoint),
+      client: new AtcRestClient(),
       profiles: null,
       potential: null,
       current: null,

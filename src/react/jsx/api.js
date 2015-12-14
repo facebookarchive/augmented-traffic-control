@@ -6,8 +6,10 @@
  */
 
 
-function AtcRestClient (primary, secondary, endpoint) {
+function AtcRestClient (endpoint) {
   this.endpoint = endpoint || '/api/v1/';
+  this.addresses = {'primary': "", 'secondary': ""};
+
   function _add_ending_slash(string) {
     if (string[string.length -1] != '/') {
       string += '/';
@@ -18,13 +20,24 @@ function AtcRestClient (primary, secondary, endpoint) {
   this.endpoint = _add_ending_slash(this.endpoint);
 
   this.dual_stack = function() {
-    return secondary != "";
+    return this.addresses['secondary'] != "";
   }
 
   this.raw_call = function (addr, method, urn, callback, data) {
+    /**
+    * If addr is empty, default to using the one from the url we connected to.
+    * Also wrap ipv6 with square brackets and set a sane default port.
+    */
+    if (addr == "") {
+      addr = document.location["hostname"];
+    }
+    var port = document.location["port"];
+    if (addr.indexOf(':') >= 0) {
+      addr = '[' + addr + ']';
+    }
     urn = _add_ending_slash(urn);
     $.ajax({
-      url: '//' + addr + this.endpoint + urn,
+      url: '//' + addr + (port != "" ? ":" + port : "") + this.endpoint + urn,
       dataType: 'json',
       type: method,
       data: data && JSON.stringify(data),
@@ -42,12 +55,20 @@ function AtcRestClient (primary, secondary, endpoint) {
   };
 
   this.api_call = function (method, urn, callback, data) {
-    this.raw_call(primary, method, urn, callback, data);
+    this.raw_call(this.addresses['primary'], method, urn, callback, data);
   };
 
   this.secondary_call = function (method, urn, callback, data) {
-    this.raw_call(secondary, method, urn, callback, data);
+    this.raw_call(this.addresses['secondary'], method, urn, callback, data);
   };
+
+  function discover_addresses(rc) {
+    var c = rc['json']['client'];
+    this.addresses['primary'] = c['server_primary'];
+    this.addresses['secondary'] = c['server_secondary'];
+  }
+
+  this.api_call('GET', 'info', discover_addresses.bind(this));
 }
 
 AtcRestClient.prototype.getServerInfo = function (callback) {
