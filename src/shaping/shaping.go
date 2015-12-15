@@ -5,9 +5,8 @@ shapers must conform. It also contains platform-specific shapers.
 package shaping
 
 import (
-	"net"
-
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/src/iptables"
 	. "github.com/facebook/augmented-traffic-control/src/log"
 )
 
@@ -16,6 +15,8 @@ var Log *LogMux
 func init() {
 	Log = NewMux(Syslog(), Stdlog())
 }
+
+type Target iptables.Target
 
 type Shaper interface {
 	// Get the platform type for this shaper.
@@ -27,13 +28,13 @@ type Shaper interface {
 	Initialize() error
 
 	// Create a new group with the given id number and initial member.
-	CreateGroup(id int64, member net.IP) error
+	CreateGroup(id int64, member Target) error
 
 	// Add the provided member to the given group.
-	JoinGroup(id int64, member net.IP) error
+	JoinGroup(id int64, member Target) error
 
 	// Remove the provided member from the given group.
-	LeaveGroup(id int64, member net.IP) error
+	LeaveGroup(id int64, member Target) error
 
 	// Delete a group. The group is assumed to be empty *before* DeleteGroup
 	// is called.
@@ -60,9 +61,9 @@ func (FakeShaper) GetPlatform() atc_thrift.PlatformType {
 }
 
 func (FakeShaper) Initialize() error                                 { return nil }
-func (FakeShaper) CreateGroup(int64, net.IP) error                   { return nil }
-func (FakeShaper) JoinGroup(int64, net.IP) error                     { return nil }
-func (FakeShaper) LeaveGroup(int64, net.IP) error                    { return nil }
+func (FakeShaper) CreateGroup(int64, Target) error                   { return nil }
+func (FakeShaper) JoinGroup(int64, Target) error                     { return nil }
+func (FakeShaper) LeaveGroup(int64, Target) error                    { return nil }
 func (FakeShaper) DeleteGroup(int64) error                           { return nil }
 func (FakeShaper) Shape(id int64, shaping *atc_thrift.Shaping) error { return nil }
 func (FakeShaper) Unshape(int64) error                               { return nil }

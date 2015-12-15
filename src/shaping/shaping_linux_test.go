@@ -1,17 +1,28 @@
 package shaping
 
 import (
+	crand "crypto/rand"
+	"fmt"
 	"math"
+	mrand "math/rand"
+	"net"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 	"testing"
 
+	assertlib "github.com/alecthomas/assert"
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/src/iptables"
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netns"
 )
+
+func init() {
+	IPTABLES = "iptables"
+	IP6TABLES = "ip6tables"
+}
 
 func TestCreatesRootQdisc(t *testing.T) {
 	tearDown, link := setUpNetlinkTest(t)
@@ -143,15 +154,145 @@ func TestShapeOff(t *testing.T) {
 
 	// FIXME Better asserts
 
-	// We expect 0 filters to be setup: 1 for ipv4, 1 for ipv6.
+	// We expect 0 filters to be setup
 	if len(filters) != 0 {
 		t.Fatal("Failed to delete filter")
+	}
+}
+
+func TestGroupCreateJoin(t *testing.T) {
+	// Do this all in the same network namespace so all the groups exist at once.
+	assert, tearDown, shaper := setUpShaperTest(t)
+	defer tearDown()
+
+	// Test most common group setups
+	testGroupCreateJoin(assert, shaper, ip4)
+	testGroupCreateJoin(assert, shaper, ip4, ip4)
+	testGroupCreateJoin(assert, shaper, ip6)
+	testGroupCreateJoin(assert, shaper, ip6, ip6)
+	testGroupCreateJoin(assert, shaper, ip4, ip6)
+	testGroupCreateJoin(assert, shaper, ip6, ip4)
+
+	// Test some random setups.
+	// 10 IPs in each group, between 0 and 10 IPv4 addresses per group
+	for f := 0; f <= 10; f += 1 {
+		testGroupCreateJoin(assert, shaper, randIPGens(10, f)...)
 	}
 }
 
 /**
 *** Testing Utilities
 **/
+
+func randIPGens(n, v4 int) []func() iptables.Target {
+	v := mrand.Perm(n)
+	gens := make([]func() iptables.Target, n)
+	for i := 0; i < n; i++ {
+		if v[i] < v4 {
+			gens[i] = ip4
+		} else {
+			gens[i] = ip6
+		}
+	}
+	return gens
+}
+
+func testGroupCreateJoin(assert *assertlib.Assertions, shaper *netlinkShaper, gens ...func() iptables.Target) {
+	mark := int64(mrand.Int31())
+
+	targets := make([]iptables.Target, 0, len(gens))
+	for _, g := range gens {
+		// hope there aren't collisions
+		targets = append(targets, g())
+	}
+
+	for i, t := range targets {
+		if i == 0 {
+			err := shaper.CreateGroup(mark, t)
+			assert.NoError(err, "could not create group with %v", t)
+		} else {
+			err := shaper.JoinGroup(mark, t)
+			assert.NoError(err, "%v could not join group 0x%x", t, mark)
+		}
+	}
+
+	for _, t := range targets {
+		assertPacketsMarked(assert, shaper, mark, t)
+	}
+}
+
+func ip6() iptables.Target {
+	return randIP(net.IPv6len)
+}
+
+func ip4() iptables.Target {
+	return randIP(net.IPv4len)
+}
+
+func randIP(l int) iptables.Target {
+	b := make([]byte, l)
+	_, err := crand.Read(b)
+	if err != nil {
+		panic(err)
+	}
+	return iptables.IPTarget(net.IP(b))
+}
+
+func assertPacketsMarked(assert *assertlib.Assertions, shaper *netlinkShaper, id int64, target iptables.Target) {
+	t := shaper.ip4t
+	world := "0.0.0.0/0"
+	if target.V6() {
+		t = shaper.ip6t
+		world = "::/0"
+	}
+
+	markings, err := t.Table("mangle").Chain("FORWARD").GetRules(target)
+	assert.NoError(err)
+	assert.Len(markings, 2, "wrong number of iptables rules for %v", target)
+
+	for _, mark := range markings {
+		switch mark.In {
+		case "wan":
+			assert.Equal(world, mark.Source.String())
+			assert.Equal(target, mark.Destination)
+		case "lan":
+			assert.Equal(target, mark.Source)
+			assert.Equal(world, mark.Destination.String())
+		default:
+			assert.Fail("Mark has the wrong interface: %v", mark.In)
+		}
+		assert.Equal([]string{"MARK", "set", fmt.Sprintf("0x%x", id)}, mark.Args)
+	}
+}
+
+func setUpShaperTest(t *testing.T) (*assertlib.Assertions, func(), *netlinkShaper) {
+	if os.Getuid() != 0 {
+		t.Skip("Skipped test because it requires root privileges")
+	}
+	assert := assertlib.New(t)
+
+	// new temporary namespace so we don't pollute the host
+	// lock thread since the namespace is thread local
+	runtime.LockOSThread()
+	ns, err := netns.New()
+	if err != nil {
+		runtime.UnlockOSThread()
+		t.Fatalf("Failed to create new network namespace: %v", err)
+	}
+
+	setUpDummyInterface(t, "wan")
+	setUpDummyInterface(t, "lan")
+	LAN_INT = "lan"
+	WAN_INT = "wan"
+
+	shaper, err := GetShaper()
+	assert.NoError(err, "could not get shaper")
+
+	return assert, func() {
+		ns.Close()
+		runtime.UnlockOSThread()
+	}, shaper.(*netlinkShaper)
+}
 
 func setUpNetlinkTest(t *testing.T) (func(), netlink.Link) {
 	if os.Getuid() != 0 {
@@ -167,7 +308,7 @@ func setUpNetlinkTest(t *testing.T) (func(), netlink.Link) {
 		t.Fatalf("Failed to create new network namespace: %v", err)
 	}
 
-	link := setUpDummyInterface(t)
+	link := setUpDummyInterface(t, "foo")
 
 	return func() {
 		ns.Close()
@@ -175,17 +316,17 @@ func setUpNetlinkTest(t *testing.T) (func(), netlink.Link) {
 	}, link
 }
 
-func setUpDummyInterface(t *testing.T) netlink.Link {
+func setUpDummyInterface(t *testing.T, name string) netlink.Link {
 	// Use a Dummy interface for testing as boot2docker 1.8.1 does not suport
 	// Ifb interfaces
 	if err := netlink.LinkAdd(
 		&netlink.Dummy{
-			LinkAttrs: netlink.LinkAttrs{Name: "foo"},
+			LinkAttrs: netlink.LinkAttrs{Name: name},
 		}); err != nil {
 		t.Fatal(err)
 	}
 
-	link, err := netlink.LinkByName("foo")
+	link, err := netlink.LinkByName(name)
 	if err != nil {
 		t.Fatal(err)
 	}

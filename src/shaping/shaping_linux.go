@@ -3,15 +3,13 @@ package shaping
 import (
 	"fmt"
 	"math"
-	"net"
 	"os/exec"
-	"strings"
 	"syscall"
 
-	"gopkg.in/alecthomas/kingpin.v2"
-
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/src/iptables"
 	"github.com/vishvananda/netlink"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var FILTER_IP_TYPE = []uint16{syscall.ETH_P_IP, syscall.ETH_P_IPV6}
@@ -41,23 +39,24 @@ Returns a shaper suitable for the current platform.
 This build of ATC is compiled with iptables support and only works on linux.
 */
 func GetShaper() (Shaper, error) {
+	var err error
 	// Make sure that the location of the iptables binaries are set
 	// If they're not, pull them from $PATH
 	if IPTABLES == "" {
-		var err error
 		IPTABLES, err = exec.LookPath("iptables")
 		if err != nil {
 			return nil, err
 		}
 	}
 	if IP6TABLES == "" {
-		var err error
 		IP6TABLES, err = exec.LookPath("ip6tables")
 		if err != nil {
 			return nil, err
 		}
 	}
-	return &netlinkShaper{}, nil
+	ip4t := iptables.New(IPTABLES)
+	ip6t := iptables.New(IP6TABLES)
+	return &netlinkShaper{ip4t, ip6t}, nil
 }
 
 /*
@@ -65,7 +64,10 @@ The netlink shaper uses a combination of iptables and tc to achieve bandwidth tr
 
 Each group gets a unique identifier (provided when the group is created)
 */
-type netlinkShaper struct{}
+type netlinkShaper struct {
+	ip4t *iptables.IPTables
+	ip6t *iptables.IPTables
+}
 
 func (nl *netlinkShaper) GetPlatform() atc_thrift.PlatformType {
 	return atc_thrift.PlatformType_LINUX
@@ -77,7 +79,7 @@ func (nl *netlinkShaper) Initialize() error {
 	}
 	// Clean out mangle's FORWARD chain. There might be remaining
 	// rules in here from past atcd instances.
-	if err := mangle_flush(); err != nil {
+	if err := nl.flush(); err != nil {
 		return err
 	}
 	// Setup the root qdisc
@@ -94,16 +96,16 @@ func (nl *netlinkShaper) Initialize() error {
 /*
 Create a group. The ID used here is assumed to be unique to this group and won't change.
 */
-func (nl *netlinkShaper) CreateGroup(id int64, member net.IP) error {
-	return mark_packets_for(member, fmt.Sprintf("0x%x", id))
+func (nl *netlinkShaper) CreateGroup(id int64, member Target) error {
+	return nl.mark_packets_for(member, id)
 }
 
-func (nl *netlinkShaper) JoinGroup(id int64, member net.IP) error {
-	return mark_packets_for(member, fmt.Sprintf("0x%x", id))
+func (nl *netlinkShaper) JoinGroup(id int64, member Target) error {
+	return nl.mark_packets_for(member, id)
 }
 
-func (nl *netlinkShaper) LeaveGroup(id int64, member net.IP) error {
-	return remove_marking_for(member, fmt.Sprintf("0x%x", id))
+func (nl *netlinkShaper) LeaveGroup(id int64, member Target) error {
+	return nl.remove_marking_for(member, id)
 }
 
 func (nl *netlinkShaper) DeleteGroup(id int64) error {
@@ -250,70 +252,43 @@ func shape_off(id int64, link netlink.Link) error {
 	return nil
 }
 
-func mark_packets_for(net net.IP, mark string) error {
-	if err := mark_int_packets_for("-d", net, WAN_INT, mark); err != nil {
-		return err
+func (nl *netlinkShaper) mark_packets_for(target Target, mark int64) error {
+	ipt := nl.tablesFor(target)
+	chain := ipt.Table("mangle").Chain("FORWARD")
+	if err := chain.Append(iptables.Rule{Destination: target, In: WAN_INT}.SetMark(mark)); err != nil {
+		return fmt.Errorf("Could not mark packets for %s: %v", target, err)
 	}
-	return mark_int_packets_for("-s", net, LAN_INT, mark)
-}
-
-func mark_int_packets_for(flag string, net net.IP, int, mark string) error {
-	if err := mangle_append(flag, net, "-i", int, "-j", "MARK", "--set-xmark", mark); err != nil {
-		return fmt.Errorf("Could not mark packets for %s: %v", net, err)
+	if err := chain.Append(iptables.Rule{Source: target, In: LAN_INT}.SetMark(mark)); err != nil {
+		return fmt.Errorf("Could not mark packets for %s: %v", target, err)
 	}
 	return nil
 }
 
-func remove_marking_for(net net.IP, mark string) error {
-	if err := remove_int_marking_for("-d", net, WAN_INT, mark); err != nil {
-		return err
+func (nl *netlinkShaper) remove_marking_for(target Target, mark int64) error {
+	ipt := nl.tablesFor(target)
+	chain := ipt.Table("mangle").Chain("FORWARD")
+	if err := chain.Delete(iptables.Rule{Destination: target, In: WAN_INT}.SetMark(mark)); err != nil {
+		return fmt.Errorf("Could not mark packets for %s: %v", target, err)
 	}
-	return remove_int_marking_for("-s", net, LAN_INT, mark)
-}
-
-func remove_int_marking_for(flag string, net net.IP, int, mark string) error {
-	if err := mangle_delete(flag, net, "-i", int, "-j", "MARK", "--set-xmark", mark); err != nil {
-		return fmt.Errorf("Could not remove marking for %s: %v", net, err)
+	if err := chain.Delete(iptables.Rule{Source: target, In: LAN_INT}.SetMark(mark)); err != nil {
+		return fmt.Errorf("Could not mark packets for %s: %v", target, err)
 	}
 	return nil
 }
 
-func mangle_append(flag string, addr net.IP, args ...string) error {
-	ipt := IPTABLES
-	if addr.To4() == nil {
-		ipt = IP6TABLES
+func (nl *netlinkShaper) tablesFor(target Target) *iptables.IPTables {
+	if target.V6() {
+		return nl.ip6t
+	} else {
+		return nl.ip4t
 	}
-	args = append([]string{"-t", "mangle", "-A", "FORWARD", flag, addr.String()}, args...)
-	return run_cmd(ipt, args...)
 }
 
-func mangle_delete(flag string, addr net.IP, args ...string) error {
-	ipt := IPTABLES
-	if addr.To4() == nil {
-		ipt = IP6TABLES
-	}
-	args = append([]string{"-t", "mangle", "-D", "FORWARD", flag, addr.String()}, args...)
-	return run_cmd(ipt, args...)
-}
-
-func mangle_flush() error {
-	if err := run_cmd(IPTABLES, "-t", "mangle", "-F", "FORWARD"); err != nil {
+func (nl *netlinkShaper) flush() error {
+	if err := nl.ip4t.Table("mangle").Chain("FORWARD").Flush(); err != nil {
 		return err
 	}
-	return run_cmd(IP6TABLES, "-t", "mangle", "-F", "FORWARD")
-}
-
-func run_cmd(cmd string, args ...string) error {
-	Log.Printf("Command: %s %s\n", cmd, strings.Join(args, " "))
-	bytes, err := exec.Command(cmd, args...).CombinedOutput()
-	if err != nil {
-		for _, s := range strings.Split(string(bytes), "\n") {
-			if len(s) > 0 {
-				Log.Println(s)
-			}
-		}
-	}
-	return err
+	return nl.ip6t.Table("mangle").Chain("FORWARD").Flush()
 }
 
 func lookupInterfaces() (wan, lan netlink.Link, err error) {
