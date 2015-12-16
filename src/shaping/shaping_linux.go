@@ -118,6 +118,13 @@ func (nl *netlinkShaper) Shape(id int64, shaping *atc_thrift.Shaping) error {
 	if err != nil {
 		return err
 	}
+	// Unshape before shaping. (FIXME: #173)
+	if err := shape_off(id, lan); err != nil {
+		Log.Printf("Could not temporarily unshape lan(%s) interface: %v", LAN_INT, err)
+	}
+	if err := shape_off(id, wan); err != nil {
+		Log.Printf("Could not temporarily unshape wan(%s) interface: %v", LAN_INT, err)
+	}
 	// Shape on the OUTBOUND side.
 	// Traffic on the lan interface is incoming, so down.
 	if err := shape_on(id, shaping.Down, lan); err != nil {
