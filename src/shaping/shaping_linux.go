@@ -248,7 +248,7 @@ func shape_off(id int64, link netlink.Link) error {
 			return fmt.Errorf("Could not create fw filter struct: %v", err)
 		}
 		if err := netlink.FilterDel(fw); err != nil {
-			return fmt.Errorf("Could not create fw filter: %v", err)
+			return fmt.Errorf("Could not delete fw filter: %v", err)
 		}
 	}
 
