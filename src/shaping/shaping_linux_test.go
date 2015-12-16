@@ -160,6 +160,41 @@ func TestShapeOff(t *testing.T) {
 	}
 }
 
+func TestShapeTwice(t *testing.T) {
+	assert, tearDown, shaper := setUpShaperTest(t)
+	defer tearDown()
+
+	// Set up class + filters (ipv4/ipv6) using shape_on
+	mark := int64(7)
+	shaping := &atc_thrift.Shaping{
+		Up: &atc_thrift.LinkShaping{
+			Rate:  10,
+			Delay: &atc_thrift.Delay{Delay: 10},
+			Loss:  &atc_thrift.Loss{Percentage: 10},
+		},
+		Down: &atc_thrift.LinkShaping{
+			Rate:  10,
+			Delay: &atc_thrift.Delay{Delay: 10},
+			Loss:  &atc_thrift.Loss{Percentage: 10},
+		},
+	}
+
+	assert.NoError(shaper.Shape(mark, shaping), "could not shape")
+	shaping.Up.Rate = 100
+	shaping.Down.Rate = 100
+	assert.NoError(shaper.Shape(mark, shaping), "could not reshape")
+
+	if testing.Verbose() {
+		for _, s := range []string{"wan", "lan"} {
+			test_cmd(t, "tc", "qdisc", "show", "dev", s)
+			test_cmd(t, "tc", "class", "show", "dev", s)
+			test_cmd(t, "tc", "filter", "show", "dev", s)
+		}
+	}
+
+	// FIXME Better asserts
+}
+
 func TestGroupCreateJoin(t *testing.T) {
 	// Do this all in the same network namespace so all the groups exist at once.
 	assert, tearDown, shaper := setUpShaperTest(t)
@@ -280,8 +315,10 @@ func setUpShaperTest(t *testing.T) (*assertlib.Assertions, func(), *netlinkShape
 		t.Fatalf("Failed to create new network namespace: %v", err)
 	}
 
-	setUpDummyInterface(t, "wan")
-	setUpDummyInterface(t, "lan")
+	link := setUpDummyInterface(t, "wan")
+	assert.NoError(setupRootQdisc(link), "could not setup wan root qdisc")
+	link = setUpDummyInterface(t, "lan")
+	assert.NoError(setupRootQdisc(link), "could not setup lan root qdisc")
 	LAN_INT = "lan"
 	WAN_INT = "wan"
 

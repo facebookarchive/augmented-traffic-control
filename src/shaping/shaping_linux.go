@@ -118,6 +118,13 @@ func (nl *netlinkShaper) Shape(id int64, shaping *atc_thrift.Shaping) error {
 	if err != nil {
 		return err
 	}
+	// Unshape before shaping. (FIXME: #173)
+	if err := shape_off(id, lan); err != nil {
+		Log.Printf("Could not temporarily unshape lan(%s) interface: %v", LAN_INT, err)
+	}
+	if err := shape_off(id, wan); err != nil {
+		Log.Printf("Could not temporarily unshape wan(%s) interface: %v", LAN_INT, err)
+	}
 	// Shape on the OUTBOUND side.
 	// Traffic on the lan interface is incoming, so down.
 	if err := shape_on(id, shaping.Down, lan); err != nil {
@@ -145,9 +152,6 @@ func (nl *netlinkShaper) Unshape(id int64) error {
 }
 
 func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) error {
-	// Add class: (contains rate)
-	//class htb 1:2 root leaf 8005: prio 0 rate 4194Mbit ceil 4194Mbit burst 1048b cburst 1048b
-
 	// Rate is a required argument for HTB class. If we are given a value of 0,
 	// rate was not set and is considered unlimited.
 	// In that case, let set the rate as high as we can.
@@ -241,7 +245,7 @@ func shape_off(id int64, link netlink.Link) error {
 			return fmt.Errorf("Could not create fw filter struct: %v", err)
 		}
 		if err := netlink.FilterDel(fw); err != nil {
-			return fmt.Errorf("Could not create fw filter: %v", err)
+			return fmt.Errorf("Could not delete fw filter: %v", err)
 		}
 	}
 

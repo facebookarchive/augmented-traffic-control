@@ -183,6 +183,9 @@ func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
 	if err != nil {
 		return err
 	}
+	if group == nil {
+		return fmt.Errorf("Group not found: %d", id)
+	}
 	if !atcd.verify(group, token) {
 		return fmt.Errorf("Unauthorized")
 	}
