@@ -320,7 +320,7 @@ var Atc = React.createClass({
 
 module.exports = Atc;
 
-},{"./api":1,"./group":3,"./profiles":4,"./server":5,"./shaping":6,"./utils":7,"react":166}],3:[function(require,module,exports){
+},{"./api":1,"./group":3,"./profiles":5,"./server":6,"./shaping":7,"./utils":8,"react":166}],3:[function(require,module,exports){
 "use strict";
 
 /**
@@ -578,6 +578,23 @@ var GroupPanel = React.createClass({
 module.exports = GroupPanel;
 
 },{"react":166}],4:[function(require,module,exports){
+'use strict';
+
+/**
+ * Copyright (c) 2014, Facebook, Inc.
+ * All rights reserved.  * *  This source code is licensed under the BSD-style license found in the
+ *  LICENSE file in the root directory of this source tree. An additional grant
+ *  of patent rights can be found in the PATENTS file in the same directory.
+ */
+
+// This is actually used once the JSX tag converts to javascript
+var React = require('react'); // eslint-disable-line no-unused-vars
+var ReactDOM = require('react-dom');
+var Atc = require('./atc.js');
+
+ReactDOM.render(React.createElement(Atc, null), document.getElementById('atc_demo_ui'));
+
+},{"./atc.js":2,"react":166,"react-dom":37}],5:[function(require,module,exports){
 "use strict";
 
 /**
@@ -688,7 +705,7 @@ var ProfilePanel = React.createClass({
 
 module.exports = ProfilePanel;
 
-},{"react":166}],5:[function(require,module,exports){
+},{"react":166}],6:[function(require,module,exports){
 'use strict';
 
 /**
@@ -792,7 +809,7 @@ var ServerInfoPanel = React.createClass({
 
 module.exports = ServerInfoPanel;
 
-},{"react":166}],6:[function(require,module,exports){
+},{"react":166}],7:[function(require,module,exports){
 'use strict';
 
 /**
@@ -908,7 +925,7 @@ var ShapingPanel = React.createClass({
 
 module.exports = ShapingPanel;
 
-},{"./utils":7,"react":166}],7:[function(require,module,exports){
+},{"./utils":8,"react":166}],8:[function(require,module,exports){
 "use strict";
 
 /**
@@ -995,24 +1012,7 @@ module.exports = {
   JSONView: JSONView
 };
 
-},{"react":166}],8:[function(require,module,exports){
-'use strict';
-
-/**
- * Copyright (c) 2014, Facebook, Inc.
- * All rights reserved.  * *  This source code is licensed under the BSD-style license found in the
- *  LICENSE file in the root directory of this source tree. An additional grant
- *  of patent rights can be found in the PATENTS file in the same directory.
- */
-
-// This is actually used once the JSX tag converts to javascript
-var React = require('react'); // eslint-disable-line no-unused-vars
-var ReactDOM = require('react-dom');
-var Atc = require('./atc.js');
-
-ReactDOM.render(React.createElement(Atc, null), document.getElementById('atc_demo_ui'));
-
-},{"./atc.js":2,"react":166,"react-dom":37}],9:[function(require,module,exports){
+},{"react":166}],9:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -20030,4 +20030,4 @@ module.exports = validateDOMNesting;
 
 module.exports = require('./lib/React');
 
-},{"./lib/React":61}]},{},[8]);
+},{"./lib/React":61}]},{},[4]);
