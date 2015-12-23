@@ -54,6 +54,8 @@ func GetShaper() (Shaper, error) {
 			return nil, err
 		}
 	}
+	Log.Debugf("Using iptables binary: %q\n", IPTABLES)
+	Log.Debugf("Using ip6tables binary: %q\n", IP6TABLES)
 	ip4t := iptables.New(IPTABLES)
 	ip6t := iptables.New(IP6TABLES)
 	return &netlinkShaper{ip4t, ip6t}, nil
@@ -74,6 +76,7 @@ func (nl *netlinkShaper) GetPlatform() atc_thrift.PlatformType {
 }
 
 func (nl *netlinkShaper) Initialize() error {
+	Log.Debugln("Initializing shaper using netlink")
 	if WAN_INT == "eth0" && LAN_INT == "eth1" {
 		Log.Println("-wan and -lan were not provided. Using defaults. This is probably not what you want!")
 	}
@@ -87,10 +90,16 @@ func (nl *netlinkShaper) Initialize() error {
 	if err != nil {
 		return err
 	}
+	Log.Debugf("WAN interface: %s(%d)\n", wan.Attrs().Name, wan.Attrs().Index)
+	Log.Debugf("LAN interface: %s(%d)\n", lan.Attrs().Name, lan.Attrs().Index)
 	if err := setupRootQdisc(wan); err != nil {
 		return err
 	}
-	return setupRootQdisc(lan)
+	if err := setupRootQdisc(lan); err != nil {
+		return err
+	}
+	Log.Debugf("Done initializing netlink shaper")
+	return nil
 }
 
 /*
@@ -171,6 +180,7 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 		Rate: rate, // in kbps
 		Ceil: rate,
 	})
+	Log.Debugf("Adding htb class: %#v\n", htbc)
 	if err := netlink.ClassAdd(htbc); err != nil {
 		return fmt.Errorf("Could not create htb class: %v", err)
 	}
@@ -193,6 +203,7 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 		if err != nil {
 			return fmt.Errorf("Could not create fw filter struct: %v", err)
 		}
+		Log.Debugf("Adding fw filter: %#v", fw)
 		if err := netlink.FilterAdd(fw); err != nil {
 			return fmt.Errorf("Could not create fw filter: %v", err)
 		}
@@ -200,7 +211,7 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 
 	// Add netem qdisc: (contains latency, packet drop, correlation, etc.)
 	//qdisc netem 8001: parent 1:2 limit 1000
-	htbq := netlink.NewNetem(netlink.QdiscAttrs{
+	netem := netlink.NewNetem(netlink.QdiscAttrs{
 		LinkIndex: link.Attrs().Index,
 		// We can leave netlink assigning a handle for us
 		// Handle:    netlink.MakeHandle(uint16(id+0x8000), 0),
@@ -217,7 +228,8 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 		CorruptProb: float32(shaping.GetCorruption().Percentage),  // in %
 		CorruptCorr: float32(shaping.GetCorruption().Correlation), // in %
 	})
-	if err := netlink.QdiscAdd(htbq); err != nil {
+	Log.Debugf("Adding netem qdisc: %#v", netem)
+	if err := netlink.QdiscAdd(netem); err != nil {
 		return fmt.Errorf("Could not create htb qdisc: %v", err)
 	}
 
@@ -244,11 +256,13 @@ func shape_off(id int64, link netlink.Link) error {
 		if err != nil {
 			return fmt.Errorf("Could not create fw filter struct: %v", err)
 		}
+		Log.Debugf("Deleting fw filter: %#v\n", fw)
 		if err := netlink.FilterDel(fw); err != nil {
 			return fmt.Errorf("Could not delete fw filter: %v", err)
 		}
 	}
 
+	Log.Debugf("Deleting htb class: %#v\n", htbc)
 	if err := netlink.ClassDel(htbc); err != nil {
 		return fmt.Errorf("Could not delete htb class: %v", err)
 	}
@@ -311,6 +325,7 @@ func lookupInterfaces() (wan, lan netlink.Link, err error) {
 
 func setupRootQdisc(link netlink.Link) error {
 	// Clean out old qdiscs
+	Log.Debugf("Cleaning out old qdiscs on %s\n", link.Attrs().Name)
 	qdiscs, err := netlink.QdiscList(link)
 	if err != nil {
 		return err
@@ -327,6 +342,7 @@ func setupRootQdisc(link netlink.Link) error {
 		Parent:    netlink.HANDLE_ROOT,
 		Handle:    netlink.MakeHandle(1, 0),
 	})
+	Log.Debugf("Creating new root qdisc on %s: %#v\n", link.Attrs().Name, root_qdisc)
 
 	if err := netlink.QdiscAdd(root_qdisc); err != nil {
 		return fmt.Errorf("Could not create root qdisc (%s): %v", link.Attrs().Name, err)

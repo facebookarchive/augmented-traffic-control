@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/facebook/augmented-traffic-control/src/api"
+	logging "github.com/facebook/augmented-traffic-control/src/log"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -23,6 +24,7 @@ func TestAtcdConnection(addr *net.TCPAddr, proto string) error {
 
 func main() {
 	args := ParseArgs()
+	logging.DEBUG = args.Verbose
 
 	// Make sure connection to the daemon is working.
 	err := TestAtcdConnection(args.ThriftAddr, args.ThriftProto)
@@ -66,6 +68,7 @@ func validateArgs(args Arguments) error {
 type Arguments struct {
 	api.AtcApiOptions
 	WarnOnly bool
+	Verbose  bool
 }
 
 func ParseArgs() Arguments {
@@ -79,6 +82,7 @@ func ParseArgs() Arguments {
 	kingpin.Flag("ipv6", "IPv6 address (or hostname) of the ATC API").Short('6').Default("").StringVar(&args.V6)
 	kingpin.Flag("proxy-addr", "IP address of authorized HTTP reverse proxy").Default("").StringVar(&args.ProxyAddr)
 	kingpin.Flag("warn", "Only warn if the thrift server isn't reachable").Short('Q').Default("false").BoolVar(&args.WarnOnly)
+	kingpin.Flag("verbose", "verbose output").Short('v').Default("false").BoolVar(&args.Verbose)
 	kingpin.Parse()
 
 	return args

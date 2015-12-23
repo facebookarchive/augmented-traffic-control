@@ -9,6 +9,7 @@ import (
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/daemon"
+	logging "github.com/facebook/augmented-traffic-control/src/log"
 	"github.com/facebook/augmented-traffic-control/src/shaping"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"gopkg.in/yaml.v2"
@@ -16,6 +17,7 @@ import (
 
 func main() {
 	args := parseArgs()
+	logging.DEBUG = args.Verbose
 
 	// Setup the database
 	db, err := daemon.NewDbRunner(args.DbDriver, args.DbConnstr)
@@ -77,6 +79,7 @@ type Args struct {
 	FakeShaping bool
 	OtpTimeout  int
 	ConfigFile  string
+	Verbose     bool
 }
 
 func parseArgs() Args {
@@ -97,6 +100,7 @@ func parseArgs() Args {
 	kingpin.Flag("insecure", "insecure mode. disable user security checks").Default("false").BoolVar(&args.Insecure)
 	kingpin.Flag("fake-shaping", "don't do real shaping. instead use a mock shaper").Short('F').Default("false").BoolVar(&args.FakeShaping)
 	kingpin.Flag("token-timeout", "OTP Token timeout in seconds").Default("60").IntVar(&args.OtpTimeout)
+	kingpin.Flag("verbose", "verbose output").Short('v').Default("false").BoolVar(&args.Verbose)
 
 	kingpin.Parse()
 
