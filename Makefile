@@ -8,7 +8,7 @@ PREFIX = /usr/local
 GO = $(shell which go)
 BUILD = $(GO) build
 # for static compilation:
-#BUILD = $(GO) build --ldflags '-extldflags "-static"'
+#BUILD += --ldflags '-extldflags "-static"'
 
 TEST = $(GO) test -v
 VET = $(GO) vet
