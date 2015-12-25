@@ -8,10 +8,15 @@ import (
 	"os"
 )
 
+var (
+	// Set to true to enable debugging output
+	DEBUG bool = false
+)
+
 func Syslog() *log.Logger {
 	log, err := syslog.NewLogger(syslog.LOG_USER|syslog.LOG_INFO, 0)
 	if err != nil {
-		log.Fatal("Could not create syslog logger:", err)
+		log.Println("warning: Could not create syslog logger:", err)
 	}
 	return log
 }
@@ -85,5 +90,29 @@ func (l *LogMux) Printf(format string, v ...interface{}) {
 func (l *LogMux) Println(v ...interface{}) {
 	for _, l := range l.loggers {
 		l.Println(v...)
+	}
+}
+
+func (l *LogMux) Debug(v ...interface{}) {
+	if DEBUG {
+		for _, l := range l.loggers {
+			l.Print(v...)
+		}
+	}
+}
+
+func (l *LogMux) Debugf(format string, v ...interface{}) {
+	if DEBUG {
+		for _, l := range l.loggers {
+			l.Printf(format, v...)
+		}
+	}
+}
+
+func (l *LogMux) Debugln(v ...interface{}) {
+	if DEBUG {
+		for _, l := range l.loggers {
+			l.Println(v...)
+		}
 	}
 }

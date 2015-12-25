@@ -27,7 +27,7 @@ func ReshapeFromDb(shaper *ShapingEngine, db *DbRunner) error {
 		return nil
 	}
 
-	Log.Println("Reshaping from database")
+	Log.Debugln("Reshaping from database")
 	// Setup all the groups' shaping again
 	for _, group := range groups {
 		// First make sure the group has all the members in the DB
@@ -235,7 +235,7 @@ func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Shaping, token strin
 		return nil, fmt.Errorf("Unauthorized")
 	}
 	group.tc = settings
-	Log.Println("Shaping group", group.id)
+	Log.Debugf("Shaping group %d with %+v\n", group.id, settings)
 	err = atcd.shaper.Shape(group.id, group.tc)
 	if err != nil {
 		return nil, err
@@ -256,7 +256,7 @@ func (atcd *Atcd) UnshapeGroup(id int64, token string) error {
 		return fmt.Errorf("Unauthorized")
 	}
 	group.tc = nil
-	Log.Println("Unshaping group", group.id)
+	Log.Debugf("Unshaping group %d\n", group.id)
 	err = atcd.shaper.Unshape(group.id)
 	if err != nil {
 		return err

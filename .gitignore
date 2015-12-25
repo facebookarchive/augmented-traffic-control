@@ -43,3 +43,4 @@ internal
 .gopath
 *.rpm
 **/node_modules/
+build-pkg
