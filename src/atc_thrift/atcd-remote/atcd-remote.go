@@ -155,8 +155,8 @@ func main() {
 			fmt.Fprintln(os.Stderr, "GetGroup requires 1 args")
 			flag.Usage()
 		}
-		argvalue0, err26 := (strconv.ParseInt(flag.Arg(1), 10, 64))
-		if err26 != nil {
+		argvalue0, err25 := (strconv.ParseInt(flag.Arg(1), 10, 64))
+		if err25 != nil {
 			Usage()
 			return
 		}
@@ -179,8 +179,8 @@ func main() {
 			fmt.Fprintln(os.Stderr, "GetGroupToken requires 1 args")
 			flag.Usage()
 		}
-		argvalue0, err28 := (strconv.ParseInt(flag.Arg(1), 10, 64))
-		if err28 != nil {
+		argvalue0, err27 := (strconv.ParseInt(flag.Arg(1), 10, 64))
+		if err27 != nil {
 			Usage()
 			return
 		}
@@ -193,8 +193,8 @@ func main() {
 			fmt.Fprintln(os.Stderr, "LeaveGroup requires 3 args")
 			flag.Usage()
 		}
-		argvalue0, err29 := (strconv.ParseInt(flag.Arg(1), 10, 64))
-		if err29 != nil {
+		argvalue0, err28 := (strconv.ParseInt(flag.Arg(1), 10, 64))
+		if err28 != nil {
 			Usage()
 			return
 		}
@@ -211,8 +211,8 @@ func main() {
 			fmt.Fprintln(os.Stderr, "JoinGroup requires 3 args")
 			flag.Usage()
 		}
-		argvalue0, err32 := (strconv.ParseInt(flag.Arg(1), 10, 64))
-		if err32 != nil {
+		argvalue0, err31 := (strconv.ParseInt(flag.Arg(1), 10, 64))
+		if err31 != nil {
 			Usage()
 			return
 		}
@@ -229,25 +229,25 @@ func main() {
 			fmt.Fprintln(os.Stderr, "ShapeGroup requires 3 args")
 			flag.Usage()
 		}
-		argvalue0, err35 := (strconv.ParseInt(flag.Arg(1), 10, 64))
-		if err35 != nil {
+		argvalue0, err34 := (strconv.ParseInt(flag.Arg(1), 10, 64))
+		if err34 != nil {
 			Usage()
 			return
 		}
 		value0 := argvalue0
-		arg36 := flag.Arg(2)
-		mbTrans37 := thrift.NewTMemoryBufferLen(len(arg36))
-		defer mbTrans37.Close()
-		_, err38 := mbTrans37.WriteString(arg36)
-		if err38 != nil {
+		arg35 := flag.Arg(2)
+		mbTrans36 := thrift.NewTMemoryBufferLen(len(arg35))
+		defer mbTrans36.Close()
+		_, err37 := mbTrans36.WriteString(arg35)
+		if err37 != nil {
 			Usage()
 			return
 		}
-		factory39 := thrift.NewTSimpleJSONProtocolFactory()
-		jsProt40 := factory39.GetProtocol(mbTrans37)
+		factory38 := thrift.NewTSimpleJSONProtocolFactory()
+		jsProt39 := factory38.GetProtocol(mbTrans36)
 		argvalue1 := atc_thrift.NewShaping()
-		err41 := argvalue1.Read(jsProt40)
-		if err41 != nil {
+		err40 := argvalue1.Read(jsProt39)
+		if err40 != nil {
 			Usage()
 			return
 		}
@@ -262,8 +262,8 @@ func main() {
 			fmt.Fprintln(os.Stderr, "UnshapeGroup requires 2 args")
 			flag.Usage()
 		}
-		argvalue0, err43 := (strconv.ParseInt(flag.Arg(1), 10, 64))
-		if err43 != nil {
+		argvalue0, err42 := (strconv.ParseInt(flag.Arg(1), 10, 64))
+		if err42 != nil {
 			Usage()
 			return
 		}

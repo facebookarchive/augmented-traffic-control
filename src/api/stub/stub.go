@@ -12,20 +12,18 @@ import (
 var (
 	FakeShaping = &atc_thrift.Shaping{
 		Up: &atc_thrift.LinkShaping{
-			Rate:            1024,
-			Delay:           nil,
-			Loss:            nil,
-			Reorder:         nil,
-			Corruption:      nil,
-			IptablesOptions: []string{},
+			Rate:       1024,
+			Delay:      nil,
+			Loss:       nil,
+			Reorder:    nil,
+			Corruption: nil,
 		},
 		Down: &atc_thrift.LinkShaping{
-			Rate:            1024,
-			Delay:           nil,
-			Loss:            nil,
-			Reorder:         nil,
-			Corruption:      nil,
-			IptablesOptions: []string{},
+			Rate:       1024,
+			Delay:      nil,
+			Loss:       nil,
+			Reorder:    nil,
+			Corruption: nil,
 		},
 	}
 
