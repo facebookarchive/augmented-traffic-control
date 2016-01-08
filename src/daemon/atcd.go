@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"fmt"
-	"net"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/iptables"
@@ -102,11 +101,10 @@ func (atcd *Atcd) ListGroups() ([]*atc_thrift.ShapingGroup, error) {
 }
 
 func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
-	ip := net.ParseIP(member)
-	if ip == nil {
-		return nil, fmt.Errorf("Malformed IP address: %q", member)
+	tgt, err := iptables.ParseTarget(member)
+	if err != nil {
+		return nil, err
 	}
-	tgt := iptables.IPTarget(ip)
 	grp := &atc_thrift.ShapingGroup{
 		Members: []string{member},
 		Shaping: nil,
@@ -153,11 +151,10 @@ func (atcd *Atcd) GetGroup(id int64) (*atc_thrift.ShapingGroup, error) {
 }
 
 func (atcd *Atcd) GetGroupWith(addr string) (*atc_thrift.ShapingGroup, error) {
-	ip := net.ParseIP(addr)
-	if ip == nil {
-		return nil, fmt.Errorf("Malformed IP address: %q", addr)
+	tgt, err := iptables.ParseTarget(addr)
+	if err != nil {
+		return nil, err
 	}
-	tgt := iptables.IPTarget(ip)
 	member, err := atcd.db.getMember(tgt)
 	if err != nil {
 		return nil, err
@@ -177,11 +174,10 @@ func (atcd *Atcd) GetGroupToken(id int64) (string, error) {
 }
 
 func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
-	ip := net.ParseIP(to_add)
-	if ip == nil {
-		return fmt.Errorf("Malformed IP address: %q", to_add)
+	tgt, err := iptables.ParseTarget(to_add)
+	if err != nil {
+		return err
 	}
-	tgt := iptables.IPTarget(ip)
 	group, err := atcd.db.getGroup(id)
 	if err != nil {
 		return err
@@ -203,11 +199,10 @@ func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
 }
 
 func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
-	ip := net.ParseIP(to_remove)
-	if ip == nil {
-		return fmt.Errorf("Malformed IP address: %q", to_remove)
+	tgt, err := iptables.ParseTarget(to_remove)
+	if err != nil {
+		return err
 	}
-	tgt := iptables.IPTarget(ip)
 	member, err := atcd.db.getMember(tgt)
 	if err != nil {
 		return err
