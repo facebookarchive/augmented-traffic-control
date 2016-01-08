@@ -122,16 +122,16 @@ func (p *AtcdClient) recvGetAtcdInfo() (value *AtcdInfo, err error) {
 		return
 	}
 	if mTypeId == thrift.EXCEPTION {
-		error2 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		var error3 error
-		error3, err = error2.Read(iprot)
+		error1 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error2 error
+		error2, err = error1.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
-		err = error3
+		err = error2
 		return
 	}
 	if mTypeId != thrift.REPLY {
@@ -199,16 +199,16 @@ func (p *AtcdClient) recvCreateGroup() (value *ShapingGroup, err error) {
 		return
 	}
 	if mTypeId == thrift.EXCEPTION {
-		error4 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		var error5 error
-		error5, err = error4.Read(iprot)
+		error3 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error4 error
+		error4, err = error3.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
-		err = error5
+		err = error4
 		return
 	}
 	if mTypeId != thrift.REPLY {
@@ -272,16 +272,16 @@ func (p *AtcdClient) recvListGroups() (value []*ShapingGroup, err error) {
 		return
 	}
 	if mTypeId == thrift.EXCEPTION {
-		error6 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		var error7 error
-		error7, err = error6.Read(iprot)
+		error5 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error6 error
+		error6, err = error5.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
-		err = error7
+		err = error6
 		return
 	}
 	if mTypeId != thrift.REPLY {
@@ -349,16 +349,16 @@ func (p *AtcdClient) recvGetGroup() (value *ShapingGroup, err error) {
 		return
 	}
 	if mTypeId == thrift.EXCEPTION {
-		error8 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		var error9 error
-		error9, err = error8.Read(iprot)
+		error7 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error8 error
+		error8, err = error7.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
-		err = error9
+		err = error8
 		return
 	}
 	if mTypeId != thrift.REPLY {
@@ -426,16 +426,16 @@ func (p *AtcdClient) recvGetGroupWith() (value *ShapingGroup, err error) {
 		return
 	}
 	if mTypeId == thrift.EXCEPTION {
-		error10 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		var error11 error
-		error11, err = error10.Read(iprot)
+		error9 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error10 error
+		error10, err = error9.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
-		err = error11
+		err = error10
 		return
 	}
 	if mTypeId != thrift.REPLY {
@@ -503,16 +503,16 @@ func (p *AtcdClient) recvGetGroupToken() (value string, err error) {
 		return
 	}
 	if mTypeId == thrift.EXCEPTION {
-		error12 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		var error13 error
-		error13, err = error12.Read(iprot)
+		error11 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error12 error
+		error12, err = error11.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
-		err = error13
+		err = error12
 		return
 	}
 	if mTypeId != thrift.REPLY {
@@ -584,16 +584,16 @@ func (p *AtcdClient) recvLeaveGroup() (err error) {
 		return
 	}
 	if mTypeId == thrift.EXCEPTION {
-		error14 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		var error15 error
-		error15, err = error14.Read(iprot)
+		error13 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error14 error
+		error14, err = error13.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
-		err = error15
+		err = error14
 		return
 	}
 	if mTypeId != thrift.REPLY {
@@ -664,16 +664,16 @@ func (p *AtcdClient) recvJoinGroup() (err error) {
 		return
 	}
 	if mTypeId == thrift.EXCEPTION {
-		error16 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		var error17 error
-		error17, err = error16.Read(iprot)
+		error15 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error16 error
+		error16, err = error15.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
-		err = error17
+		err = error16
 		return
 	}
 	if mTypeId != thrift.REPLY {
@@ -744,16 +744,16 @@ func (p *AtcdClient) recvShapeGroup() (value *Shaping, err error) {
 		return
 	}
 	if mTypeId == thrift.EXCEPTION {
-		error18 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		var error19 error
-		error19, err = error18.Read(iprot)
+		error17 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error18 error
+		error18, err = error17.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
-		err = error19
+		err = error18
 		return
 	}
 	if mTypeId != thrift.REPLY {
@@ -823,16 +823,16 @@ func (p *AtcdClient) recvUnshapeGroup() (err error) {
 		return
 	}
 	if mTypeId == thrift.EXCEPTION {
-		error20 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		var error21 error
-		error21, err = error20.Read(iprot)
+		error19 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error20 error
+		error20, err = error19.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
-		err = error21
+		err = error20
 		return
 	}
 	if mTypeId != thrift.REPLY {
@@ -869,18 +869,18 @@ func (p *AtcdProcessor) ProcessorMap() map[string]thrift.TProcessorFunction {
 
 func NewAtcdProcessor(handler Atcd) *AtcdProcessor {
 
-	self22 := &AtcdProcessor{handler: handler, processorMap: make(map[string]thrift.TProcessorFunction)}
-	self22.processorMap["get_atcd_info"] = &atcdProcessorGetAtcdInfo{handler: handler}
-	self22.processorMap["create_group"] = &atcdProcessorCreateGroup{handler: handler}
-	self22.processorMap["list_groups"] = &atcdProcessorListGroups{handler: handler}
-	self22.processorMap["get_group"] = &atcdProcessorGetGroup{handler: handler}
-	self22.processorMap["get_group_with"] = &atcdProcessorGetGroupWith{handler: handler}
-	self22.processorMap["get_group_token"] = &atcdProcessorGetGroupToken{handler: handler}
-	self22.processorMap["leave_group"] = &atcdProcessorLeaveGroup{handler: handler}
-	self22.processorMap["join_group"] = &atcdProcessorJoinGroup{handler: handler}
-	self22.processorMap["shape_group"] = &atcdProcessorShapeGroup{handler: handler}
-	self22.processorMap["unshape_group"] = &atcdProcessorUnshapeGroup{handler: handler}
-	return self22
+	self21 := &AtcdProcessor{handler: handler, processorMap: make(map[string]thrift.TProcessorFunction)}
+	self21.processorMap["get_atcd_info"] = &atcdProcessorGetAtcdInfo{handler: handler}
+	self21.processorMap["create_group"] = &atcdProcessorCreateGroup{handler: handler}
+	self21.processorMap["list_groups"] = &atcdProcessorListGroups{handler: handler}
+	self21.processorMap["get_group"] = &atcdProcessorGetGroup{handler: handler}
+	self21.processorMap["get_group_with"] = &atcdProcessorGetGroupWith{handler: handler}
+	self21.processorMap["get_group_token"] = &atcdProcessorGetGroupToken{handler: handler}
+	self21.processorMap["leave_group"] = &atcdProcessorLeaveGroup{handler: handler}
+	self21.processorMap["join_group"] = &atcdProcessorJoinGroup{handler: handler}
+	self21.processorMap["shape_group"] = &atcdProcessorShapeGroup{handler: handler}
+	self21.processorMap["unshape_group"] = &atcdProcessorUnshapeGroup{handler: handler}
+	return self21
 }
 
 func (p *AtcdProcessor) Process(iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
@@ -893,12 +893,12 @@ func (p *AtcdProcessor) Process(iprot, oprot thrift.TProtocol) (success bool, er
 	}
 	iprot.Skip(thrift.STRUCT)
 	iprot.ReadMessageEnd()
-	x23 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function "+name)
+	x22 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function "+name)
 	oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)
-	x23.Write(oprot)
+	x22.Write(oprot)
 	oprot.WriteMessageEnd()
 	oprot.Flush()
-	return false, x23
+	return false, x22
 
 }
 
@@ -1834,11 +1834,11 @@ func (p *AtcdListGroupsResult) readField0(iprot thrift.TProtocol) error {
 	tSlice := make([]*ShapingGroup, 0, size)
 	p.Success = tSlice
 	for i := 0; i < size; i++ {
-		_elem24 := &ShapingGroup{}
-		if err := _elem24.Read(iprot); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem24), err)
+		_elem23 := &ShapingGroup{}
+		if err := _elem23.Read(iprot); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem23), err)
 		}
-		p.Success = append(p.Success, _elem24)
+		p.Success = append(p.Success, _elem23)
 	}
 	if err := iprot.ReadListEnd(); err != nil {
 		return thrift.PrependError("error reading list end: ", err)

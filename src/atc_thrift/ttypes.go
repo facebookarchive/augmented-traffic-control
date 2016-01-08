@@ -678,14 +678,12 @@ func (p *Corruption) String() string {
 //  - Loss
 //  - Reorder
 //  - Corruption
-//  - IptablesOptions
 type LinkShaping struct {
-	Rate            int32       `thrift:"rate,1" json:"rate"`
-	Delay           *Delay      `thrift:"delay,2" json:"delay,omitempty"`
-	Loss            *Loss       `thrift:"loss,3" json:"loss,omitempty"`
-	Reorder         *Reorder    `thrift:"reorder,4" json:"reorder,omitempty"`
-	Corruption      *Corruption `thrift:"corruption,5" json:"corruption,omitempty"`
-	IptablesOptions []string    `thrift:"iptables_options,6" json:"iptables_options,omitempty"`
+	Rate       int32       `thrift:"rate,1" json:"rate"`
+	Delay      *Delay      `thrift:"delay,2" json:"delay,omitempty"`
+	Loss       *Loss       `thrift:"loss,3" json:"loss,omitempty"`
+	Reorder    *Reorder    `thrift:"reorder,4" json:"reorder,omitempty"`
+	Corruption *Corruption `thrift:"corruption,5" json:"corruption,omitempty"`
 }
 
 func NewLinkShaping() *LinkShaping {
@@ -739,12 +737,6 @@ func (p *LinkShaping) GetCorruption() *Corruption {
 	}
 	return p.Corruption
 }
-
-var LinkShaping_IptablesOptions_DEFAULT []string
-
-func (p *LinkShaping) GetIptablesOptions() []string {
-	return p.IptablesOptions
-}
 func (p *LinkShaping) IsSetDelay() bool {
 	return p.Delay != nil
 }
@@ -759,10 +751,6 @@ func (p *LinkShaping) IsSetReorder() bool {
 
 func (p *LinkShaping) IsSetCorruption() bool {
 	return p.Corruption != nil
-}
-
-func (p *LinkShaping) IsSetIptablesOptions() bool {
-	return p.IptablesOptions != nil
 }
 
 func (p *LinkShaping) Read(iprot thrift.TProtocol) error {
@@ -797,10 +785,6 @@ func (p *LinkShaping) Read(iprot thrift.TProtocol) error {
 			}
 		case 5:
 			if err := p.readField5(iprot); err != nil {
-				return err
-			}
-		case 6:
-			if err := p.readField6(iprot); err != nil {
 				return err
 			}
 		default:
@@ -859,28 +843,6 @@ func (p *LinkShaping) readField5(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *LinkShaping) readField6(iprot thrift.TProtocol) error {
-	_, size, err := iprot.ReadListBegin()
-	if err != nil {
-		return thrift.PrependError("error reading list begin: ", err)
-	}
-	tSlice := make([]string, 0, size)
-	p.IptablesOptions = tSlice
-	for i := 0; i < size; i++ {
-		var _elem0 string
-		if v, err := iprot.ReadString(); err != nil {
-			return thrift.PrependError("error reading field 0: ", err)
-		} else {
-			_elem0 = v
-		}
-		p.IptablesOptions = append(p.IptablesOptions, _elem0)
-	}
-	if err := iprot.ReadListEnd(); err != nil {
-		return thrift.PrependError("error reading list end: ", err)
-	}
-	return nil
-}
-
 func (p *LinkShaping) Write(oprot thrift.TProtocol) error {
 	if err := oprot.WriteStructBegin("LinkShaping"); err != nil {
 		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
@@ -898,9 +860,6 @@ func (p *LinkShaping) Write(oprot thrift.TProtocol) error {
 		return err
 	}
 	if err := p.writeField5(oprot); err != nil {
-		return err
-	}
-	if err := p.writeField6(oprot); err != nil {
 		return err
 	}
 	if err := oprot.WriteFieldStop(); err != nil {
@@ -980,29 +939,6 @@ func (p *LinkShaping) writeField5(oprot thrift.TProtocol) (err error) {
 		}
 		if err := oprot.WriteFieldEnd(); err != nil {
 			return thrift.PrependError(fmt.Sprintf("%T write field end error 5:corruption: ", p), err)
-		}
-	}
-	return err
-}
-
-func (p *LinkShaping) writeField6(oprot thrift.TProtocol) (err error) {
-	if p.IsSetIptablesOptions() {
-		if err := oprot.WriteFieldBegin("iptables_options", thrift.LIST, 6); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field begin error 6:iptables_options: ", p), err)
-		}
-		if err := oprot.WriteListBegin(thrift.STRING, len(p.IptablesOptions)); err != nil {
-			return thrift.PrependError("error writing list begin: ", err)
-		}
-		for _, v := range p.IptablesOptions {
-			if err := oprot.WriteString(string(v)); err != nil {
-				return thrift.PrependError(fmt.Sprintf("%T. (0) field write error: ", p), err)
-			}
-		}
-		if err := oprot.WriteListEnd(); err != nil {
-			return thrift.PrependError("error writing list end: ", err)
-		}
-		if err := oprot.WriteFieldEnd(); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T write field end error 6:iptables_options: ", p), err)
 		}
 	}
 	return err
@@ -1376,13 +1312,13 @@ func (p *ShapingGroup) readField2(iprot thrift.TProtocol) error {
 	tSlice := make([]string, 0, size)
 	p.Members = tSlice
 	for i := 0; i < size; i++ {
-		var _elem1 string
+		var _elem0 string
 		if v, err := iprot.ReadString(); err != nil {
 			return thrift.PrependError("error reading field 0: ", err)
 		} else {
-			_elem1 = v
+			_elem0 = v
 		}
-		p.Members = append(p.Members, _elem1)
+		p.Members = append(p.Members, _elem0)
 	}
 	if err := iprot.ReadListEnd(); err != nil {
 		return thrift.PrependError("error reading list end: ", err)

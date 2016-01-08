@@ -35,7 +35,6 @@ struct LinkShaping {
   3: optional Loss loss = {"percentage": 0},
   4: optional Reorder reorder = {"percentage": 0},
   5: optional Corruption corruption = {"percentage": 0},
-  6: optional list<string> iptables_options,
 }
 
 struct Shaping {
