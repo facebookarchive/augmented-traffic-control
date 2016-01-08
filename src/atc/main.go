@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"strings"
 
 	"github.com/facebook/augmented-traffic-control/src/api"
+
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	atclog "github.com/facebook/augmented-traffic-control/src/log"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -42,8 +42,8 @@ func main() {
 
 		// Duplicate flags/args
 		id      int64
-		members []net.IP
-		member  net.IP
+		members []string
+		member  string
 	)
 
 	kingpin.Command("info", "Prints info about the ATC shaping")
@@ -52,9 +52,9 @@ func main() {
 
 	groupAdd := kingpin.Command("create", "create a group")
 	if defMember != "" {
-		groupAdd.Arg("member", "IP address of the member (env:ATC_MEMBER)").Default(defMember).IPVar(&member)
+		groupAdd.Arg("member", "IP address of the member (env:ATC_MEMBER)").Default(defMember).StringVar(&member)
 	} else {
-		groupAdd.Arg("member", "IP address of the member (env:ATC_MEMBER)").Required().IPVar(&member)
+		groupAdd.Arg("member", "IP address of the member (env:ATC_MEMBER)").Required().StringVar(&member)
 	}
 
 	groupShow := kingpin.Command("show", "show info about a group")
@@ -63,17 +63,17 @@ func main() {
 	groupJoin := kingpin.Command("join", "leave a group")
 	groupJoin.Arg("id", "id of the group").Required().Int64Var(&id)
 	if defMember != "" {
-		groupJoin.Arg("members", "IP address of the members (env:ATC_MEMBER)").Default(defMember).IPListVar(&members)
+		groupJoin.Arg("members", "IP address of the members (env:ATC_MEMBER)").Default(defMember).StringsVar(&members)
 	} else {
-		groupJoin.Arg("members", "IP address of the members (env:ATC_MEMBER)").Required().IPListVar(&members)
+		groupJoin.Arg("members", "IP address of the members (env:ATC_MEMBER)").Required().StringsVar(&members)
 	}
 
 	groupLeave := kingpin.Command("leave", "leave a group")
 	groupLeave.Arg("id", "id of the group").Required().Int64Var(&id)
 	if defMember != "" {
-		groupLeave.Arg("members", "IP address of the members (env:ATC_MEMBER)").Default(defMember).IPListVar(&members)
+		groupLeave.Arg("members", "IP address of the members (env:ATC_MEMBER)").Default(defMember).StringsVar(&members)
 	} else {
-		groupLeave.Arg("members", "IP address of the members (env:ATC_MEMBER)").Required().IPListVar(&members)
+		groupLeave.Arg("members", "IP address of the members (env:ATC_MEMBER)").Required().StringsVar(&members)
 	}
 
 	groupToken := kingpin.Command("token", "get a token")
@@ -167,8 +167,8 @@ func ServerInfo() {
 	fmt.Printf("atcd %v %v\n", info.Version, info.Platform)
 }
 
-func GroupAdd(member net.IP) {
-	grp, err := atcd.CreateGroup(member.String())
+func GroupAdd(member string) {
+	grp, err := atcd.CreateGroup(member)
 	if err != nil {
 		Log.Fatalln(err)
 	}
@@ -194,8 +194,8 @@ func GroupList() {
 	}
 }
 
-func GroupJoin(id int64, member net.IP, token string) {
-	if err := atcd.JoinGroup(id, member.String(), token); err != nil {
+func GroupJoin(id int64, member string, token string) {
+	if err := atcd.JoinGroup(id, member, token); err != nil {
 		Log.Fatalf("Could not join group: %v", err)
 	}
 	grp, err := atcd.GetGroup(id)
@@ -205,9 +205,9 @@ func GroupJoin(id int64, member net.IP, token string) {
 	printShortGroup(grp)
 }
 
-func GroupLeave(id int64, member net.IP, token string) {
-	if err := atcd.LeaveGroup(id, member.String(), token); err != nil {
-		Log.Fatalln(err)
+func GroupLeave(id int64, member string, token string) {
+	if err := atcd.LeaveGroup(id, member, token); err != nil {
+		Log.Fatalf("Could not leave group: %v", err)
 	}
 }
 

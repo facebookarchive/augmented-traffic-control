@@ -6,7 +6,11 @@ import (
 )
 
 type Target interface {
+	// Returns true if the target is an IPv6 target.
 	V6() bool
+
+	// Returns a string representation of the target that is suitable for
+	// passing to iptables binaries.
 	String() string
 }
 
@@ -32,7 +36,7 @@ func (t CIDRTarget) String() string {
 	return t.Net.String()
 }
 
-func parseTarget(s string) (Target, error) {
+func ParseTarget(s string) (Target, error) {
 	if ip := net.ParseIP(s); ip != nil {
 		// ParseIP returns IPv4 addresses as 0::ff:ff:w:x:y:z for some reason
 		// this causes issues with unit tests since they compare byte arrays
@@ -46,6 +50,6 @@ func parseTarget(s string) (Target, error) {
 	if _, net, err := net.ParseCIDR(s); err == nil {
 		return &CIDRTarget{net}, nil
 	} else {
-		return nil, fmt.Errorf("Could not parse iptables target: %q", s)
+		return nil, fmt.Errorf("Could not parse target: %q", s)
 	}
 }

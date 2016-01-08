@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"fmt"
-	"net"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/iptables"
@@ -41,10 +40,10 @@ func ReshapeFromDb(shaper *ShapingEngine, db *DbRunner) error {
 		for _, member := range members {
 			var err error
 			if first {
-				err = shaper.CreateGroup(group.id, iptables.IPTarget(member))
+				err = shaper.CreateGroup(group.id, member)
 				first = false
 			} else {
-				err = shaper.JoinGroup(group.id, iptables.IPTarget(member))
+				err = shaper.JoinGroup(group.id, member)
 			}
 			if err != nil {
 				return err
@@ -95,16 +94,16 @@ func (atcd *Atcd) ListGroups() ([]*atc_thrift.ShapingGroup, error) {
 		results = append(results, &atc_thrift.ShapingGroup{
 			ID:      grp.id,
 			Shaping: grp.tc,
-			Members: IPsToStrings(members),
+			Members: TargetsToStrings(members),
 		})
 	}
 	return results, nil
 }
 
 func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
-	ip := net.ParseIP(member)
-	if ip == nil {
-		return nil, fmt.Errorf("Malformed IP address: %q", member)
+	tgt, err := iptables.ParseTarget(member)
+	if err != nil {
+		return nil, err
 	}
 	grp := &atc_thrift.ShapingGroup{
 		Members: []string{member},
@@ -120,11 +119,11 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 	// Have to create group in database before creating the shaper since
 	// the database gives us the unique ID of the group, which the shaper
 	// needs for the mark.
-	if err := atcd.shaper.CreateGroup(dbgrp.id, iptables.IPTarget(ip)); err != nil {
+	if err := atcd.shaper.CreateGroup(dbgrp.id, tgt); err != nil {
 		return nil, err
 	}
 	dbmem := <-atcd.db.UpdateMember(DbMember{
-		addr:     ip,
+		addr:     tgt,
 		group_id: dbgrp.id,
 	})
 	if dbmem == nil {
@@ -145,18 +144,18 @@ func (atcd *Atcd) GetGroup(id int64) (*atc_thrift.ShapingGroup, error) {
 	}
 	grp := &atc_thrift.ShapingGroup{
 		ID:      id,
-		Members: IPsToStrings(members),
+		Members: TargetsToStrings(members),
 		Shaping: group.tc,
 	}
 	return grp, nil
 }
 
 func (atcd *Atcd) GetGroupWith(addr string) (*atc_thrift.ShapingGroup, error) {
-	ip := net.ParseIP(addr)
-	if ip == nil {
-		return nil, fmt.Errorf("Malformed IP address: %q", addr)
+	tgt, err := iptables.ParseTarget(addr)
+	if err != nil {
+		return nil, err
 	}
-	member, err := atcd.db.getMember(ip)
+	member, err := atcd.db.getMember(tgt)
 	if err != nil {
 		return nil, err
 	}
@@ -175,9 +174,9 @@ func (atcd *Atcd) GetGroupToken(id int64) (string, error) {
 }
 
 func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
-	ip := net.ParseIP(to_add)
-	if ip == nil {
-		return fmt.Errorf("Malformed IP address: %q", to_add)
+	tgt, err := iptables.ParseTarget(to_add)
+	if err != nil {
+		return err
 	}
 	group, err := atcd.db.getGroup(id)
 	if err != nil {
@@ -189,22 +188,22 @@ func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
 	if !atcd.verify(group, token) {
 		return fmt.Errorf("Unauthorized")
 	}
-	if err := atcd.shaper.JoinGroup(id, iptables.IPTarget(ip)); err != nil {
+	if err := atcd.shaper.JoinGroup(id, tgt); err != nil {
 		return err
 	}
 	_, err = atcd.db.updateMember(DbMember{
-		addr:     ip,
+		addr:     tgt,
 		group_id: group.id,
 	})
 	return err
 }
 
 func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
-	ip := net.ParseIP(to_remove)
-	if ip == nil {
-		return fmt.Errorf("Malformed IP address: %q", to_remove)
+	tgt, err := iptables.ParseTarget(to_remove)
+	if err != nil {
+		return err
 	}
-	member, err := atcd.db.getMember(ip)
+	member, err := atcd.db.getMember(tgt)
 	if err != nil {
 		return err
 	}
@@ -218,12 +217,12 @@ func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
 	if !atcd.verify(group, token) {
 		return fmt.Errorf("Unauthorized")
 	}
-	if err := atcd.shaper.LeaveGroup(id, iptables.IPTarget(ip)); err != nil {
+	if err := atcd.shaper.LeaveGroup(id, tgt); err != nil {
 		return err
 	}
 	// FIXME: clean shaper's group too!
 	defer atcd.db.Cleanup()
-	return atcd.db.deleteMember(ip)
+	return atcd.db.deleteMember(tgt)
 }
 
 func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Shaping, token string) (*atc_thrift.Shaping, error) {
@@ -294,7 +293,7 @@ func makeSecret() string {
 	return uuid.New()
 }
 
-func IPsToStrings(ips []net.IP) []string {
+func TargetsToStrings(ips []iptables.Target) []string {
 	s := make([]string, len(ips))
 	for i, ip := range ips {
 		s[i] = ip.String()

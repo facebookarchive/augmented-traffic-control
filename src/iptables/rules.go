@@ -84,7 +84,7 @@ func parseRule(target Target, line string) (*Rule, error) {
 	// as an IP
 	// all positions are 0-indexed, fyi
 
-	_, err := parseTarget(line_tokens[7])
+	_, err := ParseTarget(line_tokens[7])
 	// optPos is the position of the options field, or the position where it would
 	// be relative to fields after it.
 	// This way we can parse fields by a constant offset after the option position.
@@ -99,11 +99,11 @@ func parseRule(target Target, line string) (*Rule, error) {
 	m.In = line_tokens[optPos+1]
 	m.Out = line_tokens[optPos+2]
 
-	m.Source, err = parseTarget(line_tokens[optPos+3])
+	m.Source, err = ParseTarget(line_tokens[optPos+3])
 	if err != nil {
 		return nil, err
 	}
-	m.Destination, err = parseTarget(line_tokens[optPos+4])
+	m.Destination, err = ParseTarget(line_tokens[optPos+4])
 	if err != nil {
 		return nil, err
 	}
