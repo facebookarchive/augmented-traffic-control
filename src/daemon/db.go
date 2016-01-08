@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"net"
 	"sync"
 	"time"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/src/iptables"
 )
 
 const (
@@ -57,7 +57,7 @@ type DbGroup struct {
 }
 
 type DbMember struct {
-	addr     net.IP
+	addr     iptables.Target
 	group_id int64
 }
 
@@ -170,7 +170,7 @@ func (runner *DbRunner) UpdateGroup(group DbGroup) chan *DbGroup {
 	return result
 }
 
-func (runner *DbRunner) GetMember(addr net.IP) chan *DbMember {
+func (runner *DbRunner) GetMember(addr iptables.Target) chan *DbMember {
 	result := make(chan *DbMember)
 	go func() {
 		defer close(result)
@@ -196,15 +196,15 @@ func (runner *DbRunner) UpdateMember(member DbMember) chan *DbMember {
 	return result
 }
 
-func (runner *DbRunner) DeleteMember(addr net.IP) {
+func (runner *DbRunner) DeleteMember(addr iptables.Target) {
 	go func() {
 		err := runner.deleteMember(addr)
 		runner.log(err)
 	}()
 }
 
-func (runner *DbRunner) GetMembersOf(id int64) chan []net.IP {
-	result := make(chan []net.IP)
+func (runner *DbRunner) GetMembersOf(id int64) chan []iptables.Target {
+	result := make(chan []iptables.Target)
 	go func() {
 		defer close(result)
 		members, err := runner.getMembersOf(id)
@@ -328,7 +328,7 @@ func (runner *DbRunner) updateGroup(group DbGroup) (*DbGroup, error) {
 	return &group, nil
 }
 
-func (runner *DbRunner) getMember(addr net.IP) (*DbMember, error) {
+func (runner *DbRunner) getMember(addr iptables.Target) (*DbMember, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	row := runner.prep("member").QueryRow(addr.String())
@@ -349,30 +349,32 @@ func (runner *DbRunner) updateMember(member DbMember) (*DbMember, error) {
 	return &member, nil
 }
 
-func (runner *DbRunner) deleteMember(addr net.IP) error {
+func (runner *DbRunner) deleteMember(addr iptables.Target) error {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	_, err := runner.prep("member delete").Exec(addr.String())
 	return err
 }
 
-func (runner *DbRunner) getMembersOf(id int64) ([]net.IP, error) {
+func (runner *DbRunner) getMembersOf(id int64) ([]iptables.Target, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	rows, err := runner.prep("members in group").Query(id)
 	if err != nil {
 		return nil, err
 	}
-	members := make([]net.IP, 0, 10)
+	members := make([]iptables.Target, 0, 10)
 	for rows.Next() {
 		var s string
 		err := rows.Scan(&s)
 		if err != nil {
 			return nil, err
 		}
-		// ParseIP returns nil if addr isn't a valid IP.
-		// This should never happen since atcd serializes IPs to the DB
-		members = append(members, net.ParseIP(s))
+		tgt, err := iptables.ParseTarget(s)
+		if err != nil {
+			return nil, fmt.Errorf("Could not load target from db: %v", err)
+		}
+		members = append(members, tgt)
 	}
 	return members, nil
 }
@@ -447,10 +449,12 @@ func scanMember(sc scanner) (*DbMember, error) {
 	if err := sc.Scan(&addr, &gid); err != nil {
 		return nil, err
 	}
+	tgt, err := iptables.ParseTarget(addr)
+	if err != nil {
+		return nil, fmt.Errorf("Could not load target from db: %v", err)
+	}
 	return &DbMember{
-		// ParseIP returns nil if addr isn't a valid IP.
-		// This should never happen since atcd serializes IPs to the DB
-		addr:     net.ParseIP(addr),
+		addr:     tgt,
 		group_id: gid,
 	}, nil
 }
