@@ -43,6 +43,7 @@ var (
 		"member update":    `insert or replace into groupmembers values (?, ?)`,
 		"member delete":    `delete from groupmembers where addr = ?`,
 		"members in group": `select addr from groupmembers where group_id = ?`,
+		"all members":      `select addr, group_id from groupmembers order by group_id`,
 
 		"empty group cleanup": `delete from shapinggroups where id not in (select distinct(group_id) from groupmembers)`,
 		"old group cleanup":   `delete from shapinggroups where timeout < ?`,
@@ -216,6 +217,15 @@ func (runner *DbRunner) GetMembersOf(id int64) chan []iptables.Target {
 	return result
 }
 
+func (runner *DbRunner) GetAllMembers() chan *DbMember {
+	results := make(chan *DbMember)
+	go func() {
+		defer close(results)
+		runner.log(runner.getAllMembers(results))
+	}()
+	return results
+}
+
 func (runner *DbRunner) Cleanup() {
 	go func() {
 		n, err := runner.cleanupEmptyGroups()
@@ -377,6 +387,29 @@ func (runner *DbRunner) getMembersOf(id int64) ([]iptables.Target, error) {
 		members = append(members, tgt)
 	}
 	return members, nil
+}
+
+func (runner *DbRunner) getAllMembers(members chan *DbMember) error {
+	runner.mutex.RLock()
+	defer runner.mutex.RUnlock()
+	rows, err := runner.prep("all members").Query()
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var addr string
+		var id int64
+		err := rows.Scan(&addr, &id)
+		if err != nil {
+			return err
+		}
+		tgt, err := iptables.ParseTarget(addr)
+		if err != nil {
+			return fmt.Errorf("Could not load target from db: %v", err)
+		}
+		members <- &DbMember{tgt, id}
+	}
+	return nil
 }
 
 func (runner *DbRunner) cleanupOldGroups() (int64, error) {

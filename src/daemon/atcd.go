@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"fmt"
+	"net"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/iptables"
@@ -160,6 +161,17 @@ func (atcd *Atcd) GetGroupWith(addr string) (*atc_thrift.ShapingGroup, error) {
 		return nil, err
 	}
 	if member == nil {
+		if ip, ok := tgt.(iptables.IPTarget); ok {
+			// Search for network targets that contain the ip
+			members := atcd.db.GetAllMembers()
+			for member := range members {
+				if cidr, ok := member.addr.(*iptables.CIDRTarget); ok {
+					if cidr.Net.Contains((net.IP)(ip)) {
+						return atcd.GetGroup(member.group_id)
+					}
+				}
+			}
+		}
 		return nil, NoSuchItem
 	}
 	return atcd.GetGroup(member.group_id)

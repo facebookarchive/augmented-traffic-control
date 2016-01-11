@@ -57,6 +57,13 @@ func main() {
 		groupAdd.Arg("member", "IP address of the member (env:ATC_MEMBER)").Required().StringVar(&member)
 	}
 
+	groupFind := kingpin.Command("find", "find the group containing a member")
+	if defMember != "" {
+		groupFind.Arg("member", "IP address of the member (env:ATC_MEMBER)").Default(defMember).StringVar(&member)
+	} else {
+		groupFind.Arg("member", "IP address of the member (env:ATC_MEMBER)").Required().StringVar(&member)
+	}
+
 	groupShow := kingpin.Command("show", "show info about a group")
 	groupShow.Arg("id", "id of the group").Required().Int64Var(&id)
 
@@ -109,6 +116,8 @@ func main() {
 		ServerInfo()
 	case "create":
 		GroupAdd(member)
+	case "find":
+		GroupFind(member)
 	case "show":
 		GroupShow(id)
 	case "list":
@@ -175,10 +184,21 @@ func GroupAdd(member string) {
 	printShortGroup(grp)
 }
 
+func GroupFind(member string) {
+	grp, err := atcd.GetGroupWith(member)
+	if err != nil {
+		if api.IsNoSuchItem(err) {
+			Log.Fatalf("Could not find group for member %q", member)
+		} else {
+			Log.Fatalln(err)
+		}
+	}
+	printShortGroup(grp)
+}
+
 func GroupShow(id int64) {
 	grp, err := atcd.GetGroup(id)
 	if err != nil {
-		Log.Fatalln(err)
 		Log.Fatalf("Could not find group (%d): %v", id, err)
 	}
 	printLongGroup(grp)
