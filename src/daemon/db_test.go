@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"github.com/facebook/augmented-traffic-control/src/iptables"
 )
 
 var (
@@ -18,8 +19,8 @@ var (
 		Down: &atc_thrift.LinkShaping{},
 	}
 
-	IP1 = net.IPv4(1, 2, 3, 4)
-	IP2 = net.IPv4(2, 3, 4, 5)
+	IP1 = iptables.IPTarget(net.IPv4(1, 2, 3, 4))
+	IP2 = iptables.IPTarget(net.IPv4(2, 3, 4, 5))
 )
 
 func TestDBCreatesSchema(t *testing.T) {
@@ -42,7 +43,7 @@ func TestDBInsertsGroup(t *testing.T) {
 	}
 	defer db.Close()
 
-	group, err := db.updateGroup(DbGroup{
+	group, err := db.UpdateGroup(DbGroup{
 		tc: FakeShaping1,
 	})
 	if err != nil {
@@ -64,24 +65,26 @@ func TestDBDeletesGroup(t *testing.T) {
 	defer db.Close()
 
 	var group *DbGroup
-	if group, err = db.updateGroup(DbGroup{id: 1, tc: FakeShaping1}); err != nil {
+	if group, err = db.UpdateGroup(DbGroup{id: 1, tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if group, err = db.updateGroup(DbGroup{id: 2, tc: FakeShaping2}); err != nil {
+	if group, err = db.UpdateGroup(DbGroup{id: 2, tc: FakeShaping2}); err != nil {
 		t.Fatal(err)
 	}
 
-	err = db.deleteGroup(2)
+	err = db.DeleteGroup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	groups, err := db.getAllGroups()
+	groups_c, err := db.GetAllGroups()
 	if err != nil {
 		t.Fatal(err)
 	}
+	groups := accumulate_groups(groups_c)
+
 	if len(groups) != 1 {
-		t.Fatalf("Wrong number of groups: 1 != %d", len(groups))
+		t.Fatalf("Wrong number of groups (expecting 1 group): %#v", groups)
 	}
 	if groups[0].tc.Up == nil {
 		t.Fatalf(`Mismatched tc settings: %+v`, group.tc)
@@ -95,19 +98,21 @@ func TestDBGetsAllGroups(t *testing.T) {
 	}
 	defer db.Close()
 
-	if _, err := db.updateGroup(DbGroup{tc: FakeShaping1}); err != nil {
+	if _, err := db.UpdateGroup(DbGroup{tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.updateGroup(DbGroup{tc: FakeShaping2}); err != nil {
+	if _, err := db.UpdateGroup(DbGroup{tc: FakeShaping2}); err != nil {
 		t.Fatal(err)
 	}
 
-	groups, err := db.getAllGroups()
+	groups_c, err := db.GetAllGroups()
 	if err != nil {
 		t.Fatal(err)
 	}
+	groups := accumulate_groups(groups_c)
+
 	if len(groups) != 2 {
-		t.Fatalf("Wrong number of groups: 2 != %d", len(groups))
+		t.Fatalf("Wrong number of groups (expecting 2 groups): %#v", groups)
 	}
 }
 
@@ -119,19 +124,21 @@ func TestDBUpdatesGroup(t *testing.T) {
 	defer db.Close()
 
 	var group *DbGroup
-	if group, err = db.updateGroup(DbGroup{secret: "asdf", tc: FakeShaping1}); err != nil {
+	if group, err = db.UpdateGroup(DbGroup{secret: "asdf", tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = db.updateGroup(DbGroup{id: group.id, secret: "qwer", tc: FakeShaping1}); err != nil {
+	if _, err = db.UpdateGroup(DbGroup{id: group.id, secret: "qwer", tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
 
-	groups, err := db.getAllGroups()
+	groups_c, err := db.GetAllGroups()
 	if err != nil {
 		t.Fatal(err)
 	}
+	groups := accumulate_groups(groups_c)
+
 	if len(groups) != 1 {
-		t.Fatalf("Wrong number of groups: 1 != %d", len(groups))
+		t.Fatalf("Wrong number of groups (expecting 1 group): %#v", groups)
 	}
 	if groups[0].id != group.id {
 		t.Fatalf("Wrong group id: %d != %d", group.id, groups[0].id)
@@ -152,10 +159,10 @@ func TestDBInsertsMember(t *testing.T) {
 		group  *DbGroup
 		member *DbMember
 	)
-	if group, err = db.updateGroup(DbGroup{tc: FakeShaping1}); err != nil {
+	if group, err = db.UpdateGroup(DbGroup{tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if member, err = db.updateMember(DbMember{IP1, group.id}); err != nil {
+	if member, err = db.UpdateMember(DbMember{IP1, group.id}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -178,14 +185,14 @@ func TestDBGetsMember(t *testing.T) {
 		group  *DbGroup
 		member *DbMember
 	)
-	if group, err = db.updateGroup(DbGroup{tc: FakeShaping1}); err != nil {
+	if group, err = db.UpdateGroup(DbGroup{tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = db.updateMember(DbMember{IP1, group.id}); err != nil {
+	if _, err = db.UpdateMember(DbMember{IP1, group.id}); err != nil {
 		t.Fatal(err)
 	}
 
-	if member, err = db.getMember(IP1); err != nil {
+	if member, err = db.GetMember(IP1); err != nil {
 		t.Fatal(err)
 	}
 
@@ -205,24 +212,26 @@ func TestDBGetsMembersForGroup(t *testing.T) {
 	defer db.Close()
 
 	var (
-		group   *DbGroup
-		members []net.IP
+		group     *DbGroup
+		members_c chan iptables.Target
 	)
-	if group, err = db.updateGroup(DbGroup{tc: FakeShaping1}); err != nil {
+	if group, err = db.UpdateGroup(DbGroup{tc: FakeShaping1}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = db.updateMember(DbMember{IP1, group.id}); err != nil {
+	if _, err = db.UpdateMember(DbMember{IP1, group.id}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = db.updateMember(DbMember{IP2, group.id}); err != nil {
+	if _, err = db.UpdateMember(DbMember{IP2, group.id}); err != nil {
 		t.Fatal(err)
 	}
 
-	if members, err = db.getMembersOf(group.id); err != nil {
+	if members_c, err = db.GetMembersOf(group.id); err != nil {
 		t.Fatal(err)
 	}
+	members := accumulate_targets(members_c)
+
 	if len(members) != 2 {
-		t.Fatalf("Wrong number of members: 2 != %d", len(members))
+		t.Fatalf("Wrong number of members (expecting 2 members): %#v", members)
 	}
 }
 
@@ -234,13 +243,13 @@ func TestDBCleansEmptyGroups(t *testing.T) {
 	defer db.Close()
 
 	var group *DbGroup
-	if _, err = db.updateGroup(DbGroup{secret: "qwer"}); err != nil {
+	if _, err = db.UpdateGroup(DbGroup{secret: "qwer"}); err != nil {
 		t.Fatal(err)
 	}
-	if group, err = db.updateGroup(DbGroup{secret: "asdf"}); err != nil {
+	if group, err = db.UpdateGroup(DbGroup{secret: "asdf"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = db.updateMember(DbMember{IP1, group.id}); err != nil {
+	if _, err = db.UpdateMember(DbMember{IP1, group.id}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -252,12 +261,14 @@ func TestDBCleansEmptyGroups(t *testing.T) {
 		t.Errorf("Wrong number of groups deleted: 1 != %d", n)
 	}
 
-	groups, err := db.getAllGroups()
+	groups_c, err := db.GetAllGroups()
 	if err != nil {
 		t.Fatal(err)
 	}
+	groups := accumulate_groups(groups_c)
+
 	if len(groups) != 1 {
-		t.Fatalf("Wrong number of groups: 1 != %d", len(groups))
+		t.Fatalf("Wrong number of groups (expecting 1 group): %#v", groups)
 	}
 
 	if groups[0].secret != "asdf" {
@@ -273,10 +284,10 @@ func TestDBCleansOldGroups(t *testing.T) {
 	defer db.Close()
 
 	var group *DbGroup
-	if _, err = db.updateGroup(DbGroup{secret: "qwer"}); err != nil {
+	if _, err = db.UpdateGroup(DbGroup{secret: "qwer"}); err != nil {
 		t.Fatal(err)
 	}
-	if group, err = db.updateGroup(DbGroup{secret: "asdf"}); err != nil {
+	if group, err = db.UpdateGroup(DbGroup{secret: "asdf"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -293,10 +304,12 @@ func TestDBCleansOldGroups(t *testing.T) {
 		t.Errorf("Wrong number of groups deleted: 1 != %d", n)
 	}
 
-	groups, err := db.getAllGroups()
+	groups_c, err := db.GetAllGroups()
 	if err != nil {
 		t.Fatal(err)
 	}
+	groups := accumulate_groups(groups_c)
+
 	if len(groups) != 1 {
 		t.Fatalf("Wrong number of groups: 1 != %d", len(groups))
 	}
@@ -304,4 +317,20 @@ func TestDBCleansOldGroups(t *testing.T) {
 	if groups[0].secret != "qwer" {
 		t.Fatalf(`Wrong group: "qwer" != %q`, groups[0].secret)
 	}
+}
+
+func accumulate_groups(groups chan *DbGroup) []*DbGroup {
+	results := make([]*DbGroup, 0, 10)
+	for group := range groups {
+		results = append(results, group)
+	}
+	return results
+}
+
+func accumulate_targets(members chan iptables.Target) []iptables.Target {
+	results := make([]iptables.Target, 0, 10)
+	for member := range members {
+		results = append(results, member)
+	}
+	return results
 }
