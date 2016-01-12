@@ -104,6 +104,19 @@ func TestAtcdGetGroupWith(_t *testing.T) {
 	t.checkMembers(grp2, "1.2.3.4")
 }
 
+func TestAtcdGetGroupWithCIDR(_t *testing.T) {
+	t := Setup(_t, true)
+	defer t.Cleanup()
+	grp := t.CreateGroup("1.2.3.0/24")
+
+	grp2 := t.GetGroupWith("1.2.3.4")
+
+	if grp2.ID != grp.ID {
+		t.Errorf("Group IDs don't match: %d != %d", grp.ID, grp2.ID)
+	}
+	t.checkMembers(grp2, "1.2.3.0/24")
+}
+
 /**
 *** Test utils below this point
 **/
