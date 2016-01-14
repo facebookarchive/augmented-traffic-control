@@ -3,8 +3,11 @@ package api
 import (
 	"fmt"
 	"html/template"
+	"io"
 	"net"
 	"net/http"
+	"os"
+	"path"
 
 	"github.com/facebook/augmented-traffic-control/src/assets"
 	"github.com/gorilla/context"
@@ -74,33 +77,43 @@ func (info *bindInfo) templateFor(r *http.Request) (*templateData, HttpError) {
 	return data, nil
 }
 
-func rootHandler(srv *Server) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := assets.Asset("static/index.htm")
-		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(404)
-			return
-		}
-		context.Set(r, srv_context_key, srv)
-		tmpl, err := template.New("root").Parse(string(data))
-		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(500)
-			return
-		}
-		tmpl_data, err := srv.bind_info.templateFor(r)
-		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(400)
-			return
-		}
-		w.WriteHeader(200)
-		tmpl.Execute(w, tmpl_data)
-	}
+type AssetManager interface {
+	Asset(w http.ResponseWriter, r *http.Request)
+	Index(w http.ResponseWriter, r *http.Request)
 }
 
-func cachedAssetHandler(w http.ResponseWriter, r *http.Request) {
+type BundleAssetManager struct {
+	srv *Server
+}
+
+func (mgr *BundleAssetManager) Index(w http.ResponseWriter, r *http.Request) {
+	data, err := assets.Asset("static/index.html.tmpl")
+	if err != nil {
+		Log.Printf("Could not find index page asset: %v", err)
+		w.WriteHeader(404)
+		return
+	}
+
+	// Need to do this so GetClientAddr will work
+	context.Set(r, srv_context_key, mgr.srv)
+
+	tmpl, err := template.New("root").Parse(string(data))
+	if err != nil {
+		Log.Printf("Could not parse template for index page: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+	tmpl_data, err := mgr.srv.bind_info.templateFor(r)
+	if err != nil {
+		Log.Printf("Could not generate index page: %v", err)
+		w.WriteHeader(400)
+		return
+	}
+	w.WriteHeader(200)
+	tmpl.Execute(w, tmpl_data)
+}
+
+func (mgr *BundleAssetManager) Asset(w http.ResponseWriter, r *http.Request) {
 	name, ok := mux.Vars(r)["name"]
 	if !ok {
 		w.WriteHeader(404)
@@ -111,16 +124,74 @@ func cachedAssetHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	data, err := assets.Asset(fmt.Sprintf("static/%s/%s", folder, name))
+	asset_name := fmt.Sprintf("static/%s/%s", folder, name)
+	data, err := assets.Asset(asset_name)
 	if err != nil {
-		fmt.Println(err)
+		Log.Printf("Could not find asset %q: %v", asset_name, err)
 		w.WriteHeader(404)
 		return
 	}
 	w.WriteHeader(200)
 	_, err = w.Write(data)
 	if err != nil {
-		fmt.Println(err)
+		Log.Printf("Could not write asset %q: %v", asset_name, err)
+		return
+	}
+}
+
+type LocalAssetManager struct {
+	srv *Server
+	dir string
+}
+
+func (mgr *LocalAssetManager) path(els ...string) string {
+	els = append([]string{mgr.dir}, els...)
+	return path.Clean(path.Join(els...))
+}
+
+func (mgr *LocalAssetManager) Index(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles(mgr.path("index.html.tmpl"))
+	if err != nil {
+		Log.Printf("Could not parse template for index page: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	// Need to do this so GetClientAddr will work
+	context.Set(r, srv_context_key, mgr.srv)
+
+	tmpl_data, err := mgr.srv.bind_info.templateFor(r)
+	if err != nil {
+		Log.Printf("Could not generate index page: %v", err)
+		w.WriteHeader(400)
+		return
+	}
+	w.WriteHeader(200)
+	tmpl.Execute(w, tmpl_data)
+}
+
+func (mgr *LocalAssetManager) Asset(w http.ResponseWriter, r *http.Request) {
+	name, ok := mux.Vars(r)["name"]
+	if !ok {
+		w.WriteHeader(404)
+		return
+	}
+	folder, ok := mux.Vars(r)["folder"]
+	if !ok {
+		w.WriteHeader(404)
+		return
+	}
+	asset_name := mgr.path(folder, name)
+	f, err := os.Open(asset_name)
+	if err != nil {
+		Log.Printf("Could not find asset %q: %v", asset_name, err)
+		w.WriteHeader(404)
+		return
+	}
+	w.WriteHeader(200)
+	_, err = io.Copy(w, f)
+	if err != nil {
+		Log.Printf("Could not write asset %q: %v", asset_name, err)
 		return
 	}
 }
