@@ -78,20 +78,20 @@ func rootHandler(srv *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, err := assets.Asset("static/index.htm")
 		if err != nil {
-			fmt.Println(err)
+			Log.Printf("Could not find index page asset: %v", err)
 			w.WriteHeader(404)
 			return
 		}
 		context.Set(r, srv_context_key, srv)
 		tmpl, err := template.New("root").Parse(string(data))
 		if err != nil {
-			fmt.Println(err)
+			Log.Printf("Could not parse template for index page: %v", err)
 			w.WriteHeader(500)
 			return
 		}
 		tmpl_data, err := srv.bind_info.templateFor(r)
 		if err != nil {
-			fmt.Println(err)
+			Log.Printf("Could not generate index page: %v", err)
 			w.WriteHeader(400)
 			return
 		}
@@ -111,16 +111,17 @@ func cachedAssetHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	data, err := assets.Asset(fmt.Sprintf("static/%s/%s", folder, name))
+	asset_name := fmt.Sprintf("static/%s/%s", folder, name)
+	data, err := assets.Asset(asset_name)
 	if err != nil {
-		fmt.Println(err)
+		Log.Printf("Could not find asset %q: %v", asset_name, err)
 		w.WriteHeader(404)
 		return
 	}
 	w.WriteHeader(200)
 	_, err = w.Write(data)
 	if err != nil {
-		fmt.Println(err)
+		Log.Printf("Could not write asset %q: %v", asset_name, err)
 		return
 	}
 }
