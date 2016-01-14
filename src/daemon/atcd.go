@@ -22,23 +22,21 @@ var (
 )
 
 func ReshapeFromDb(shaper *ShapingEngine, db *DbRunner) error {
-	groups := <-db.GetAllGroups()
-	if groups == nil || len(groups) == 0 {
-		return nil
+	groups, err := db.GetAllGroups()
+	if err != nil {
+		return err
 	}
 
 	Log.Debugln("Reshaping from database")
 	// Setup all the groups' shaping again
-	for _, group := range groups {
+	for group := range groups {
 		// First make sure the group has all the members in the DB
-		members := <-db.GetMembersOf(group.id)
-		if members == nil || len(members) == 0 {
-			// If there aren't any members, don't bother doing anything.
-			// Empty groups are cleaned regularly so this is unlikely
+		members, err := db.GetMembersOf(group.id)
+		if err != nil {
 			continue
 		}
 		first := false
-		for _, member := range members {
+		for member := range members {
 			var err error
 			if first {
 				err = shaper.CreateGroup(group.id, member)
@@ -88,10 +86,16 @@ func (atcd *Atcd) GetAtcdInfo() (*atc_thrift.AtcdInfo, error) {
 }
 
 func (atcd *Atcd) ListGroups() ([]*atc_thrift.ShapingGroup, error) {
-	groups := <-atcd.db.GetAllGroups()
-	results := make([]*atc_thrift.ShapingGroup, 0, len(groups))
-	for _, grp := range groups {
-		members := <-atcd.db.GetMembersOf(grp.id)
+	groups, err := atcd.db.GetAllGroups()
+	if err != nil {
+		return nil, DbError
+	}
+	results := make([]*atc_thrift.ShapingGroup, 0, 10)
+	for grp := range groups {
+		members, err := atcd.db.GetMembersOf(grp.id)
+		if err != nil {
+			return nil, DbError
+		}
 		results = append(results, &atc_thrift.ShapingGroup{
 			ID:      grp.id,
 			Shaping: grp.tc,
@@ -110,11 +114,11 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 		Members: []string{member},
 		Shaping: nil,
 	}
-	dbgrp := <-atcd.db.UpdateGroup(DbGroup{
+	dbgrp, err := atcd.db.UpdateGroup(DbGroup{
 		secret: makeSecret(),
 		tc:     nil,
 	})
-	if dbgrp == nil {
+	if err != nil {
 		return nil, DbError
 	}
 	// Have to create group in database before creating the shaper since
@@ -123,11 +127,11 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 	if err := atcd.shaper.CreateGroup(dbgrp.id, tgt); err != nil {
 		return nil, err
 	}
-	dbmem := <-atcd.db.UpdateMember(DbMember{
+	_, err = atcd.db.UpdateMember(DbMember{
 		addr:     tgt,
 		group_id: dbgrp.id,
 	})
-	if dbmem == nil {
+	if err != nil {
 		return nil, DbError
 	}
 	grp.ID = dbgrp.id
@@ -135,13 +139,17 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 }
 
 func (atcd *Atcd) GetGroup(id int64) (*atc_thrift.ShapingGroup, error) {
-	group := <-atcd.db.GetGroup(id)
+	group, err := atcd.db.GetGroup(id)
+	if err != nil {
+		return nil, DbError
+	}
 	if group == nil {
 		return nil, NoSuchItem
 	}
-	members := <-atcd.db.GetMembersOf(id)
-	if members == nil {
-		return nil, NoSuchItem
+
+	members, err := atcd.db.GetMembersOf(id)
+	if err != nil {
+		return nil, DbError
 	}
 	grp := &atc_thrift.ShapingGroup{
 		ID:      id,
@@ -156,14 +164,19 @@ func (atcd *Atcd) GetGroupWith(addr string) (*atc_thrift.ShapingGroup, error) {
 	if err != nil {
 		return nil, err
 	}
-	member, err := atcd.db.getMember(tgt)
+
+	member, err := atcd.db.GetMember(tgt)
 	if err != nil {
-		return nil, err
+		return nil, DbError
 	}
+
 	if member == nil {
 		if ip, ok := tgt.(iptables.IPTarget); ok {
 			// Search for network targets that contain the ip
-			members := atcd.db.GetAllMembers()
+			members, err := atcd.db.GetAllMembers()
+			if err != nil {
+				return nil, DbError
+			}
 			for member := range members {
 				if cidr, ok := member.addr.(*iptables.CIDRTarget); ok {
 					if cidr.Net.Contains((net.IP)(ip)) {
@@ -178,7 +191,7 @@ func (atcd *Atcd) GetGroupWith(addr string) (*atc_thrift.ShapingGroup, error) {
 }
 
 func (atcd *Atcd) GetGroupToken(id int64) (string, error) {
-	group, err := atcd.db.getGroup(id)
+	group, err := atcd.db.GetGroup(id)
 	if err != nil {
 		return "", err
 	}
@@ -190,7 +203,7 @@ func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
 	if err != nil {
 		return err
 	}
-	group, err := atcd.db.getGroup(id)
+	group, err := atcd.db.GetGroup(id)
 	if err != nil {
 		return err
 	}
@@ -203,7 +216,7 @@ func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
 	if err := atcd.shaper.JoinGroup(id, tgt); err != nil {
 		return err
 	}
-	_, err = atcd.db.updateMember(DbMember{
+	_, err = atcd.db.UpdateMember(DbMember{
 		addr:     tgt,
 		group_id: group.id,
 	})
@@ -215,14 +228,14 @@ func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
 	if err != nil {
 		return err
 	}
-	member, err := atcd.db.getMember(tgt)
+	member, err := atcd.db.GetMember(tgt)
 	if err != nil {
 		return err
 	}
 	if member.group_id != id {
 		return fmt.Errorf("%q is not a member of group %d", to_remove, id)
 	}
-	group, err := atcd.db.getGroup(member.group_id)
+	group, err := atcd.db.GetGroup(member.group_id)
 	if err != nil {
 		return err
 	}
@@ -234,11 +247,11 @@ func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
 	}
 	// FIXME: clean shaper's group too!
 	defer atcd.db.Cleanup()
-	return atcd.db.deleteMember(tgt)
+	return atcd.db.DeleteMember(tgt)
 }
 
 func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Shaping, token string) (*atc_thrift.Shaping, error) {
-	group, err := atcd.db.getGroup(id)
+	group, err := atcd.db.GetGroup(id)
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +264,7 @@ func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Shaping, token strin
 	if err != nil {
 		return nil, err
 	}
-	group, err = atcd.db.updateGroup(*group)
+	group, err = atcd.db.UpdateGroup(*group)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +272,7 @@ func (atcd *Atcd) ShapeGroup(id int64, settings *atc_thrift.Shaping, token strin
 }
 
 func (atcd *Atcd) UnshapeGroup(id int64, token string) error {
-	group, err := atcd.db.getGroup(id)
+	group, err := atcd.db.GetGroup(id)
 	if err != nil {
 		return err
 	}
@@ -272,7 +285,7 @@ func (atcd *Atcd) UnshapeGroup(id int64, token string) error {
 	if err != nil {
 		return err
 	}
-	_, err = atcd.db.updateGroup(*group)
+	_, err = atcd.db.UpdateGroup(*group)
 	if err != nil {
 		return err
 	}
@@ -305,10 +318,10 @@ func makeSecret() string {
 	return uuid.New()
 }
 
-func TargetsToStrings(ips []iptables.Target) []string {
-	s := make([]string, len(ips))
-	for i, ip := range ips {
-		s[i] = ip.String()
+func TargetsToStrings(ips chan iptables.Target) []string {
+	s := make([]string, 0, 10)
+	for ip := range ips {
+		s = append(s, ip.String())
 	}
 	return s
 }
