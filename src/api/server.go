@@ -22,6 +22,7 @@ type AtcApiOptions struct {
 	DBDriver, DBConn string
 	V4, V6           string
 	ProxyAddr        string
+	AssetPath        string
 }
 
 type Server struct {
@@ -32,6 +33,7 @@ type Server struct {
 	Atcd      AtcdCloser
 	db        *DbRunner
 	bind_info *bindInfo
+	assets    AssetManager
 }
 
 func ListenAndServe(options AtcApiOptions) (*Server, error) {
@@ -52,6 +54,12 @@ func ListenAndServe(options AtcApiOptions) (*Server, error) {
 			IP6:    options.V6,
 			Port:   strconv.Itoa(options.Addr.Port),
 		},
+		assets: nil,
+	}
+	if options.AssetPath == "" {
+		srv.assets = &BundleAssetManager{srv}
+	} else {
+		srv.assets = &LocalAssetManager{srv, options.AssetPath}
 	}
 	srv.setupHandlers()
 	err = srv.ListenAndServe()
@@ -117,8 +125,8 @@ func (srv *Server) setupHandlers() {
 		apir.HandleFunc(url, h)
 		apir.HandleFunc(url+"/", h)
 	}
-	r.HandleFunc("/", rootHandler(srv))
-	r.HandleFunc("/static/{folder}/{name}", cachedAssetHandler)
+	r.HandleFunc("/", srv.assets.Index)
+	r.HandleFunc("/static/{folder}/{name}", srv.assets.Asset)
 	srv.Handler = r
 }
 
