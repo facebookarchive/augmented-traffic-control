@@ -2,7 +2,7 @@ package api
 
 import (
 	"fmt"
-	"net"
+	"net/url"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
@@ -29,21 +29,19 @@ type AtcdCloser interface {
 
 type AtcdConn struct {
 	*atc_thrift.AtcdClient
-	xport        thrift.TTransport
-	thrift_addr  *net.TCPAddr
-	thrift_proto string
+	xport      thrift.TTransport
+	thrift_url *url.URL
 }
 
-func NewAtcdConn(thrift_addr *net.TCPAddr, thrift_proto string) *AtcdConn {
+func NewAtcdConn(thrift_url *url.URL) *AtcdConn {
 	return &AtcdConn{
-		thrift_addr:  thrift_addr,
-		thrift_proto: thrift_proto,
+		thrift_url: thrift_url,
 	}
 }
 
 func (atcd *AtcdConn) Open() error {
 	var err error
-	atcd.xport, err = thrift.NewTSocket(atcd.thrift_addr.String())
+	atcd.xport, err = thrift.NewTSocket(atcd.thrift_url.Host)
 	if err != nil {
 		return err
 	}
@@ -51,7 +49,7 @@ func (atcd *AtcdConn) Open() error {
 		return err
 	}
 
-	pfactory, err := getThriftProtocol(atcd.thrift_proto)
+	pfactory, err := getThriftProtocol(atcd.thrift_url.Scheme)
 	if err != nil {
 		return err
 	}

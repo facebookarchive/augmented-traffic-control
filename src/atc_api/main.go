@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"net"
+	"net/url"
 	"os"
 	"time"
 
@@ -11,8 +11,8 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-func TestAtcdConnection(addr *net.TCPAddr, proto string) error {
-	atcd := api.NewAtcdConn(addr, proto)
+func TestAtcdConnection(thrift_url *url.URL) error {
+	atcd := api.NewAtcdConn(thrift_url)
 	if err := atcd.Open(); err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func main() {
 	logging.DEBUG = args.Verbose
 
 	// Make sure connection to the daemon is working.
-	err := TestAtcdConnection(args.ThriftAddr, args.ThriftProto)
+	err := TestAtcdConnection(args.ThriftUrl)
 	if err != nil {
 		api.Log.Println("failed to connect to atcd server:", err)
 		if !args.WarnOnly {
@@ -35,7 +35,7 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		api.Log.Println("Connected to atcd socket on", args.ThriftAddr)
+		api.Log.Println("Connected to atcd socket on", args.ThriftUrl)
 	}
 
 	if err := validateArgs(args); err != nil {
@@ -74,8 +74,7 @@ type Arguments struct {
 func ParseArgs() Arguments {
 	args := Arguments{}
 	kingpin.Flag("listen", "Bind address for the HTTP server").Short('b').Default("0.0.0.0:8080").TCPVar(&args.Addr)
-	kingpin.Flag("atcd", "ATCD thrift server address").Short('t').Default("127.0.0.1:9090").TCPVar(&args.ThriftAddr)
-	kingpin.Flag("atcd-proto", "ATCD thrift server protocol").Short('p').Default("json").StringVar(&args.ThriftProto)
+	kingpin.Flag("thrift-addr", "thrift server url (env:ATCD_ADDR)").Short('t').Default("json://127.0.0.1:9090").Envar("ATCD_ADDR").URLVar(&args.ThriftUrl)
 	kingpin.Flag("dbdrv", "Database driver").Short('D').Default("sqlite3").StringVar(&args.DBDriver)
 	kingpin.Flag("dbconn", "Database connection string").Short('Q').Default("atc_api.db").StringVar(&args.DBConn)
 	kingpin.Flag("ipv4", "IPv4 address (or hostname) of the ATC API").Short('4').Default("").StringVar(&args.V4)
