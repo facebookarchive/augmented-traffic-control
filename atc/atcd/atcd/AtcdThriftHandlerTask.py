@@ -287,8 +287,8 @@ class AtcdThriftHandlerTask(ThriftHandlerTask):
                     # We have a shaping set in database that is denied
                     # probably because it was set in unsecure mode, passing
                     if (
-                            e.code == ReturnCode.ACCESS_DENIED
-                            and self.mode == 'secure'):
+                            e.code == ReturnCode.ACCESS_DENIED and
+                            self.mode == 'secure'):
                         self.logger.warn(
                             'Shaping Denied in secure mode, passing:'
                             ' {0}'.format(e.message)

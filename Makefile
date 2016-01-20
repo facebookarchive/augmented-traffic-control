@@ -50,7 +50,7 @@ publish:
 # Cleans up python dist files
 .PHONY: clean
 clean:
-	rm -rf atc/atcd/dist atc/atc_thrift/dist atc/django-atc-api/dist atc/django-atc-demo-ui/dist atc/django-atc-profile-storage/dist
+	rm -rf atc/{atcd,atc_thrift,django-atc-api,django-atc-demo-ui,django-atc-profile-storage}/{build,dist}
 
 
 # Lint the various sources that ATC includes:
