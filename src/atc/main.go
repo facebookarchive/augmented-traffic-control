@@ -34,8 +34,8 @@ func GetEnv(name, def string) string {
 }
 
 func main() {
-	thriftAddr := kingpin.Flag("thrift-addr", "thrift server address (env:ATCD_ADDR)").Short('T').Default("127.0.0.1:9090").Envar("ATCD_ADDR").TCP()
-	thriftProto := kingpin.Flag("thrift-proto", "thrift server protocol (env:ATCD_PROTO)").Short('P').Default("json").Envar("ATCD_PROTO").String()
+	thriftUrl := kingpin.Flag("thrift-addr", "thrift server url in the format 'proto://host:port' (env:ATCD_ADDR)").Short('r').
+		Default("json://127.0.0.1:9090").Envar("ATCD_ADDR").URL()
 
 	var (
 		defMember = GetEnv("ATC_MEMBER", "")
@@ -105,7 +105,7 @@ func main() {
 
 	cmd := kingpin.Parse()
 
-	atcd = api.NewAtcdConn(*thriftAddr, *thriftProto)
+	atcd = api.NewAtcdConn(*thriftUrl)
 	if err := atcd.Open(); err != nil {
 		Log.Fatalln("Could not open connection to atcd:", err)
 	}

@@ -3,6 +3,7 @@ package api
 import (
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -17,8 +18,8 @@ var (
 )
 
 type AtcApiOptions struct {
-	Addr, ThriftAddr *net.TCPAddr
-	ThriftProto      string
+	Addr             *net.TCPAddr
+	ThriftUrl        *url.URL
 	DBDriver, DBConn string
 	V4, V6           string
 	ProxyAddr        string
@@ -81,7 +82,7 @@ func (srv *Server) GetAtcd() (AtcdCloser, HttpError) {
 	if srv.Atcd != nil {
 		return srv.Atcd, nil
 	}
-	atcd := NewAtcdConn(srv.ThriftAddr, srv.ThriftProto)
+	atcd := NewAtcdConn(srv.ThriftUrl)
 	if err := atcd.Open(); err != nil {
 		return nil, HttpErrorf(502, "Could not connect to atcd: %v", err)
 	}
