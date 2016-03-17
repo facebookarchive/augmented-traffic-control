@@ -18,6 +18,19 @@ const (
 	NEVER
 )
 
+func (t HookType) String() string {
+	switch t {
+	case GROUP_JOIN:
+		return "GROUP_JOIN"
+	case GROUP_LEAVE:
+		return "GROUP_LEAVE"
+	case NEVER:
+		return "NEVER"
+	default:
+		panic(fmt.Sprintf("Unknown hook type: %d", int(t)))
+	}
+}
+
 var (
 	all_hook_types = []HookType{
 		GROUP_JOIN,
@@ -47,7 +60,7 @@ type Hook struct {
 
 func (c Hook) GetTypes() ([]HookType, error) {
 	if c.Async && c.SuccessRequired {
-		return nil, fmt.Errorf("Hook (%v) cannot be both async and success_required", c.Name)
+		return nil, fmt.Errorf("Hook %q cannot be both async and success_required", c.Name)
 	}
 	hookTypes := []HookType{}
 	for _, p := range c.When {
@@ -68,12 +81,12 @@ func (c Hook) GetTypes() ([]HookType, error) {
 // Runs the hook with the provided arguments.
 // Returns an error IFF SuccessRequired and the command fails.
 // Forks a goroutine if hook.Async
-func (hook Hook) Run(args []string) error {
+func (hook Hook) Run(env []string, args ...string) error {
 	if hook.Async {
-		go hook.doHook(args)
+		go hook.doHook(env, args)
 		return nil
 	}
-	err := hook.doHook(args)
+	err := hook.doHook(env, args)
 	if hook.SuccessRequired && err != nil {
 		return err
 	}
@@ -82,12 +95,15 @@ func (hook Hook) Run(args []string) error {
 
 // Runs the hook's command with the given arguments in this goroutine.
 // Logs and returns an error if the command fails.
-func (hook Hook) doHook(args []string) error {
+func (hook Hook) doHook(env []string, args []string) error {
 	cmd := exec.Command(hook.Command, args...)
+	cmd.Env = env
 	if out, err := cmd.CombinedOutput(); err != nil {
-		Log.Printf("Could not run hook (%s) command: %v", hook.Name, err)
+		Log.Printf("Could not run hook %q command: %v", hook.Name, err)
 		Log.Printf("Failed hook command: '%s %s'\n%s", hook.Command, strings.Join(args, " "), string(out))
 		return fmt.Errorf("Hook failed: %v", err)
+	} else {
+		Log.Debugf("Ran hook command: '%s %s'\n%s", hook.Command, strings.Join(args, " "), string(out))
 	}
 	return nil
 }

@@ -44,3 +44,4 @@ internal
 *.rpm
 **/node_modules/
 build-pkg
+lib
