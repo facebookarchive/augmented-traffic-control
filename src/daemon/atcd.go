@@ -121,18 +121,20 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 	if err != nil {
 		return nil, DbError
 	}
-	// Have to create group in database before creating the shaper since
-	// the database gives us the unique ID of the group, which the shaper
-	// needs for the mark.
-	if err := atcd.shaper.CreateGroup(dbgrp.id, tgt); err != nil {
-		return nil, err
-	}
+	// Have to insert the addr into the db before shaping
+	// because hooks might depend on it.
 	_, err = atcd.db.UpdateMember(DbMember{
 		addr:     tgt,
 		group_id: dbgrp.id,
 	})
 	if err != nil {
 		return nil, DbError
+	}
+	// Have to create group in database before creating the shaper since
+	// the database gives us the unique ID of the group, which the shaper
+	// needs for the mark.
+	if err := atcd.shaper.CreateGroup(dbgrp.id, tgt); err != nil {
+		return nil, err
 	}
 	grp.ID = dbgrp.id
 	return grp, nil
@@ -213,13 +215,14 @@ func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
 	if !atcd.verify(group, token) {
 		return fmt.Errorf("Unauthorized")
 	}
-	if err := atcd.shaper.JoinGroup(id, tgt); err != nil {
-		return err
-	}
+	// Insert into the db first since hooks might rely on the API.
 	_, err = atcd.db.UpdateMember(DbMember{
 		addr:     tgt,
 		group_id: group.id,
 	})
+	if err := atcd.shaper.JoinGroup(id, tgt); err != nil {
+		return err
+	}
 	return err
 }
 
@@ -231,6 +234,9 @@ func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
 	member, err := atcd.db.GetMember(tgt)
 	if err != nil {
 		return err
+	}
+	if member == nil {
+		return NoSuchItem
 	}
 	if member.group_id != id {
 		return fmt.Errorf("%q is not a member of group %d", to_remove, id)

@@ -50,6 +50,9 @@ func main() {
 
 	kingpin.Command("list", "List groups")
 
+	groupMembers := kingpin.Command("members", "List members of a group")
+	groupMembers.Arg("id", "id of the group").Default("-1").Int64Var(&id)
+
 	groupAdd := kingpin.Command("create", "create a group")
 	if defMember != "" {
 		groupAdd.Arg("member", "IP address of the member (env:ATC_MEMBER)").Default(defMember).StringVar(&member)
@@ -122,6 +125,8 @@ func main() {
 		GroupShow(id)
 	case "list":
 		GroupList()
+	case "members":
+		GroupMembers(id)
 	case "join":
 		token, err := atcd.GetGroupToken(id)
 		if err != nil {
@@ -214,6 +219,25 @@ func GroupList() {
 	}
 }
 
+func GroupMembers(id int64) {
+	if id != -1 {
+		grp, err := atcd.GetGroup(id)
+		if err != nil {
+			Log.Fatalf("Could not find group (%d): %v", id, err)
+		}
+		listGroupMembers(grp)
+
+	} else {
+		grps, err := atcd.ListGroups()
+		if err != nil {
+			Log.Fatalln(err)
+		}
+		for _, grp := range grps {
+			listGroupMembers(grp)
+		}
+	}
+}
+
 func GroupJoin(id int64, member string, token string) {
 	if err := atcd.JoinGroup(id, member, token); err != nil {
 		Log.Fatalf("Could not join group: %v", err)
@@ -255,6 +279,12 @@ func GroupUnshape(id int64, token string) {
 	err := atcd.UnshapeGroup(id, token)
 	if err != nil {
 		Log.Fatalln(err)
+	}
+}
+
+func listGroupMembers(grp *atc_thrift.ShapingGroup) {
+	for _, m := range grp.Members {
+		fmt.Println(m)
 	}
 }
 

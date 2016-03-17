@@ -36,8 +36,24 @@ func main() {
 		}
 	}
 
+	// Hooks are called with ATCD_ADDR set to a suitable address
+	// for the atc daemon. For this to work, we need to get the address
+	// and pass it to the engine
+	engine_addr := &net.TCPAddr{
+		Port: args.ThriftAddr.Port,
+		Zone: args.ThriftAddr.Zone,
+	}
+	// zero addresses mean listen to everything, so we use the loopback
+	if args.ThriftAddr.IP.Equal(net.IPv4zero) {
+		engine_addr.IP = net.IPv4(127, 0, 0, 1)
+	} else if args.ThriftAddr.IP.Equal(net.IPv6zero) {
+		engine_addr.IP = net.IPv6loopback
+	} else {
+		engine_addr.IP = args.ThriftAddr.IP
+	}
+
 	// Wrap the shaper in an engine for hook execution support.
-	eng, err := daemon.NewShapingEngine(config)
+	eng, err := daemon.NewShapingEngine(engine_addr, config)
 	if err != nil {
 		daemon.Log.Fatalf("Could not initialize shaping engine: %v", err)
 	}
