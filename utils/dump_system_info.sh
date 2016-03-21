@@ -11,13 +11,21 @@ function title {
 
 function run_cmd {
     title "$1"
-    $1
+    $@
 }
 
-for cmd in "cat /etc/os-release" "pip freeze" "ip a" "ip r" "iptables-save"
+function run_cmd_filtered {
+    title "$1"
+    $@ | egrep -v '(ether|inet6.*scope link)'
+}
+
+for cmd in "uname -a" "cat /etc/os-release" "python -V" "pip freeze" \
+    "ip r" "iptables-save" "ip r"
 do
     run_cmd "${cmd}"
 done
+
+run_cmd_filtered "ip a"
 
 for netif in ${WAN} ${LAN}
 do
