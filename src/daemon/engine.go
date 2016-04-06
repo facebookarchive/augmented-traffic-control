@@ -33,6 +33,7 @@ func NewShapingEngine(resolution int, thriftAddr *net.TCPAddr, conf *Config) (*S
 func buildShapingEngine(resolution int, thriftAddr *net.TCPAddr, shaper shaping.Shaper, conf *Config) (*ShapingEngine, error) {
 	if resolution <= 0 {
 		// resolution of 0 is bad!
+		Log.Printf("Setting hook resolution to 1 (overriding bad value of 0)")
 		resolution = 1
 	}
 	hooks := make([][]Hook, len(all_hook_types))
