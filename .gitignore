@@ -40,6 +40,7 @@ internal
 # Go stuff
 /bin/
 *.db
+*.log
 .gopath
 *.rpm
 **/node_modules/
