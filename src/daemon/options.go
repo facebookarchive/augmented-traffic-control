@@ -1,7 +1,10 @@
 package daemon
 
 type AtcdOptions struct {
-	Secure     bool
+	// Run in secure mode?
+	Secure bool
+
+	// OTP token timeout (seconds)
 	OtpTimeout uint8
 }
 

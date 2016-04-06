@@ -15,7 +15,8 @@ type HookType int
 const (
 	GROUP_JOIN HookType = iota
 	GROUP_LEAVE
-	NEVER
+	PERIODIC
+	NEVER // must be last
 )
 
 func (t HookType) String() string {
@@ -26,6 +27,8 @@ func (t HookType) String() string {
 		return "GROUP_LEAVE"
 	case NEVER:
 		return "NEVER"
+	case PERIODIC:
+		return "PERIODIC"
 	default:
 		panic(fmt.Sprintf("Unknown hook type: %d", int(t)))
 	}
@@ -35,6 +38,7 @@ var (
 	all_hook_types = []HookType{
 		GROUP_JOIN,
 		GROUP_LEAVE,
+		PERIODIC,
 		// NEVER not included intentionally.
 	}
 )
@@ -56,6 +60,9 @@ type Hook struct {
 
 	// Should the hook be required to succeed
 	SuccessRequired bool `json:"success_required,omitempty" yaml:"success_required,omitempty"`
+
+	// lock to prevent the hook from being run more than once
+	_lock chan int
 }
 
 func (c Hook) GetTypes() ([]HookType, error) {
@@ -71,6 +78,8 @@ func (c Hook) GetTypes() ([]HookType, error) {
 			hookTypes = append(hookTypes, GROUP_LEAVE)
 		case "never":
 			// Do nothing
+		case "periodic":
+			hookTypes = append(hookTypes, PERIODIC)
 		default:
 			return nil, fmt.Errorf("Unknown hook position: %s", p)
 		}
@@ -98,7 +107,11 @@ func (hook Hook) Run(env []string, args ...string) error {
 func (hook Hook) doHook(env []string, args []string) error {
 	cmd := exec.Command(hook.Command, args...)
 	cmd.Env = env
+	hook.lock()
+	defer hook.unlock()
 	if out, err := cmd.CombinedOutput(); err != nil {
+		// Log and return an error because we might be async, in which case
+		// the return value is discarded.
 		Log.Printf("Could not run hook %q command: %v", hook.Name, err)
 		Log.Printf("Failed hook command: '%s %s'\n%s", hook.Command, strings.Join(args, " "), string(out))
 		return fmt.Errorf("Hook failed: %v", err)
@@ -106,4 +119,24 @@ func (hook Hook) doHook(env []string, args []string) error {
 		Log.Debugf("Ran hook command: '%s %s'\n%s", hook.Command, strings.Join(args, " "), string(out))
 	}
 	return nil
+}
+
+func (hook Hook) lock() {
+	if hook._lock == nil {
+		// create a lock
+		hook._lock = make(chan int, 1)
+		// leave it in locked state
+		return
+	}
+	<-hook._lock
+}
+
+func (hook Hook) unlock() {
+	if hook._lock == nil {
+		// create a lock
+		hook._lock = make(chan int, 1)
+		// leave it in unlocked state
+	}
+	// release the lock-en!
+	hook._lock <- 1
 }

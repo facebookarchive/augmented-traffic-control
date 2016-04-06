@@ -53,7 +53,7 @@ func main() {
 	}
 
 	// Wrap the shaper in an engine for hook execution support.
-	eng, err := daemon.NewShapingEngine(engine_addr, config)
+	eng, err := daemon.NewShapingEngine(args.Resolution, engine_addr, config)
 	if err != nil {
 		daemon.Log.Fatalf("Could not initialize shaping engine: %v", err)
 	}
@@ -96,6 +96,7 @@ type Args struct {
 	OtpTimeout  int
 	ConfigFile  string
 	Verbose     bool
+	Resolution  int
 }
 
 func parseArgs() Args {
@@ -117,6 +118,7 @@ func parseArgs() Args {
 	kingpin.Flag("fake-shaping", "don't do real shaping. instead use a mock shaper").Short('F').Default("false").BoolVar(&args.FakeShaping)
 	kingpin.Flag("token-timeout", "OTP Token timeout in seconds").Default("60").IntVar(&args.OtpTimeout)
 	kingpin.Flag("verbose", "verbose output").Short('v').Default("false").BoolVar(&args.Verbose)
+	kingpin.Flag("resolution", "periodic hook resolution in seconds").Default("5").IntVar(&args.Resolution)
 
 	kingpin.Parse()
 
