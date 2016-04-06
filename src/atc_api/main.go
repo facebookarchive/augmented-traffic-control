@@ -80,7 +80,7 @@ func ParseArgs() Arguments {
 	kingpin.Flag("ipv4", "IPv4 address (or hostname) of the ATC API").Short('4').Default("").StringVar(&args.V4)
 	kingpin.Flag("ipv6", "IPv6 address (or hostname) of the ATC API").Short('6').Default("").StringVar(&args.V6)
 	kingpin.Flag("proxy-addr", "IP address of authorized HTTP reverse proxy").Default("").StringVar(&args.ProxyAddr)
-	kingpin.Flag("warn", "Only warn if the thrift server isn't reachable").Short('Q').Default("false").BoolVar(&args.WarnOnly)
+	kingpin.Flag("warn", "Only warn if the thrift server isn't reachable").Short('W').Default("false").BoolVar(&args.WarnOnly)
 	kingpin.Flag("verbose", "verbose output").Short('v').Default("false").BoolVar(&args.Verbose)
 	kingpin.Flag("assets", "location of asset files on disk").Default("").StringVar(&args.AssetPath)
 	kingpin.Parse()
