@@ -76,10 +76,16 @@ docker-compose run node make npm_env
 
 To build the js file:
 ```
-docker-compose run node make jsx
+docker-compose run node make static/js/index.js
 ```
 
 If you want to have the `static/js/index.js` file automatically generated as you modify the jsx files, you can run:
 ```
 docker-compose run node bash -c 'cd src/react; npm run watch'
+```
+
+
+To run the UI linter:
+```
+docker-compose run node make lint-ui
 ```
