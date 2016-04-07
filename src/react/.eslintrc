@@ -1,6 +1,8 @@
 {
-  "ecmaFeatures": {
-    "jsx": true,
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true,
+    }
   },
   "env": {
     "browser": true,
@@ -8,7 +10,9 @@
     "es6": true
   },
   "rules": {
-    "no-unused-vars": [1]
+    "no-unused-vars": [1],
+    "react/jsx-uses-react": 1,
+    "react/jsx-uses-vars": 1
   },
   "plugins": [
     "react"
