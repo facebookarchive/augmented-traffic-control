@@ -32,7 +32,8 @@ function AtcRestClient (endpoint) {
       addr = document.location["hostname"];
     }
     var port = document.location["port"];
-    if (addr.indexOf(':') >= 0) {
+    // IPv6 addresses must be enclosed in square brackets.
+    if (addr.indexOf(':') >= 0 && addr[0] != '[') {
       addr = '[' + addr + ']';
     }
     urn = _add_ending_slash(urn);

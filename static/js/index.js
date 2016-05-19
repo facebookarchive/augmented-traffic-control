@@ -34,7 +34,8 @@ function AtcRestClient(endpoint) {
       addr = document.location["hostname"];
     }
     var port = document.location["port"];
-    if (addr.indexOf(':') >= 0) {
+    // IPv6 addresses must be enclosed in square brackets.
+    if (addr.indexOf(':') >= 0 && addr[0] != '[') {
       addr = '[' + addr + ']';
     }
     urn = _add_ending_slash(urn);
@@ -222,21 +223,21 @@ var Atc = React.createClass({
 
   createNewProfile: function createNewProfile(name) {
     // FIXME SETTINGS
-    this.state.client.createProfile({ name: name, shaping: this.state.potential.shaping }, (function (rc) {
+    this.state.client.createProfile({ name: name, shaping: this.state.potential.shaping }, function (rc) {
       if (rc.status == 200) {
         this.fetchProfiles();
       }
-    }).bind(this));
+    }.bind(this));
   },
 
   fetchProfiles: function fetchProfiles() {
-    this.state.client.getProfiles((function (rc) {
+    this.state.client.getProfiles(function (rc) {
       if (rc.status == 200) {
         this.setState({
           profiles: rc.json.profiles
         });
       }
-    }).bind(this));
+    }.bind(this));
   },
 
   selectProfile: function selectProfile(shaping) {
@@ -247,7 +248,7 @@ var Atc = React.createClass({
   },
 
   fetchShaping: function fetchShaping() {
-    this.state.client.getShaping((function (rc) {
+    this.state.client.getShaping(function (rc) {
       var current = null;
       if (rc.status != 200) {
         current = null;
@@ -264,11 +265,11 @@ var Atc = React.createClass({
       } else {
         this.setState({ potential: rc.json });
       }
-    }).bind(this));
+    }.bind(this));
   },
 
   performShaping: function performShaping() {
-    this.state.client.shape(this.state.potential, (function (rc) {
+    this.state.client.shape(this.state.potential, function (rc) {
       if (rc.status == 200) {
         this.setState({
           current: rc.json.shaping,
@@ -276,18 +277,18 @@ var Atc = React.createClass({
           changed: false
         });
       }
-    }).bind(this));
+    }.bind(this));
   },
 
   clearShaping: function clearShaping() {
-    this.state.client.unshape((function (rc) {
+    this.state.client.unshape(function (rc) {
       if (rc.status == 204) {
         // Notify unshaped successfully
         this.setState({
           current: null
         });
       }
-    }).bind(this));
+    }.bind(this));
   },
 
   render: function render() {
@@ -320,7 +321,7 @@ var Atc = React.createClass({
 
 module.exports = Atc;
 
-},{"./api":1,"./group":3,"./profiles":5,"./server":6,"./shaping":7,"./utils":8,"react":166}],3:[function(require,module,exports){
+},{"./api":1,"./group":3,"./profiles":4,"./server":5,"./shaping":6,"./utils":7,"react":166}],3:[function(require,module,exports){
 "use strict";
 
 /**
@@ -345,7 +346,7 @@ var NoGroup = React.createClass({
   },
 
   createGroupCB: function createGroupCB() {
-    this.props.client.createGroup((function (rc) {
+    this.props.client.createGroup(function (rc) {
       if (rc.status == 200) {
         if (this.props.client.dual_stack()) {
           this.props.client.joinGroupSecondary(rc.json.id, { token: rc.json.token.toString() }, function (rc) {
@@ -356,7 +357,7 @@ var NoGroup = React.createClass({
           this.props.fetchGroup();
         }
       }
-    }).bind(this));
+    }.bind(this));
   },
 
   updateTokenCB: function updateTokenCB(event) {
@@ -368,11 +369,11 @@ var NoGroup = React.createClass({
   },
 
   joinGroupCB: function joinGroupCB() {
-    this.props.client.joinGroup(this.state.group_id, { token: this.state.token.toString() }, (function (rc) {
+    this.props.client.joinGroup(this.state.group_id, { token: this.state.token.toString() }, function (rc) {
       if (rc.status == 200) {
         this.props.fetchGroup();
       }
-    }).bind(this));
+    }.bind(this));
   },
 
   render: function render() {
@@ -457,7 +458,7 @@ var InGroup = React.createClass({
   },
 
   updateToken: function updateToken() {
-    this.props.client.getToken(this.props.group.id, (function (rc) {
+    this.props.client.getToken(this.props.group.id, function (rc) {
       if (rc.status == 200) {
         this.setState(function (state, props) {
           // eslint-disable-line no-unused-vars
@@ -466,15 +467,15 @@ var InGroup = React.createClass({
           };
         });
       }
-    }).bind(this));
+    }.bind(this));
   },
 
   leaveGroupCB: function leaveGroupCB() {
-    this.props.client.leaveGroup(this.state.token.id, this.state.token, (function (rc) {
+    this.props.client.leaveGroup(this.state.token.id, this.state.token, function (rc) {
       if (rc.status == 200) {
         this.props.fetchGroup();
       }
-    }).bind(this));
+    }.bind(this));
   },
 
   render: function render() {
@@ -547,7 +548,7 @@ var GroupPanel = React.createClass({
 
   fetchGroup: function fetchGroup() {
     // Get group from API
-    this.props.client.getGroup((function (rc) {
+    this.props.client.getGroup(function (rc) {
       if (rc.status == 200) {
         this.setState(function (state, props) {
           // eslint-disable-line no-unused-vars
@@ -563,7 +564,7 @@ var GroupPanel = React.createClass({
           };
         });
       }
-    }).bind(this));
+    }.bind(this));
   },
 
   render: function render() {
@@ -578,23 +579,6 @@ var GroupPanel = React.createClass({
 module.exports = GroupPanel;
 
 },{"react":166}],4:[function(require,module,exports){
-'use strict';
-
-/**
- * Copyright (c) 2014, Facebook, Inc.
- * All rights reserved.  * *  This source code is licensed under the BSD-style license found in the
- *  LICENSE file in the root directory of this source tree. An additional grant
- *  of patent rights can be found in the PATENTS file in the same directory.
- */
-
-// This is actually used once the JSX tag converts to javascript
-var React = require('react'); // eslint-disable-line no-unused-vars
-var ReactDOM = require('react-dom');
-var Atc = require('./atc.js');
-
-ReactDOM.render(React.createElement(Atc, null), document.getElementById('atc_demo_ui'));
-
-},{"./atc.js":2,"react":166,"react-dom":37}],5:[function(require,module,exports){
 "use strict";
 
 /**
@@ -638,13 +622,13 @@ var ProfilePanel = React.createClass({
   render: function render() {
     var profiles = false;
     if (this.props.profiles != null && this.props.profiles.length > 0) {
-      profiles = this.props.profiles.map((function (item) {
+      profiles = this.props.profiles.map(function (item) {
         return React.createElement(
           "option",
           { key: item.id },
           item.name
         );
-      }).bind(this));
+      }.bind(this));
     }
     return React.createElement(
       "div",
@@ -705,7 +689,7 @@ var ProfilePanel = React.createClass({
 
 module.exports = ProfilePanel;
 
-},{"react":166}],6:[function(require,module,exports){
+},{"react":166}],5:[function(require,module,exports){
 'use strict';
 
 /**
@@ -738,7 +722,7 @@ var ServerInfoPanel = React.createClass({
   },
 
   updateInfo: function updateInfo() {
-    this.props.client.getServerInfo((function (rc) {
+    this.props.client.getServerInfo(function (rc) {
       if (rc.status == 200) {
         this.setState(function (state, props) {
           // eslint-disable-line no-unused-vars
@@ -754,7 +738,7 @@ var ServerInfoPanel = React.createClass({
           };
         });
       }
-    }).bind(this));
+    }.bind(this));
   },
 
   render: function render() {
@@ -809,7 +793,7 @@ var ServerInfoPanel = React.createClass({
 
 module.exports = ServerInfoPanel;
 
-},{"react":166}],7:[function(require,module,exports){
+},{"react":166}],6:[function(require,module,exports){
 'use strict';
 
 /**
@@ -925,7 +909,7 @@ var ShapingPanel = React.createClass({
 
 module.exports = ShapingPanel;
 
-},{"./utils":8,"react":166}],8:[function(require,module,exports){
+},{"./utils":7,"react":166}],7:[function(require,module,exports){
 "use strict";
 
 /**
@@ -1012,7 +996,24 @@ module.exports = {
   JSONView: JSONView
 };
 
-},{"react":166}],9:[function(require,module,exports){
+},{"react":166}],8:[function(require,module,exports){
+'use strict';
+
+/**
+ * Copyright (c) 2014, Facebook, Inc.
+ * All rights reserved.  * *  This source code is licensed under the BSD-style license found in the
+ *  LICENSE file in the root directory of this source tree. An additional grant
+ *  of patent rights can be found in the PATENTS file in the same directory.
+ */
+
+// This is actually used once the JSX tag converts to javascript
+var React = require('react'); // eslint-disable-line no-unused-vars
+var ReactDOM = require('react-dom');
+var Atc = require('./atc.js');
+
+ReactDOM.render(React.createElement(Atc, null), document.getElementById('atc_demo_ui'));
+
+},{"./atc.js":2,"react":166,"react-dom":37}],9:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -1541,11 +1542,14 @@ module.exports = focusNode;
  * @typechecks
  */
 
+/* eslint-disable fb-www/typeof-undefined */
+
 /**
  * Same as document.activeElement but wraps in a try-catch block. In IE it is
  * not safe to call document.activeElement if there is nothing focused.
  *
- * The activeElement will be null only if the document or document body is not yet defined.
+ * The activeElement will be null only if the document or document body is not
+ * yet defined.
  */
 'use strict';
 
@@ -1553,7 +1557,6 @@ function getActiveElement() /*?DOMElement*/{
   if (typeof document === 'undefined') {
     return null;
   }
-
   try {
     return document.activeElement || document.body;
   } catch (e) {
@@ -1799,7 +1802,7 @@ module.exports = hyphenateStyleName;
  * will remain to ensure logic does not differ in production.
  */
 
-var invariant = function (condition, format, a, b, c, d, e, f) {
+function invariant(condition, format, a, b, c, d, e, f) {
   if (process.env.NODE_ENV !== 'production') {
     if (format === undefined) {
       throw new Error('invariant requires an error message argument');
@@ -1813,15 +1816,16 @@ var invariant = function (condition, format, a, b, c, d, e, f) {
     } else {
       var args = [a, b, c, d, e, f];
       var argIndex = 0;
-      error = new Error('Invariant Violation: ' + format.replace(/%s/g, function () {
+      error = new Error(format.replace(/%s/g, function () {
         return args[argIndex++];
       }));
+      error.name = 'Invariant Violation';
     }
 
     error.framesToPop = 1; // we don't care about invariant's own frame
     throw error;
   }
-};
+}
 
 module.exports = invariant;
 }).call(this,require('_process'))
@@ -2086,18 +2090,23 @@ module.exports = performance || {};
 'use strict';
 
 var performance = require('./performance');
-var curPerformance = performance;
+
+var performanceNow;
 
 /**
  * Detect if we can use `window.performance.now()` and gracefully fallback to
  * `Date.now()` if it doesn't exist. We need to support Firefox < 15 for now
  * because of Facebook's testing infrastructure.
  */
-if (!curPerformance || !curPerformance.now) {
-  curPerformance = Date;
+if (performance.now) {
+  performanceNow = function () {
+    return performance.now();
+  };
+} else {
+  performanceNow = function () {
+    return Date.now();
+  };
 }
-
-var performanceNow = curPerformance.now.bind(curPerformance);
 
 module.exports = performanceNow;
 },{"./performance":31}],33:[function(require,module,exports){
@@ -5690,8 +5699,8 @@ var HTMLDOMPropertyConfig = {
      */
     // autoCapitalize and autoCorrect are supported in Mobile Safari for
     // keyboard hints.
-    autoCapitalize: null,
-    autoCorrect: null,
+    autoCapitalize: MUST_USE_ATTRIBUTE,
+    autoCorrect: MUST_USE_ATTRIBUTE,
     // autoSave allows WebKit/Blink to persist values of input fields on page reloads
     autoSave: null,
     // color is for Safari mask-icon link
@@ -5722,9 +5731,7 @@ var HTMLDOMPropertyConfig = {
     httpEquiv: 'http-equiv'
   },
   DOMPropertyNames: {
-    autoCapitalize: 'autocapitalize',
     autoComplete: 'autocomplete',
-    autoCorrect: 'autocorrect',
     autoFocus: 'autofocus',
     autoPlay: 'autoplay',
     autoSave: 'autosave',
@@ -10127,7 +10134,10 @@ var ReactDOMOption = {
       }
     });
 
-    nativeProps.children = content;
+    if (content) {
+      nativeProps.children = content;
+    }
+
     return nativeProps;
   }
 
@@ -10167,7 +10177,7 @@ function updateOptionsIfPendingUpdateAndMounted() {
     var value = LinkedValueUtils.getValue(props);
 
     if (value != null) {
-      updateOptions(this, props, value);
+      updateOptions(this, Boolean(props.multiple), value);
     }
   }
 }
@@ -11246,7 +11256,9 @@ var DOM_OPERATION_TYPES = {
   'setValueForProperty': 'update attribute',
   'setValueForAttribute': 'update attribute',
   'deleteValueForProperty': 'remove attribute',
-  'dangerouslyReplaceNodeWithMarkupByID': 'replace'
+  'setValueForStyles': 'update styles',
+  'replaceNodeWithMarkup': 'replace',
+  'updateTextContent': 'set textContent'
 };
 
 function getTotalTime(measurements) {
@@ -11980,6 +11992,10 @@ var ReactEmptyComponentInjection = {
   }
 };
 
+function registerNullComponentID() {
+  ReactEmptyComponentRegistry.registerNullComponentID(this._rootNodeID);
+}
+
 var ReactEmptyComponent = function (instantiate) {
   this._currentElement = null;
   this._rootNodeID = null;
@@ -11988,7 +12004,7 @@ var ReactEmptyComponent = function (instantiate) {
 assign(ReactEmptyComponent.prototype, {
   construct: function (element) {},
   mountComponent: function (rootID, transaction, context) {
-    ReactEmptyComponentRegistry.registerNullComponentID(rootID);
+    transaction.getReactMountReady().enqueue(registerNullComponentID, this);
     this._rootNodeID = rootID;
     return ReactReconciler.mountComponent(this._renderedComponent, rootID, transaction, context);
   },
@@ -16294,7 +16310,7 @@ module.exports = ReactUpdates;
 
 'use strict';
 
-module.exports = '0.14.3';
+module.exports = '0.14.8';
 },{}],122:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -17389,6 +17405,7 @@ var warning = require('fbjs/lib/warning');
  */
 var EventInterface = {
   type: null,
+  target: null,
   // currentTarget is set when dispatching; no use in copying it here
   currentTarget: emptyFunction.thatReturnsNull,
   eventPhase: null,
@@ -17422,8 +17439,6 @@ function SyntheticEvent(dispatchConfig, dispatchMarker, nativeEvent, nativeEvent
   this.dispatchConfig = dispatchConfig;
   this.dispatchMarker = dispatchMarker;
   this.nativeEvent = nativeEvent;
-  this.target = nativeEventTarget;
-  this.currentTarget = nativeEventTarget;
 
   var Interface = this.constructor.Interface;
   for (var propName in Interface) {
@@ -17434,7 +17449,11 @@ function SyntheticEvent(dispatchConfig, dispatchMarker, nativeEvent, nativeEvent
     if (normalize) {
       this[propName] = normalize(nativeEvent);
     } else {
-      this[propName] = nativeEvent[propName];
+      if (propName === 'target') {
+        this.target = nativeEventTarget;
+      } else {
+        this[propName] = nativeEvent[propName];
+      }
     }
   }
 
@@ -20030,4 +20049,4 @@ module.exports = validateDOMNesting;
 
 module.exports = require('./lib/React');
 
-},{"./lib/React":61}]},{},[4]);
+},{"./lib/React":61}]},{},[8]);
