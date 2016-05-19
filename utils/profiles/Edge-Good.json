@@ -1,5 +1,5 @@
 {
-    "content": {
+    "shaping": {
         "down": {
             "corruption": {
                 "correlation": 0,
@@ -7,15 +7,15 @@
             },
             "delay": {
                 "correlation": 0,
-                "delay": "350",
+                "delay": 350,
                 "jitter": 0
             },
             "iptables_options": [],
             "loss": {
                 "correlation": 0,
-                "percentage": "0"
+                "percentage": 0
             },
-            "rate": "250",
+            "rate": 250,
             "reorder": {
                 "correlation": 0,
                 "gap": 0,
@@ -29,15 +29,15 @@
             },
             "delay": {
                 "correlation": 0,
-                "delay": "370",
+                "delay": 370,
                 "jitter": 0
             },
             "iptables_options": [],
             "loss": {
                 "correlation": 0,
-                "percentage": "0"
+                "percentage": 0
             },
-            "rate": "200",
+            "rate": 200,
             "reorder": {
                 "correlation": 0,
                 "gap": 0,
