@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 if [ "$(whoami)" != "root" ] ; then
     sudo "$0" 
