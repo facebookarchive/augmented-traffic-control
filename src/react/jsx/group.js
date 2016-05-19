@@ -110,7 +110,16 @@ var InGroup = React.createClass({
   leaveGroupCB: function() {
     this.props.client.leaveGroup(this.state.token.id, this.state.token, function(rc) {
       if (rc.status == 200) {
-        this.props.fetchGroup();
+        if (this.props.client.dual_stack()) {
+          this.props.client.leaveGroupSecondary(
+                this.state.token.id,
+		this.state.token,
+                function(rc) { // eslint-disable-line no-unused-vars
+            this.props.fetchGroup();
+          });
+        } else {
+          this.props.fetchGroup();
+        }
       }
     }.bind(this))
   },

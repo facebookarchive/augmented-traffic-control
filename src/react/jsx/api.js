@@ -87,6 +87,10 @@ AtcRestClient.prototype.leaveGroup = function(id, token, callback) {
   this.api_call('POST', 'group/' + id.toString() + '/leave', callback, token)
 }
 
+AtcRestClient.prototype.leaveGroupSecondary = function(id, token, callback) {
+  this.secondary_call('POST', 'group/' + id.toString() + '/leave', callback, token)
+}
+
 AtcRestClient.prototype.joinGroup = function(id, token, callback) {
   this.api_call('POST', 'group/' + id.toString() + '/join', callback, token)
 }
