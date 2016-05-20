@@ -10,10 +10,8 @@
 var React = require('react');
 var AtcRestClient = require('./api');
 var CollapsePanel = require('./utils').CollapsePanel;
+var SimpleShapingPanel = require('./simple_shaping');
 var ServerInfoPanel = require('./server');
-var GroupPanel = require('./group');
-var ProfilePanel = require('./profiles');
-var ShapingPanel = require('./shaping');
 
 var Atc = React.createClass({
   getInitialState: function() {
@@ -22,33 +20,40 @@ var Atc = React.createClass({
       profiles: null,
       potential: null,
       current: null,
-      changed: false,
+      token: null,
+      group: null,
     };
   },
 
   componentDidMount: function() {
+    this.updateToken();
     this.updateState();
-    this.update_interval = setInterval(this.updateState, 3000);
+    this.update_state_interval = setInterval(this.updateState, 3000);
+    this.fetch_group_interval = setInterval(this.fetchGroup, 1000);
   },
 
   componentWillUnmount: function() {
-    clearInterval(this.update_interval);
+    if (this.update_state_interval) {
+      clearInterval(this.update_state_interval);
+    }
+    if (this.fetch_group_interval != null) {
+      clearInterval(this.fetch_group_interval);
+    }
   },
 
   updateState: function() {
     this.fetchProfiles();
-    this.fetchShaping();
   },
 
-  createNewProfile: function(name) {
-    // FIXME SETTINGS
-    this.state.client.createProfile(
-      {name:name, shaping:this.state.potential.shaping}, function(rc) {
-        if (rc.status == 200) {
-          this.fetchProfiles();
-        }
-      }.bind(this)
-    );
+  updateToken: function() {
+    if ( this.state.group == null){
+        return;
+    }
+    this.state.client.getToken(this.state.group.id, function(rc) {
+      if (rc.status == 200) {
+        this.setState({token: rc.json});
+      }
+    }.bind(this));
   },
 
   fetchProfiles: function() {
@@ -62,67 +67,125 @@ var Atc = React.createClass({
   },
 
   selectProfile: function(shaping) {
+    console.log(shaping);
     this.setState({
       potential: {shaping: shaping},
-      changed: true,
     });
   },
 
-  fetchShaping: function() {
-    this.state.client.getShaping(function(rc) {
-      var current = null;
-      if (rc.status != 200) {
-        current = null;
+  createGroupCB: function() {
+    var ok = true;
+    var addresses = this.state.client.addresses;
+    console.info('Creating group against ' + addresses['primary']);
+    this.state.client.createGroup(function(rc) {
+      if (rc.status == 200) {
+        if (this.state.client.dual_stack()) {
+          console.info('Dual stacked. joining group ' + rc.json.id + ' against ' + addresses['secondary']);
+          this.state.client.joinGroupSecondary(
+                rc.json.id,
+                {token: rc.json.token.toString()},
+                function(rc) { // eslint-disable-line no-unused-vars
+            if (rc.status != 200) {
+                console.error('Failed to join group on' + addresses['secondary'] + ' endpoint with HTTP response ' + rc.status);
+                ok = false;
+            }
+          });
+        }
       } else {
-        current = rc.json;
+        console.error('Failed to create group on' + addresses['primary'] + 'endpoint with HTTP response ' + rc.status);
+        ok = false;
       }
-      this.setState({current: current});
-      if (this.state.changed) {
-        // Don't overwrite the user-provided info in potential
-        return;
-      }
-      if (rc.status != 200 || rc.json.shaping == null) {
-        this.setState({potential: {shaping: this.state.client.defaultShaping()}});
+    }.bind(this));
+    if (ok) {
+      this.fetchGroup();
+    }
+    return ok;
+  },
+
+  leaveGroupCB: function() {
+    var ok = true;
+    this.fetchGroup();
+    var addresses = this.state.client.addresses;
+    console.info('Leaving group ' + this.state.token.id + ' against ' + addresses['primary']);
+    this.state.client.leaveGroup(this.state.token.id, this.state.token, function(rc) {
+      if (rc.status == 200) {
+        if (this.state.client.dual_stack()) {
+          console.info('Dual stacked. leaving group ' + rc.json.id + ' against ' + addresses['secondary']);
+          this.state.client.leaveGroupSecondary(
+                this.state.token.id,
+                this.state.token,
+                function(rc) { // eslint-disable-line no-unused-vars
+            if (rc.status != 200) {
+                console.error('Failed to leave group ' + this.state.token.id + ' against ' + addresses['secondary'] + ' endpoint with HTTP response ' + rc.status);
+                ok = false;
+            }
+          });
+        }
       } else {
-        this.setState({potential: rc.json});
+        console.error('Failed to leave group ' + this.state.token.id + ' against ' + addresses['primary'] + ' endpoint with HTTP response ' + rc.status);
+        ok = false;
+      }
+    }.bind(this));
+    return ok;
+  },
+
+  fetchGroup: function() {
+    // Get group from API
+    this.state.client.getGroup(function(rc) {
+      if (rc.status == 200) {
+        this.setState({group: rc.json});
+        this.updateToken();
+      } else if (rc.status == 204) {
+        this.setState({group: null, token: null});
       }
     }.bind(this));
   },
 
   performShaping: function() {
-    this.state.client.shape(this.state.potential, function(rc) {
-      if (rc.status == 200) {
-        this.setState({
-          current: rc.json.shaping,
-          potential: rc.json.shaping,
-          changed: false,
-        });
-      }
-    }.bind(this));
+    if (this.createGroupCB()) {
+      this.state.client.shape(this.state.potential, function(rc) {
+          if (rc.status == 200) {
+              this.setState({
+                current: rc.json.shaping,
+                potential: {shaping: rc.json.shaping},
+                changed: false,
+              });
+          }
+      }.bind(this));
+    }
   },
 
   clearShaping: function() {
-    this.state.client.unshape(function(rc) {
-      if (rc.status == 204) {
-        // Notify unshaped successfully
-        this.setState({
-          current: null,
-        });
+    this.leaveGroupCB();
+  },
+
+  toggleShaping: function() {
+    // If shaped, e.g we are in a group, unshaped
+    if (this.state.group != null) {
+      console.log('toggleShaping: unshaping');
+      this.clearShaping();
+    } else {
+      if (this.getPotentialShaping() == null) {
+        // Do nothing, should alert.
+      } else {
+        this.performShaping();
+        console.log('toggleShaping: shaping');
       }
-    }.bind(this));
+    }
+  },
+
+  getPotentialShaping: function() {
+    if (this.state.potential == null || this.state.potential.shaping == null) {
+      return null;
+    }
+    return this.state.potential.shaping;
   },
 
   render: function () {
     return (
       <div>
-        <CollapsePanel title="Profiles">
-          <ProfilePanel profiles={this.state.profiles} onSave={this.createNewProfile} onSelect={this.selectProfile} />
-        </CollapsePanel>
         <CollapsePanel title="Shaping">
-          <ShapingPanel current={this.state.current} potential={this.state.potential} shapingDisabled={!this.state.changed} onPerformShaping={this.performShaping} onClearShaping={this.clearShaping} onSetPotential={this.selectProfile} />
-        </CollapsePanel>
-        <CollapsePanel title="Group">
-          <GroupPanel client={this.state.client} />
+          <SimpleShapingPanel onToggleShaping={this.toggleShaping} profiles={this.state.profiles} onSelectProfile={this.selectProfile} shaped={this.state.group != null} potential_shaping={this.getPotentialShaping()} />
         </CollapsePanel>
         <CollapsePanel title="Server Info">
           <ServerInfoPanel client={this.state.client} />
