@@ -6,9 +6,10 @@
  */
 
 
-function AtcRestClient (endpoint) {
+function AtcRestClient (callback, endpoint) {
   this.endpoint = endpoint || '/api/v1/';
-  this.addresses = {'primary': "", 'secondary': ""};
+  this.addresses = {'primary': "", 'secondary': "", 'ipv4': "", 'ipv6': ""};
+  this.info = null;
 
   function _add_ending_slash(string) {
     if (string[string.length -1] != '/') {
@@ -29,6 +30,7 @@ function AtcRestClient (endpoint) {
     * Also wrap ipv6 with square brackets and set a sane default port.
     */
     if (addr == "") {
+      console.warn('addr is empty, defaulting to hostname: ' + method + ' ' + urn);
       addr = document.location["hostname"];
     }
     var port = document.location["port"];
@@ -51,9 +53,48 @@ function AtcRestClient (endpoint) {
         if (callback !== undefined) {
           callback(rc);
         }
+      },
+    });
+  };
+
+  this.new_raw_call = function (addr, method, urn, callbacks, data) {
+    /**
+    * If addr is empty, default to using the one from the url we connected to.
+    * Also wrap ipv6 with square brackets and set a sane default port.
+    */
+    if (addr == "") {
+      addr = document.location["hostname"];
+    }
+    var port = document.location["port"];
+    // IPv6 addresses must be enclosed in square brackets.
+    if (addr.indexOf(':') >= 0 && addr[0] != '[') {
+      addr = '[' + addr + ']';
+    }
+    urn = _add_ending_slash(urn);
+    $.ajax({
+      url: '//' + addr + (port != "" ? ":" + port : "") + this.endpoint + urn,
+      dataType: 'json',
+      type: method,
+      data: data && JSON.stringify(data),
+      contentType: 'application/json; charset=utf-8',
+      complete: function (xhr, status) {
+        if (callbacks['complete'] !== undefined) {
+          callbacks['complete'](xhr, status);
+        }
+      },
+      error: function (xhr, status, error) {
+        if (callbacks['error'] !== undefined) {
+          callbacks['error'](xhr, status, error);
+        }
+      },
+      success: function (data, status, xhr) {
+        if (callbacks['success'] !== undefined) {
+            callbacks['success'](data, status, xhr);
+        }
       }
     });
   };
+
 
   this.api_call = function (method, urn, callback, data) {
     this.raw_call(this.addresses['primary'], method, urn, callback, data);
@@ -63,13 +104,49 @@ function AtcRestClient (endpoint) {
     this.raw_call(this.addresses['secondary'], method, urn, callback, data);
   };
 
+  this.ipv4_call = function (method, urn, callback, data) {
+     this.raw_call(this.addresses['ipv4'], method, urn, callback, data);
+  }
+
+  this.ipv6_call = function (method, urn, callback, data) {
+     this.raw_call(this.addresses['ipv6'], method, urn, callback, data);
+  }
+
   function discover_addresses(rc) {
     var c = rc['json']['client'];
+    var api = rc['json']['atc_api'];
+    this.info = rc['json'];
     this.addresses['primary'] = c['server_primary'];
     this.addresses['secondary'] = c['server_secondary'];
+    this.addresses['ipv4'] = api['ipv4_addr'];
+    this.addresses['ipv6'] = api['ipv6_addr'];
+    console.log('AtcRestClient initialized');
+    if (callback !== undefined) {
+        callback();
+    }
   }
 
   this.api_call('GET', 'info', discover_addresses.bind(this));
+}
+
+
+AtcRestClient.prototype.testIP = function (addr, callback) {
+  if (addr === "") {
+    callback(false);
+    return;
+  }
+  this.new_raw_call(addr, 'GET', 'info', {
+    'success': function() {
+        callback(true);
+    },
+    'error': function() {
+        callback(false);
+    }
+  });
+}
+
+AtcRestClient.prototype.getGroupByAddr = function (addr, callback) {
+  this.new_raw_call(addr, 'GET', 'group', {complete: callback});
 }
 
 AtcRestClient.prototype.getServerInfo = function (callback) {

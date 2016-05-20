@@ -8,9 +8,10 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
-function AtcRestClient(endpoint) {
+function AtcRestClient(callback, endpoint) {
   this.endpoint = endpoint || '/api/v1/';
-  this.addresses = { 'primary': "", 'secondary': "" };
+  this.addresses = { 'primary': "", 'secondary': "", 'ipv4': "", 'ipv6': "" };
+  this.info = null;
 
   function _add_ending_slash(string) {
     if (string[string.length - 1] != '/') {
@@ -31,6 +32,7 @@ function AtcRestClient(endpoint) {
     * Also wrap ipv6 with square brackets and set a sane default port.
     */
     if (addr == "") {
+      console.warn('addr is empty, defaulting to hostname: ' + method + ' ' + urn);
       addr = document.location["hostname"];
     }
     var port = document.location["port"];
@@ -58,6 +60,44 @@ function AtcRestClient(endpoint) {
     });
   };
 
+  this.new_raw_call = function (addr, method, urn, callbacks, data) {
+    /**
+    * If addr is empty, default to using the one from the url we connected to.
+    * Also wrap ipv6 with square brackets and set a sane default port.
+    */
+    if (addr == "") {
+      addr = document.location["hostname"];
+    }
+    var port = document.location["port"];
+    // IPv6 addresses must be enclosed in square brackets.
+    if (addr.indexOf(':') >= 0 && addr[0] != '[') {
+      addr = '[' + addr + ']';
+    }
+    urn = _add_ending_slash(urn);
+    $.ajax({
+      url: '//' + addr + (port != "" ? ":" + port : "") + this.endpoint + urn,
+      dataType: 'json',
+      type: method,
+      data: data && JSON.stringify(data),
+      contentType: 'application/json; charset=utf-8',
+      complete: function complete(xhr, status) {
+        if (callbacks['complete'] !== undefined) {
+          callbacks['complete'](xhr, status);
+        }
+      },
+      error: function error(xhr, status, _error) {
+        if (callbacks['error'] !== undefined) {
+          callbacks['error'](xhr, status, _error);
+        }
+      },
+      success: function success(data, status, xhr) {
+        if (callbacks['success'] !== undefined) {
+          callbacks['success'](data, status, xhr);
+        }
+      }
+    });
+  };
+
   this.api_call = function (method, urn, callback, data) {
     this.raw_call(this.addresses['primary'], method, urn, callback, data);
   };
@@ -66,14 +106,49 @@ function AtcRestClient(endpoint) {
     this.raw_call(this.addresses['secondary'], method, urn, callback, data);
   };
 
+  this.ipv4_call = function (method, urn, callback, data) {
+    this.raw_call(this.addresses['ipv4'], method, urn, callback, data);
+  };
+
+  this.ipv6_call = function (method, urn, callback, data) {
+    this.raw_call(this.addresses['ipv6'], method, urn, callback, data);
+  };
+
   function discover_addresses(rc) {
     var c = rc['json']['client'];
+    var api = rc['json']['atc_api'];
+    this.info = rc['json'];
     this.addresses['primary'] = c['server_primary'];
     this.addresses['secondary'] = c['server_secondary'];
+    this.addresses['ipv4'] = api['ipv4_addr'];
+    this.addresses['ipv6'] = api['ipv6_addr'];
+    console.log('AtcRestClient initialized');
+    if (callback !== undefined) {
+      callback();
+    }
   }
 
   this.api_call('GET', 'info', discover_addresses.bind(this));
 }
+
+AtcRestClient.prototype.testIP = function (addr, callback) {
+  if (addr === "") {
+    callback(false);
+    return;
+  }
+  this.new_raw_call(addr, 'GET', 'info', {
+    'success': function success() {
+      callback(true);
+    },
+    'error': function error() {
+      callback(false);
+    }
+  });
+};
+
+AtcRestClient.prototype.getGroupByAddr = function (addr, callback) {
+  this.new_raw_call(addr, 'GET', 'group', { complete: callback });
+};
 
 AtcRestClient.prototype.getServerInfo = function (callback) {
   this.api_call('GET', 'info', callback);
@@ -196,37 +271,81 @@ var CollapsePanel = require('./utils').CollapsePanel;
 var SimpleShapingPanel = require('./simple_shaping');
 var ServerInfoPanel = require('./server');
 
+function isIPv6(addr) {
+  return addr.indexOf(':') >= 0;
+}
+
 var Atc = React.createClass({
   displayName: 'Atc',
 
   getInitialState: function getInitialState() {
+    this.update_intervals = {};
     return {
-      client: new AtcRestClient(),
+      client: null,
       profiles: null,
       potential: null,
       current: null,
       token: null,
-      group: null
+      group: null,
+      info: null,
+      ipv4_ok: false,
+      ipv6_ok: false,
+      ipv4_shaped: false,
+      ipv6_shaped: false
     };
   },
 
   componentDidMount: function componentDidMount() {
-    this.updateToken();
-    this.updateState();
-    this.update_state_interval = setInterval(this.updateState, 3000);
-    this.fetch_group_interval = setInterval(this.fetchGroup, 1000);
+    var client = new AtcRestClient(function () {
+      this.setState({
+        client: client,
+        info: client.info
+      });
+      this.updateToken();
+
+      this.updateProfiles();
+      this.update_intervals['profiles'] = setInterval(this.updateProfiles, 300000);
+      this.updateInfo();
+      this.update_intervals['info'] = setInterval(this.updateInfo, 300000);
+
+      this.updateReacheability();
+      this.update_intervals['reacheability'] = setInterval(this.updateReacheability, 6000);
+
+      this.fetchGroup();
+      this.update_intervals['group'] = setInterval(this.fetchGroup, 1000);
+    }.bind(this));
   },
 
   componentWillUnmount: function componentWillUnmount() {
-    if (this.update_state_interval) {
-      clearInterval(this.update_state_interval);
-    }
-    if (this.fetch_group_interval != null) {
-      clearInterval(this.fetch_group_interval);
+    for (update in this.update_intervals) {
+      clearInterval(this.update_intervals['update']);
     }
   },
 
-  updateState: function updateState() {
+  /**
+  * Update functions
+  */
+  updateInfo: function updateInfo() {
+    this.state.client.getServerInfo(function (rc) {
+      if (rc.status == 200) {
+        this.setState({ info: rc.json });
+      } else {
+        this.setState({ info: null });
+      }
+    }.bind(this));
+  },
+
+  updateReacheability: function updateReacheability() {
+    console.log("updating reacheability");
+    this.state.client.testIP(this.state.client.addresses['ipv4'], function (rc) {
+      this.setState({ ipv4_ok: rc });
+    }.bind(this));
+    this.state.client.testIP(this.state.client.addresses['ipv6'], function (rc) {
+      this.setState({ ipv6_ok: rc });
+    }.bind(this));
+  },
+
+  updateProfiles: function updateProfiles() {
     this.fetchProfiles();
   },
 
@@ -241,6 +360,9 @@ var Atc = React.createClass({
     }.bind(this));
   },
 
+  /**
+  * Profiles
+  */
   fetchProfiles: function fetchProfiles() {
     this.state.client.getProfiles(function (rc) {
       if (rc.status == 200) {
@@ -252,10 +374,27 @@ var Atc = React.createClass({
   },
 
   selectProfile: function selectProfile(shaping) {
-    console.log(shaping);
     this.setState({
       potential: { shaping: shaping }
     });
+  },
+
+  /**
+  * Groups
+  */
+  dualStackAccessible: function dualStackAccessible() {
+    var ok = false;
+    var addresses = this.state.client.addresses;
+    if (this.state.client.dual_stack()) {
+      if (addresses['secondary'].indexOf(':') >= 0 ? !this.state.ipv6_ok : !this.state.ipv4_ok) {
+        console.warn('Dual-stacked but secondary IP is not accessible!');
+      } else {
+        ok = true;
+      }
+    } else {
+      console.log('Not dual-stacked');
+    }
+    return ok;
   },
 
   createGroupCB: function createGroupCB() {
@@ -264,18 +403,18 @@ var Atc = React.createClass({
     console.info('Creating group against ' + addresses['primary']);
     this.state.client.createGroup(function (rc) {
       if (rc.status == 200) {
-        if (this.state.client.dual_stack()) {
+        if (this.dualStackAccessible()) {
           console.info('Dual stacked. joining group ' + rc.json.id + ' against ' + addresses['secondary']);
           this.state.client.joinGroupSecondary(rc.json.id, { token: rc.json.token.toString() }, function (rc) {
             // eslint-disable-line no-unused-vars
             if (rc.status != 200) {
-              console.error('Failed to join group on' + addresses['secondary'] + ' endpoint with HTTP response ' + rc.status);
+              console.error('Failed to join group on ' + addresses['secondary'] + ' endpoint with HTTP response ' + rc.status);
               ok = false;
             }
           });
         }
       } else {
-        console.error('Failed to create group on' + addresses['primary'] + 'endpoint with HTTP response ' + rc.status);
+        console.error('Failed to create group on ' + addresses['primary'] + 'endpoint with HTTP response ' + rc.status);
         ok = false;
       }
     }.bind(this));
@@ -287,12 +426,11 @@ var Atc = React.createClass({
 
   leaveGroupCB: function leaveGroupCB() {
     var ok = true;
-    this.fetchGroup();
     var addresses = this.state.client.addresses;
     console.info('Leaving group ' + this.state.token.id + ' against ' + addresses['primary']);
     this.state.client.leaveGroup(this.state.token.id, this.state.token, function (rc) {
       if (rc.status == 200) {
-        if (this.state.client.dual_stack()) {
+        if (this.dualStackAccessible()) {
           console.info('Dual stacked. leaving group ' + rc.json.id + ' against ' + addresses['secondary']);
           this.state.client.leaveGroupSecondary(this.state.token.id, this.state.token, function (rc) {
             // eslint-disable-line no-unused-vars
@@ -300,28 +438,55 @@ var Atc = React.createClass({
               console.error('Failed to leave group ' + this.state.token.id + ' against ' + addresses['secondary'] + ' endpoint with HTTP response ' + rc.status);
               ok = false;
             }
-          });
+          }.bind(this));
         }
       } else {
         console.error('Failed to leave group ' + this.state.token.id + ' against ' + addresses['primary'] + ' endpoint with HTTP response ' + rc.status);
         ok = false;
       }
     }.bind(this));
+    this.fetchGroup();
     return ok;
   },
 
   fetchGroup: function fetchGroup() {
     // Get group from API
-    this.state.client.getGroup(function (rc) {
-      if (rc.status == 200) {
-        this.setState({ group: rc.json });
+    // Fixme... this only use primary addr
+    var addresses = this.state.client.addresses;
+    this.state.client.getGroupByAddr(addresses['primary'], function (xhr) {
+      var shaped = false;
+      if (xhr.status == 200) {
+        this.setState({ group: xhr.responseJSON });
         this.updateToken();
-      } else if (rc.status == 204) {
+        shaped = true;
+      } else if (xhr.status == 204) {
         this.setState({ group: null, token: null });
       }
+      if (isIPv6(addresses['primary'])) {
+        this.setState({ ipv6_shaped: shaped });
+      } else {
+        this.setState({ ipv4_shaped: shaped });
+      }
     }.bind(this));
+
+    if (this.dualStackAccessible()) {
+      this.state.client.getGroupByAddr(addresses['secondary'], function (xhr) {
+        var shaped = false;
+        if (xhr.status == 200) {
+          shaped = true;
+        }
+        if (isIPv6(addresses['secondary'])) {
+          this.setState({ ipv6_shaped: shaped });
+        } else {
+          this.setState({ ipv4_shaped: shaped });
+        }
+      }.bind(this));
+    }
   },
 
+  /**
+  * Shaping
+  */
   performShaping: function performShaping() {
     if (this.createGroupCB()) {
       this.state.client.shape(this.state.potential, function (rc) {
@@ -362,6 +527,9 @@ var Atc = React.createClass({
     return this.state.potential.shaping;
   },
 
+  /**
+  * Rendering
+  */
   render: function render() {
     return React.createElement(
       'div',
@@ -374,7 +542,7 @@ var Atc = React.createClass({
       React.createElement(
         CollapsePanel,
         { title: 'Server Info' },
-        React.createElement(ServerInfoPanel, { client: this.state.client })
+        React.createElement(ServerInfoPanel, { info: this.state.info, ipv4_ok: this.state.ipv4_ok, ipv6_ok: this.state.ipv6_ok, ipv4_shaped: this.state.ipv4_shaped, ipv6_shaped: this.state.ipv6_shaped })
       )
     );
   }
@@ -399,43 +567,13 @@ var React = require('react');
 var ServerInfoPanel = React.createClass({
   displayName: 'ServerInfoPanel',
 
-  getInitialState: function getInitialState() {
-    return {
-      info: null
-    };
-  },
-
-  componentDidMount: function componentDidMount() {
-    this.updateInfo();
-    this.update_interval = setInterval(this.updateInfo, 1000);
-  },
-
-  componentWillUnmount: function componentWillUnmount() {
-    clearInterval(this.update_interval);
-  },
-
-  updateInfo: function updateInfo() {
-    this.props.client.getServerInfo(function (rc) {
-      if (rc.status == 200) {
-        this.setState(function (state, props) {
-          // eslint-disable-line no-unused-vars
-          return {
-            info: rc.json
-          };
-        });
-      } else {
-        this.setState(function (state, props) {
-          // eslint-disable-line no-unused-vars
-          return {
-            info: null
-          };
-        });
-      }
-    }.bind(this));
-  },
 
   render: function render() {
-    if (this.state.info == null) {
+    function print_state(b) {
+      return b ? 'OK' : 'NO';
+    }
+
+    if (this.props.info == null) {
       return React.createElement(
         'div',
         null,
@@ -452,11 +590,48 @@ var ServerInfoPanel = React.createClass({
         React.createElement(
           'div',
           null,
+          'IPv4: Connect ',
+          React.createElement(
+            'code',
+            null,
+            print_state(this.props.ipv4_ok)
+          ),
+          ' Shaped: ',
+          React.createElement(
+            'code',
+            null,
+            print_state(this.props.ipv4_shaped)
+          )
+        ),
+        React.createElement(
+          'div',
+          null,
+          'IPv6: Connect ',
+          React.createElement(
+            'code',
+            null,
+            print_state(this.props.ipv6_ok)
+          ),
+          ' Shaped: ',
+          React.createElement(
+            'code',
+            null,
+            print_state(this.props.ipv6_shaped)
+          )
+        ),
+        React.createElement(
+          'div',
+          null,
+          ' '
+        ),
+        React.createElement(
+          'div',
+          null,
           'API Version: ',
           React.createElement(
             'code',
             null,
-            this.state.info.atc_api.version
+            this.props.info.atc_api.version
           )
         ),
         React.createElement(
@@ -466,7 +641,7 @@ var ServerInfoPanel = React.createClass({
           React.createElement(
             'code',
             null,
-            this.state.info.atc_daemon.version
+            this.props.info.atc_daemon.version
           )
         ),
         React.createElement(
@@ -476,7 +651,7 @@ var ServerInfoPanel = React.createClass({
           React.createElement(
             'code',
             null,
-            this.state.info.atc_daemon.platform
+            this.props.info.atc_daemon.platform
           )
         )
       );
