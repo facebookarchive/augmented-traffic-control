@@ -87,10 +87,10 @@ func TestGetsToken(t *testing.T) {
 	cli := srv.client(Addr1)
 
 	var group atc_thrift.ShapingGroup
-	cli.PostJson(1, nil, &group, url("/group"))
+	cli.PostJson(1, nil, &group, _url("/group"))
 
 	var token Token
-	cli.GetJson(1, &token, url("group", group.ID, "token"))
+	cli.GetJson(1, &token, _url("group", group.ID, "token"))
 
 	if token.Token == "" {
 		t.Errorf("Invalid token: %q", token.Token)
@@ -106,10 +106,10 @@ func TestJoinsGroup(t *testing.T) {
 	var group atc_thrift.ShapingGroup
 	cli1.PostJson(1, nil, &group, "/group")
 	var token Token
-	cli1.GetJson(1, &token, url("group", group.ID, "token"))
+	cli1.GetJson(1, &token, _url("group", group.ID, "token"))
 
 	var resp MemberResponse
-	cli2.PostJson(1, token, &resp, url("group", group.ID, "join"))
+	cli2.PostJson(1, token, &resp, _url("group", group.ID, "join"))
 
 	if resp.Member != Addr2 {
 		t.Errorf("Invalid member: %q != %q", Addr2, resp.Member)
@@ -118,7 +118,7 @@ func TestJoinsGroup(t *testing.T) {
 		t.Errorf("Invalid group ID: %d != %d", group.ID, resp.Id)
 	}
 
-	cli1.GetJson(1, &group, url("group", group.ID))
+	cli1.GetJson(1, &group, _url("group", group.ID))
 
 	checkSetContains(t, group.Members, Addr1, Addr2)
 }
@@ -132,12 +132,12 @@ func TestLeavesGroup(t *testing.T) {
 	var group atc_thrift.ShapingGroup
 	cli1.PostJson(1, nil, &group, "/group")
 	var token Token
-	cli1.GetJson(1, &token, url("group", group.ID, "token"))
+	cli1.GetJson(1, &token, _url("group", group.ID, "token"))
 
 	var resp MemberResponse
-	cli2.PostJson(1, token, &resp, url("group", group.ID, "join"))
+	cli2.PostJson(1, token, &resp, _url("group", group.ID, "join"))
 
-	cli2.PostJson(1, token, &resp, url("group", group.ID, "leave"))
+	cli2.PostJson(1, token, &resp, _url("group", group.ID, "leave"))
 
 	if resp.Member != Addr2 {
 		t.Errorf("Invalid member: %q != %q", Addr2, resp.Member)
@@ -146,7 +146,7 @@ func TestLeavesGroup(t *testing.T) {
 		t.Errorf("Invalid group ID: %d != %d", group.ID, resp.Id)
 	}
 
-	cli1.GetJson(1, &group, url("group", group.ID))
+	cli1.GetJson(1, &group, _url("group", group.ID))
 
 	checkSetContains(t, group.Members, Addr1)
 
@@ -214,7 +214,7 @@ func TestDeletesProfiles(t *testing.T) {
 	var profile Profile
 	cli.PostJson(1, ProfileRequest{Name: "bar", Shaping: &atc_thrift.Shaping{}}, &profile, "/profile")
 
-	cli.Delete(1, url("profile", profile.Id))
+	cli.Delete(1, _url("profile", profile.Id))
 
 	var profiles Profiles
 	cli.GetJson(1, &profiles, "/profile")
@@ -249,13 +249,12 @@ func newTestServer(t *testing.T) testServer {
 			IP:   ServerAddr,
 			Port: 0,
 		},
-		ThriftAddr:  nil,
-		ThriftProto: "",
-		DBDriver:    "sqlite3",
-		DBConn:      ":memory:",
-		V4:          "0.0.0.0",
-		V6:          "::",
-		ProxyAddr:   "",
+		ThriftUrl: nil,
+		DBDriver:  "sqlite3",
+		DBConn:    ":memory:",
+		V4:        "0.0.0.0",
+		V6:        "::",
+		ProxyAddr: "",
 	}
 	srv, err := ListenAndServe(opts)
 	if err != nil {
@@ -369,7 +368,7 @@ func (c testClient) url(resp *http.Response) string {
 	return resp.Request.URL.Path
 }
 
-func url(url_items ...interface{}) string {
+func _url(url_items ...interface{}) string {
 	url := "/"
 	for _, i := range url_items {
 		url = path.Join(url, fmt.Sprint(i))
