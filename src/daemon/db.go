@@ -10,6 +10,8 @@ import (
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/iptables"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const (
@@ -181,6 +183,7 @@ func (runner *DbRunner) UpdateGroup(group DbGroup) (*DbGroup, error) {
 		tc_bytes = buf.Bytes()
 	}
 	group.timeout = time.Now().Add(SHAPING_TIMEOUT_LENGTH)
+	fmt.Printf("%T %T %T %T", group.id, group.secret, tc_bytes, group.timeout.Unix())
 	_, err = runner.prep("group update").Exec(group.id, group.secret, tc_bytes, group.timeout.Unix())
 	if err != nil {
 		runner.log(err)

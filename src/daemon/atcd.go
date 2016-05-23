@@ -7,7 +7,6 @@ import (
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/iptables"
 	"github.com/hgfischer/go-otp"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/pborman/uuid"
 )
 
