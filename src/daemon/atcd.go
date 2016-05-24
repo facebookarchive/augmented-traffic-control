@@ -136,6 +136,7 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 		return nil, err
 	}
 	grp.ID = dbgrp.id
+	defer atcd.Cleanup()
 	return grp, nil
 }
 
@@ -222,6 +223,7 @@ func (atcd *Atcd) JoinGroup(id int64, to_add, token string) error {
 	if err := atcd.shaper.JoinGroup(id, tgt); err != nil {
 		return err
 	}
+	defer atcd.Cleanup()
 	return err
 }
 
@@ -250,8 +252,7 @@ func (atcd *Atcd) LeaveGroup(id int64, to_remove, token string) error {
 	if err := atcd.shaper.LeaveGroup(id, tgt); err != nil {
 		return err
 	}
-	// FIXME: clean shaper's group too!
-	defer atcd.db.Cleanup()
+	defer atcd.Cleanup()
 	return atcd.db.DeleteMember(tgt)
 }
 
@@ -316,6 +317,10 @@ func (atcd *Atcd) otp(group *DbGroup) *otp.TOTP {
 		Secret: fmt.Sprintf("%s::%d", group.secret, group.id),
 		Period: atcd.options.OtpTimeout,
 	}
+}
+
+func (atcd *Atcd) Cleanup() {
+	atcd.db.Cleanup()
 }
 
 func makeSecret() string {

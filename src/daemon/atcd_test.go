@@ -1,8 +1,8 @@
 package daemon
 
 import (
-	"runtime"
 	"testing"
+	"time"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/shaping"
@@ -46,15 +46,13 @@ func TestAtcdLeaveGroup(_t *testing.T) {
 }
 
 func TestAtcdCleansEmptyGroups(_t *testing.T) {
-	_t.Skip("something changed with how goroutines were run and this is broken in 1.6. Deferring fixing until we refactor the cleanup logic")
 	t := Setup(_t, true)
 	defer t.Cleanup()
 	grp := t.CreateGroup("1.2.3.4")
 	token := t.token(grp)
 	t.LeaveGroup(grp.ID, "1.2.3.4", token)
 
-	// Allow other goroutines to run
-	runtime.Gosched()
+	time.Sleep(1 * time.Millisecond)
 
 	grp, err := t.atcd.GetGroup(grp.ID)
 	if err != NoSuchItem {
