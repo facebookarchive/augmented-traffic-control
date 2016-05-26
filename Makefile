@@ -125,7 +125,7 @@ clean:
 
 # Remove all generated files and binaries
 clean-all: clean
-	rm -rf src/atc_thrift src/api/bindata.go
+	rm -rf src/atc_thrift src/assets/bindata.go
 
 # Copy built binaries into /usr/local/bin/
 install:
