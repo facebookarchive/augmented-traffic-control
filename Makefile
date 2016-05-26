@@ -40,7 +40,7 @@ bin/atcd: src/daemon/*.go src/atcd/*.go src/log/*.go src/shaping/*.go
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atcd
 
-bin/atc_api: src/api/*.go src/atc_api/*.go src/log/*.go
+bin/atc_api: src/api/*.go src/atc_api/*.go src/log/*.go src/assets/bindata.go
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atc_api
 
@@ -125,7 +125,7 @@ clean:
 
 # Remove all generated files and binaries
 clean-all: clean
-	rm -rf src/atc_thrift src/api/bindata.go
+	rm -rf src/atc_thrift src/assets/bindata.go
 
 # Copy built binaries into /usr/local/bin/
 install:
