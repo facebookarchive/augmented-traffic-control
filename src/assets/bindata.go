@@ -146,7 +146,7 @@ func staticJsIndexJs() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "static/js/index.js", size: 690753, mode: os.FileMode(436), modTime: time.Unix(1464220906, 0)}
+	info := bindataFileInfo{name: "static/js/index.js", size: 690753, mode: os.FileMode(436), modTime: time.Unix(1464803733, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
