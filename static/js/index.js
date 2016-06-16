@@ -550,7 +550,24 @@ var Atc = React.createClass({
 
 module.exports = Atc;
 
-},{"./api":1,"./server":3,"./simple_shaping":4,"./utils":5,"react":164}],3:[function(require,module,exports){
+},{"./api":1,"./server":4,"./simple_shaping":5,"./utils":6,"react":164}],3:[function(require,module,exports){
+'use strict';
+
+/**
+ * Copyright (c) 2014, Facebook, Inc.
+ * All rights reserved.  * *  This source code is licensed under the BSD-style license found in the
+ *  LICENSE file in the root directory of this source tree. An additional grant
+ *  of patent rights can be found in the PATENTS file in the same directory.
+ */
+
+// This is actually used once the JSX tag converts to javascript
+var React = require('react'); // eslint-disable-line no-unused-vars
+var ReactDOM = require('react-dom');
+var Atc = require('./atc.js');
+
+ReactDOM.render(React.createElement(Atc, null), document.getElementById('atc_demo_ui'));
+
+},{"./atc.js":2,"react":164,"react-dom":35}],4:[function(require,module,exports){
 'use strict';
 
 /**
@@ -661,7 +678,7 @@ var ServerInfoPanel = React.createClass({
 
 module.exports = ServerInfoPanel;
 
-},{"react":164}],4:[function(require,module,exports){
+},{"react":164}],5:[function(require,module,exports){
 'use strict';
 
 /**
@@ -744,7 +761,7 @@ var SimpleShapingPanel = React.createClass({
 
 module.exports = SimpleShapingPanel;
 
-},{"react":164}],5:[function(require,module,exports){
+},{"react":164}],6:[function(require,module,exports){
 "use strict";
 
 /**
@@ -831,24 +848,7 @@ module.exports = {
   JSONView: JSONView
 };
 
-},{"react":164}],6:[function(require,module,exports){
-'use strict';
-
-/**
- * Copyright (c) 2014, Facebook, Inc.
- * All rights reserved.  * *  This source code is licensed under the BSD-style license found in the
- *  LICENSE file in the root directory of this source tree. An additional grant
- *  of patent rights can be found in the PATENTS file in the same directory.
- */
-
-// This is actually used once the JSX tag converts to javascript
-var React = require('react'); // eslint-disable-line no-unused-vars
-var ReactDOM = require('react-dom');
-var Atc = require('./atc.js');
-
-ReactDOM.render(React.createElement(Atc, null), document.getElementById('atc_demo_ui'));
-
-},{"./atc.js":2,"react":164,"react-dom":35}],7:[function(require,module,exports){
+},{"react":164}],7:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -2125,6 +2125,9 @@ var currentQueue;
 var queueIndex = -1;
 
 function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
     draining = false;
     if (currentQueue.length) {
         queue = currentQueue.concat(queue);
@@ -19884,4 +19887,4 @@ module.exports = validateDOMNesting;
 
 module.exports = require('./lib/React');
 
-},{"./lib/React":59}]},{},[6]);
+},{"./lib/React":59}]},{},[3]);
