@@ -15,6 +15,7 @@ description      'Installs/Configures atc'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
 version          '0.1.0'
 
+depends 'apt'
 depends 'dhcp', '~> 2.2.2'
 depends 'python'
 depends 'simple_iptables', '~> 0.6.4'
