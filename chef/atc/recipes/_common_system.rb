@@ -14,7 +14,11 @@
 case node['platform_family']
 when 'rhel'
   include_recipe 'yum-epel'
+when 'debian'
+  include_recipe 'apt'
 end
+
+include_recipe 'python'
 
 group node['atc']['atcui']['group'] do
   system

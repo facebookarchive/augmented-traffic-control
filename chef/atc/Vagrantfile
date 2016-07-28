@@ -35,7 +35,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             box.berkshelf.enabled = true
             box.vm.provision :chef_solo do |chef|
                 chef.run_list = [
-                    "recipe[python]",
                     "recipe[atc::default]"
                 ]
                 if opts.fetch(:python_from_source, false)
