@@ -1,5 +1,9 @@
 # Changelog
 
+* 0.1.4
+    * Bump django to 1.9 and django-bootstrap-themes to 3.3.6
+    * Fix chef run on Ubuntu
+
 * 0.1.3
     * Support Django rest framework 3.2
 
