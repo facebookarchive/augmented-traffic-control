@@ -31,6 +31,7 @@ def profile_list(request):
 
     elif request.method == 'POST':
         data = JSONParser().parse(request)
+        data['content'] = str(data['content'])
         serializer = ProfileSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
