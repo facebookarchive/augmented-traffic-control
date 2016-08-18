@@ -1,5 +1,8 @@
 # Changelog
 
+* 0.1.5
+    * Fix handling of POSTed profiles. #287
+
 * 0.1.4
     * Bump django to 1.9 and django-bootstrap-themes to 3.3.6
     * Fix chef run on Ubuntu
