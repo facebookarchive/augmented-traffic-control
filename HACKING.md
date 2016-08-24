@@ -45,6 +45,14 @@ make
 
 This will download all atcd dependencies as well as build it, run tests and install it.
 
+### Making a static build
+
+Golang binary can easily be built sttatically, allowing to copy the binary around without even have to worry about libc. To build ATC statically, set the `STATICBUILD` environment variable to somehting as in:
+
+```
+STATICBUILD=1 make
+```
+
 ## Starting ATC
 
 After you have built ATC, you can run it by running (from within the default workdir):
