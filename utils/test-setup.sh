@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$(whoami)" != "root" ] ; then
-    sudo "$0" 
+    sudo "$0"
     exit 0
 fi
 

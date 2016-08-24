@@ -11,14 +11,15 @@ make_gopath() {
 
 get_depends() {
     echo "Fetching dependencies. (This might take a few minutes)."
-    for x in $(depends) ; do
+    # github.com/vishvananda/netns and github.com/alecthomas/assert
+    # are used for unittests.
+    for x in $(depends) \
+            "github.com/vishvananda/netns" \
+            "github.com/alecthomas/assert"
+    do
         echo "$x"
         go get "$x"
     done
-    # Used to run unittests
-	x="github.com/vishvananda/netns"
-	echo "$x"
-	go get "$x"
 }
 
 depends() {

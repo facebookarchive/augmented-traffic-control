@@ -198,7 +198,13 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 			Protocol:  proto,
 			Priority:  uint16(idx + 1),
 		}, netlink.FilterFwAttrs{
-			ClassId: htbc.Attrs().Handle,
+			ClassId:  htbc.Attrs().Handle,
+			Rate:     uint32(rate),
+			PeakRate: uint32(rate),
+			// FIXME: We should be coming with a better way to decide the
+			// the buffer size.
+			Buffer: 12000,
+			Action: netlink.TC_POLICE_SHOT,
 		})
 		if err != nil {
 			return fmt.Errorf("Could not create fw filter struct: %v", err)

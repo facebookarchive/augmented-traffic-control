@@ -28,7 +28,7 @@ USERID = $(shell id -u)
 .PHONY: all bin tests ui lint
 bin: bin/atcd bin/atc_api bin/atc
 all: src/atc_thrift lint ui tests bin
-test: test-daemon test-api test-shaping
+tests: test-daemon test-api test-shaping
 ui: src/assets/bindata.go
 lint: lint-ui lint-daemon lint-api lint-client
 
