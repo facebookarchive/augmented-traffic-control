@@ -46,12 +46,12 @@ If you want to have `/` redirecting to `/atc/demo_ui`, you can update `urls.py`
 ...
 from django.views.generic.base import RedirectView
 
-urlpatterns = patterns('',
+urlpatterns = [
     ...
     ...
     url(r'^atc_demo_ui/', include('atc_demo_ui.urls')),
     url(r'^$', RedirectView.as_view(url='/atc_demo_ui/', permanent=False)),
-)
+]
 ```
 
 3. Start the development server
