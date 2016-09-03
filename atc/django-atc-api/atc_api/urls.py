@@ -7,12 +7,10 @@
 #  of patent rights can be found in the PATENTS file in the same directory.
 #
 #
-from django.conf.urls import patterns
 from django.conf.urls import url
 from atc_api.views import AtcApi, AuthApi, TokenApi
 
-urlpatterns = patterns(
-    '',
+urlpatterns = [
     url('^shape/$', AtcApi.as_view()),
     url('^shape/'
         '(?P<address>[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/$',
@@ -23,4 +21,4 @@ urlpatterns = patterns(
         '(?P<address>[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/$',
         AuthApi.as_view()),
     url('^token/$', TokenApi.as_view()),
-)
+]

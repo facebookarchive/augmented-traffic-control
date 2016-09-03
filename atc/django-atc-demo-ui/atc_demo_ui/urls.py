@@ -7,11 +7,10 @@
 #  of patent rights can be found in the PATENTS file in the same directory.
 #
 #
-from django.conf.urls import patterns
 from django.conf.urls import url
+from atc_demo_ui.views import index
 
 
-urlpatterns = patterns(
-    '',
-    url(r'^$', 'atc_demo_ui.views.index', name='atc-demo-ui-index'),
-)
+urlpatterns = [
+    url(r'^$', index, name='atc-demo-ui-index'),
+]

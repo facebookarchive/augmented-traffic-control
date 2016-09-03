@@ -27,7 +27,7 @@ default['atc']['venv']['atcd']['packages'] = {
 
 # 'pyroute2' => {:action => :upgrade, :version => "0.1.12"},
 default['atc']['venv']['atcui']['packages'] = {
-  'django' => { :version => '1.9' },
+  'django' => { :version => '1.10' },
   'gunicorn' => {},
   "file://#{File.join(src_dir, 'atc/atc_thrift/')}" =>
     { :action => :install, :options => '-e' },
