@@ -85,7 +85,7 @@ Now, open `atcui/urls.py` and enable routing to the `ATC` apps by adding the rou
 from django.views.generic.base import RedirectView
 from django.conf.urls import include
 
-urlpatterns = patterns('',
+urlpatterns = [
     ...
     # Django ATC API
     url(r'^api/v1/', include('atc_api.urls')),
@@ -94,7 +94,7 @@ urlpatterns = patterns('',
     # Django ATC profile storage
     url(r'^api/v1/profiles/', include('atc_profile_storage.urls')),
     url(r'^$', RedirectView.as_view(url='/atc_demo_ui/', permanent=False)),
-)
+]
 ```
 
 Finally, let's update the Django DB:
