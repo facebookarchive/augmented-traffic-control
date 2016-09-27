@@ -5,6 +5,7 @@ project_github: &project_github https://github.com/facebook/augmented-traffic-co
 project_license: BSD
 project_irc: atcd
 project_pip: true
+django_version: "1.10"
 navigation:
  - text: FAQ
    url: /docs/faq.html

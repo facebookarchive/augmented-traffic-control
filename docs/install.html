@@ -9,7 +9,7 @@
 <li><strong>A Network Gateway</strong>: ATC will shape the traffic that is forwarded through it. To do this, ATC will typically have 1 network interface conencted to your local network and an other that connects you to the internet.</li>
 <li><strong>Linux</strong>: ATC makes uses of both iptables and the tc subsystem. As such, Linux is a hard requirement.</li>
 <li><strong>Python 2.7</strong>: Currently, ATC is only supported on python version 2.7.</li>
-<li><strong>Django 1.7</strong>: Currently, ATC is only supported using django version 1.7.</li>
+<li><strong>Django {{ site.data.config.django_version }}</strong>: Currently, ATC is only supported using django version {{ site.data.config.django_version }}.</li>
 
 </ul>
 </div>
@@ -28,7 +28,7 @@ Currently, {{ site.data.config.project_name }} requires python 2.7. Each {{ site
 On top of this, <em>atcd</em> only supports Linux operating system.</em>
 </p>
 <p>
-The API and UI components are django apps and have been tested with django 1.7.
+The API and UI components are django apps and have been tested with django {{ site.data.config.django_version }}.
 </p>
   <h3>Installation</h3>
 <p>
