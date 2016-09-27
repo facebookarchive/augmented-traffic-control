@@ -1,5 +1,8 @@
 # Changelog
 
+* 0.1.6
+    * Suport for Django 1.10 #296
+
 * 0.1.5
     * Fix handling of POSTed profiles. #287
 

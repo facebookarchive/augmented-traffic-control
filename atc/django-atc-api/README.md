@@ -6,7 +6,7 @@ ATC API is a Django app that allow to bridge a REST API to ATCD's thrift API.
 
 ## Requirements
 
-* [Django 1.7](https://github.com/django/django)
+* [Django 1.10](https://github.com/django/django)
 * [Django REST framework 3.X](https://github.com/tomchristie/django-rest-framework)
 * [atc_thrift](../atc_thrift)
 

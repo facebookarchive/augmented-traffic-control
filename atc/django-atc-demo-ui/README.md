@@ -6,7 +6,7 @@ Even though it is a Django app, `ATC Demo UI` is mostly a [React](http://faceboo
 
 ## Requirements
 
-* [Django 1.7](https://github.com/django/django)
+* [Django 1.10](https://github.com/django/django)
 * [atc_api](../django-atc-api)
 
 `ATC Demo UI` depends on `ATC API` so make sure you have installed and configured the [ATC API](../django-atc-api) first.

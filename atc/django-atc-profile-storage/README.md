@@ -4,7 +4,7 @@ ATC Profile Storage is a Django app that allows to store predefined ATC profiles
 
 ## Requirements
 
-* [Django 1.7](https://github.com/django/django)
+* [Django 1.10](https://github.com/django/django)
 * [atc_api](../django-atc-api)
 
 `ATC Profile Storage` depends on `ATC API` so make sure you have installed and configured [ATC API](../django-atc-api) first.
