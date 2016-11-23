@@ -25,10 +25,12 @@
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="{% static 'static_jquery/js/jquery.min.js' %}"></script>
 
+    {% autoescape off %}
     <!-- Bootstrap CSS -->
     {% bootstrap_styles theme='default' type='min.css' %}
     <!-- Bootstrap JS -->
     {% bootstrap_script use_min=True %}
+    {% endautoescape %}
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
