@@ -22,6 +22,8 @@ var (
 	// Names of the wan and lan interfaces (e.g. eth0, enp6s0)
 	WAN_INT string
 	LAN_INT string
+
+	DONT_DROP_PACKETS bool
 )
 
 /*
@@ -32,6 +34,7 @@ func ShapingFlags() {
 	kingpin.Flag("ip6tables", "location of the ip6tables binary").StringVar(&IP6TABLES)
 	kingpin.Flag("wan", "name of the WAN interface").StringVar(&WAN_INT)
 	kingpin.Flag("lan", "name of the LAN interface").StringVar(&LAN_INT)
+	kingpin.Flag("dont-drop-packets", "Buffer packets that overflow the queue instead of dropping them").BoolVar(&DONT_DROP_PACKETS)
 }
 
 /*
@@ -190,6 +193,10 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 	//     rate 4194Mbit burst 11010b mtu 2Kb action drop overhead 0b ref 1 bind 1
 	// filters packets with mark 0x2 to classid 1:2
 	// We need to add the filter for both IPv4 and IPv6
+	action := netlink.TC_POLICE_SHOT
+	if DONT_DROP_PACKETS {
+		 action = netlink.TC_POLICE_OK
+	}
 	for idx, proto := range FILTER_IP_TYPE {
 		fw, err := netlink.NewFw(netlink.FilterAttrs{
 			LinkIndex: link.Attrs().Index,
@@ -204,7 +211,7 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 			// FIXME: We should be coming with a better way to decide the
 			// the buffer size.
 			Buffer: 12000,
-			Action: netlink.TC_POLICE_SHOT,
+			Action: action,
 		})
 		if err != nil {
 			return fmt.Errorf("Could not create fw filter struct: %v", err)
