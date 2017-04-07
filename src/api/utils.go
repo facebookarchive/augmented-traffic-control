@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/textproto"
 	"runtime/debug"
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
@@ -152,36 +153,49 @@ func GetClientAddr(r *http.Request) (net.IP, HttpError) {
 func getProxiedClientAddr(srv *Server, r *http.Request) (net.IP, HttpError) {
 	srv_proxy := srv.ProxyAddr
 	remote_addr, _, _ := net.SplitHostPort(r.RemoteAddr)
-	real_ip, ok := r.Header["X_HTTP_REAL_IP"]
-	proxy_request := ok && (len(real_ip) == 1)
+	real_ips, ok := r.Header[textproto.CanonicalMIMEHeaderKey("X_HTTP_REAL_IP")]
+	proxy_request := ok && len(real_ips) == 1
 	proxy_server := srv_proxy != ""
 	if proxy_request && proxy_server {
 		// Server and client were both proxied
 		if srv_proxy == remote_addr {
-			if ip := net.ParseIP(real_ip[0]); ip != nil {
+			if ip := net.ParseIP(real_ips[0]); ip != nil {
 				return ip, nil
 			} else {
-				Log.Printf("Could not parse IP [X_HTTP_REAL_IP]: %q", real_ip[0])
+				Log.Printf("Could not parse IP [X_HTTP_REAL_IP]: %q",
+					real_ips[0])
 				return nil, ServerError
 			}
 		} else {
-			Log.Printf("Unauthorized proxied request from %s on behalf of %v", remote_addr, real_ip[0])
-			return nil, HttpErrorf(http.StatusBadRequest, "Invalid proxy address")
+			Log.Printf("Unauthorized proxied request from %s on behalf of %v",
+				remote_addr, real_ips[0])
+			return nil, HttpErrorf(http.StatusBadRequest,
+				"Invalid proxy address")
 		}
 	} else if proxy_request {
 		// Client was proxied but the server wasn't
-		Log.Printf("Unexpected proxied request from %s on behalf of %v", remote_addr, real_ip[0])
+		Log.Printf("Unexpected proxied request from %s on behalf of %v",
+			remote_addr, real_ips[0])
 		return nil, HttpErrorf(http.StatusBadRequest, "Invalid proxy address")
 	} else if proxy_server {
-		// Server was proxied, but the client wasn't
-		Log.Printf("Unexpected non-proxied request from %s", remote_addr)
-		return nil, HttpErrorf(http.StatusBadRequest, "Invalid proxy address")
+		if len(real_ips) > 1 {
+			Log.Printf("Multiple X_HTTP_REAL_IP headers: %v", real_ips)
+			return nil, HttpErrorf(http.StatusBadRequest,
+				"Multiple X_HTTP_REAL_IP headers")
+		} else {
+
+			// Server was proxied, but the client wasn't
+			Log.Printf("Unexpected non-proxied request from %s", remote_addr)
+			return nil, HttpErrorf(http.StatusBadRequest,
+				"Missing proxied address")
+		}
 	} else {
 		// Neither the server nor the client were proxied.
 		if ip := net.ParseIP(remote_addr); ip != nil {
 			return ip, nil
 		} else {
-			Log.Printf("Could not parse IP [request.RemoteAddr]: %q", real_ip[0])
+			Log.Printf("Could not parse IP [request.RemoteAddr]: %q",
+				real_ips[0])
 			return nil, ServerError
 		}
 	}
