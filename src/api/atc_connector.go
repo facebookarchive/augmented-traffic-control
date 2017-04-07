@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"git.apache.org/thrift.git/lib/go/thrift"
+	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 )
 

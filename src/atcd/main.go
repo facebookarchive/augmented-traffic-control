@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 
-	"git.apache.org/thrift.git/lib/go/thrift"
+	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/daemon"
 	logging "github.com/facebook/augmented-traffic-control/src/log"
