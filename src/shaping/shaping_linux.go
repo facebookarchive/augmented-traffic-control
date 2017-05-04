@@ -135,7 +135,7 @@ func (nl *netlinkShaper) Shape(id int64, shaping *atc_thrift.Shaping) error {
 		Log.Printf("Could not temporarily unshape lan(%s) interface: %v", LAN_INT, err)
 	}
 	if err := shape_off(id, wan); err != nil {
-		Log.Printf("Could not temporarily unshape wan(%s) interface: %v", LAN_INT, err)
+		Log.Printf("Could not temporarily unshape wan(%s) interface: %v", WAN_INT, err)
 	}
 	// Shape on the OUTBOUND side.
 	// Traffic on the lan interface is incoming, so down.
@@ -195,7 +195,7 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 	// We need to add the filter for both IPv4 and IPv6
 	action := netlink.TC_POLICE_SHOT
 	if DONT_DROP_PACKETS {
-		 action = netlink.TC_POLICE_OK
+		action = netlink.TC_POLICE_OK
 	}
 	for idx, proto := range FILTER_IP_TYPE {
 		fw, err := netlink.NewFw(netlink.FilterAttrs{
@@ -323,12 +323,12 @@ func (nl *netlinkShaper) flush() error {
 }
 
 func lookupInterfaces() (wan, lan netlink.Link, err error) {
-	wan, err = netlink.LinkByName(LAN_INT)
+	lan, err = netlink.LinkByName(LAN_INT)
 	if err != nil {
 		err = fmt.Errorf("Could not find lan(%s) interface: %v", LAN_INT, err)
 		return
 	}
-	lan, err = netlink.LinkByName(WAN_INT)
+	wan, err = netlink.LinkByName(WAN_INT)
 	if err != nil {
 		err = fmt.Errorf("Could not find wan(%s) interface: %v", WAN_INT, err)
 		return
