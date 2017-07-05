@@ -47,6 +47,7 @@ def parse_arguments():
     )
     return parser.parse_args()
 
+
 if __name__ == '__main__':
     options = parse_arguments()
     client = getAtcClient()
