@@ -50,6 +50,7 @@ def get_package_data(package):
                           for filename in filenames])
     return {package: filepaths}
 
+
 version = get_version('atc_api')
 
 if sys.argv[-1] == 'publish':
