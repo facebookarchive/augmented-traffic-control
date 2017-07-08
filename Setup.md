@@ -40,13 +40,13 @@ ATC Daemon
 Installation:
 
 ```shell
-pip install atcd
+sudo pip install atcd
 ```
 
 Running `atcd` (as root):
 
 ```shell
-atcd --atcd-lan eth0 --atcd-wan eth1
+sudo atcd --atcd-lan eth0 --atcd-wan eth1
 ```
 
 ATC Interface
@@ -55,7 +55,7 @@ ATC Interface
 Install the ATC API and UI packages:
 
 ```shell
-pip install django-atc-api django-atc-demo-ui django-atc-profile-storage
+sudo pip install django-atc-api django-atc-demo-ui django-atc-profile-storage
 ```
 
 ### Django Webapp Setup
