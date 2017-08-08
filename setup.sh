@@ -20,6 +20,11 @@ get_depends() {
         echo "$x"
         go get "$x"
     done
+
+    cd .gopath/src/github.com/apache/thrift/
+    # thrift master is not compatible, check out a stable version.
+    # TODO: eventually move dependency management to glide or godep or gb
+    git checkout remotes/origin/0.11.0
 }
 
 depends() {
