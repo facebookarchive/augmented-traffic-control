@@ -8,6 +8,7 @@ import (
 
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/iptables"
+	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -108,16 +109,28 @@ func (nl *netlinkShaper) Initialize() error {
 /*
 Create a group. The ID used here is assumed to be unique to this group and won't change.
 */
-func (nl *netlinkShaper) CreateGroup(id int64, member Target) error {
-	return nl.mark_packets_for(member, id)
+func (nl *netlinkShaper) CreateGroup(id int64, member Target) (err error) {
+	err = nl.mark_packets_for(member, id)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to mark packets for group")
+	}
+	return
 }
 
-func (nl *netlinkShaper) JoinGroup(id int64, member Target) error {
-	return nl.mark_packets_for(member, id)
+func (nl *netlinkShaper) JoinGroup(id int64, member Target) (err error) {
+	err = nl.mark_packets_for(member, id)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to mark packets for group")
+	}
+	return
 }
 
-func (nl *netlinkShaper) LeaveGroup(id int64, member Target) error {
-	return nl.remove_marking_for(member, id)
+func (nl *netlinkShaper) LeaveGroup(id int64, member Target) (err error) {
+	err = nl.remove_marking_for(member, id)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to remove marking for group")
+	}
+	return
 }
 
 func (nl *netlinkShaper) DeleteGroup(id int64) error {
@@ -283,16 +296,18 @@ func shape_off(id int64, link netlink.Link) error {
 	return nil
 }
 
-func (nl *netlinkShaper) mark_packets_for(target Target, mark int64) error {
+func (nl *netlinkShaper) mark_packets_for(target Target, mark int64) (err error) {
 	ipt := nl.tablesFor(target)
 	chain := ipt.Table("mangle").Chain("FORWARD")
-	if err := chain.Append(iptables.Rule{Destination: target, In: WAN_INT}.SetMark(mark)); err != nil {
-		return fmt.Errorf("Could not mark packets for %s: %v", target, err)
+	if err = chain.Append(iptables.Rule{Destination: target, In: WAN_INT}.SetMark(mark)); err != nil {
+		err = errors.Wrapf(err, "Could not mark packets for %s: %v", target)
+		return
 	}
-	if err := chain.Append(iptables.Rule{Source: target, In: LAN_INT}.SetMark(mark)); err != nil {
-		return fmt.Errorf("Could not mark packets for %s: %v", target, err)
+	if err = chain.Append(iptables.Rule{Source: target, In: LAN_INT}.SetMark(mark)); err != nil {
+		err = errors.Wrapf(err, "Could not mark packets for %s", target)
+		return
 	}
-	return nil
+	return
 }
 
 func (nl *netlinkShaper) remove_marking_for(target Target, mark int64) error {
