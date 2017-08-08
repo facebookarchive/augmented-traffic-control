@@ -426,7 +426,7 @@ func scanGroup(sc scanner) (*DbGroup, error) {
 		return nil, err
 	}
 	var shape *atc_thrift.Shaping
-	if tc_bytes != nil {
+	if tc_bytes != nil && len(tc_bytes) > 0 {
 		shape = &atc_thrift.Shaping{}
 		err := json.Unmarshal(tc_bytes, shape)
 		if err != nil {
