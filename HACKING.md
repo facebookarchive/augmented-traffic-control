@@ -4,25 +4,29 @@
 
 ATC uses netlink under the hood to shape traffic, as such, ATC only runs on Linux.
 
+ATC uses golang, glide, and sqlite3. You must have a relatively recent version of go (1.7, 1.8) as well
+as glide (for dependendency management) and the sqlite3 library and development files.
+
 To make it easier to deploy a development environment, we leverage [docker](https://www.docker.com/) and/or optionally [docker-compose](https://docs.docker.com/compose/)
 
 Installing and configuring docker is out of the scope of this document, but plenty of documentation for your favorite operating system can be found online at https://docs.docker.com/installation/
 
 ### Using docker
 
-The `Dockerfile` provided in this repo is pretty limited and basically build from golang-1.5.1 image. To build the ATC image, you need to run:
+The `Dockerfile` provided in this repo is pretty limited and basically build from golang:latest image. To build the ATC image, you need to run:
 
 ```
-docker build -t atc .
+make docker-build
 ```
 
 Once you have the image build, you can get a shell in the container by running:
 
 ```
-docker run -ti --rm --cap-add NET_ADMIN --cap-add SYS_ADMIN -v "$PWD":/usr/src/myapp -w /usr/src/myapp -p 9090:9090 -p 8080:8080 --env GOPATH=/usr/src/myapp/.gopath atc bash
+make docker-run
 ```
 
-This will give you a bash prompt in the docker container and will set you in the working directory: `/usr/src/myapp`. The root of the atc project will be mounted within the container. From there, any chnages that you do in ATC repo, will be readily available in the container.
+This will give you a bash prompt in the docker container and will set you in the working directory: `/gopath/src/github.com/facebook/augmented-traffic-control`.
+The root of the atc project will be mounted within the container. From there, any changes that you do in ATC repo, will be readily available in the container.
 Also, port 8080 and 9090 are mapped from the host to the container allowing you to access both the atc daemon and the atc ui through the host.
 
 ### Using docker-compose
@@ -38,8 +42,7 @@ docker-compose run --service-ports atc bash
 Once you have your development environment setup, you can build/install atcd by running:
 
 ```
-./setup.sh
-export GOPATH="$(pwd)/.gopath/"
+glide i
 make
 ```
 

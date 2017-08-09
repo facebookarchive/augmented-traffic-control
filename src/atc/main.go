@@ -289,7 +289,7 @@ func listGroupMembers(grp *atc_thrift.ShapingGroup) {
 }
 
 func printShortGroup(group *atc_thrift.ShapingGroup) {
-	fmt.Printf("%d: %s\n", group.ID, strings.Join(group.Members, " "))
+	fmt.Printf("%d: %s\n", group.Id, strings.Join(group.Members, " "))
 }
 
 func printLongGroup(group *atc_thrift.ShapingGroup) {

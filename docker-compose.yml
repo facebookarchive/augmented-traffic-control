@@ -7,13 +7,13 @@
 atc:
     build: .
     volumes:
-        - .:/usr/src/myapp
-    working_dir: /usr/src/myapp
+        - .:/gopath/github.com/facebook/augmented-traffic-control
+    working_dir: /gopath/github.com/facebook/augmented-traffic-control
     environment:
-        - GOPATH=/usr/src/myapp/.gopath
+        - GOPATH=/gopath
     ports:
         - "9090:9090"
-        - "8080:8080"
+        - "8081:8081"
     cap_add:
         - NET_ADMIN # General TC/IP privileges
         - SYS_ADMIN # New NetNS Privilege

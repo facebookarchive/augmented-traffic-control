@@ -46,3 +46,6 @@ internal
 **/node_modules/
 build-pkg
 lib
+vendor
+log/
+db/

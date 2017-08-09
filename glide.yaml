@@ -1,0 +1,29 @@
+package: github.com/facebook/augmented-traffic-control
+import:
+- package: git.apache.org/thrift.git
+  version: ^0.10.0
+  subpackages:
+  - lib/go/thrift
+- package: github.com/apache/thrift
+  version: ^0.11.0
+  subpackages:
+  - lib/go/thrift
+- package: github.com/gorilla/context
+  version: ^1.1.0
+- package: github.com/gorilla/mux
+  version: ^1.4.0
+- package: github.com/hgfischer/go-otp
+  version: ^1.0.0
+- package: github.com/mattn/go-sqlite3
+  version: ^1.2.0
+- package: github.com/pborman/uuid
+  version: ^1.1.0
+- package: github.com/vishvananda/netlink
+- package: gopkg.in/alecthomas/kingpin.v2
+  version: ^2.2.5
+- package: gopkg.in/yaml.v2
+- package: github.com/pkg/errors
+  version: ^0.8.0
+testImport:
+- package: github.com/alecthomas/assert
+- package: github.com/vishvananda/netns

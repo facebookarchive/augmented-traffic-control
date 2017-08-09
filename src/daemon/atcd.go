@@ -8,6 +8,7 @@ import (
 	"github.com/facebook/augmented-traffic-control/src/iptables"
 	"github.com/hgfischer/go-otp"
 	"github.com/pborman/uuid"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -44,7 +45,7 @@ func ReshapeFromDb(shaper *ShapingEngine, db *DbRunner) error {
 				err = shaper.JoinGroup(group.id, member)
 			}
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "failed to evaluate members of group %d", group.id)
 			}
 		}
 
@@ -52,7 +53,7 @@ func ReshapeFromDb(shaper *ShapingEngine, db *DbRunner) error {
 		// but only if the group has shaping settings to begin with
 		if group.tc != nil {
 			if err := shaper.Shape(group.id, group.tc); err != nil {
-				return err
+				return errors.Wrapf(err, "failed to shape for group %d", group.id)
 			}
 		}
 	}
@@ -96,7 +97,7 @@ func (atcd *Atcd) ListGroups() ([]*atc_thrift.ShapingGroup, error) {
 			return nil, DbError
 		}
 		results = append(results, &atc_thrift.ShapingGroup{
-			ID:      grp.id,
+			Id:      grp.id,
 			Shaping: grp.tc,
 			Members: TargetsToStrings(members),
 		})
@@ -135,7 +136,7 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 	if err := atcd.shaper.CreateGroup(dbgrp.id, tgt); err != nil {
 		return nil, err
 	}
-	grp.ID = dbgrp.id
+	grp.Id = dbgrp.id
 	defer atcd.Cleanup()
 	return grp, nil
 }
@@ -154,7 +155,7 @@ func (atcd *Atcd) GetGroup(id int64) (*atc_thrift.ShapingGroup, error) {
 		return nil, DbError
 	}
 	grp := &atc_thrift.ShapingGroup{
-		ID:      id,
+		Id:      id,
 		Members: TargetsToStrings(members),
 		Shaping: group.tc,
 	}

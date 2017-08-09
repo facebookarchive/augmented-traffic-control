@@ -84,7 +84,7 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErr
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not create group: %v", err)
 		}
-		token, err := atcd.GetGroupToken(grp.ID)
+		token, err := atcd.GetGroupToken(grp.Id)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not get group token: %v", err)
 		}
@@ -114,7 +114,7 @@ func GroupHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErro
 	case "GET":
 		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 		if err != nil {
-			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get Id from url: %v", err)
 		}
 		group, err := atcd.GetGroup(id)
 		if err != nil {
@@ -138,7 +138,7 @@ func GroupJoinHandler(w http.ResponseWriter, r *http.Request) (interface{}, Http
 	case "POST":
 		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 		if err != nil {
-			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get Id from url: %v", err)
 		}
 		req_info := &Token{}
 		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
@@ -170,7 +170,7 @@ func GroupLeaveHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 	case "POST":
 		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 		if err != nil {
-			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get Id from url: %v", err)
 		}
 		req_info := &Token{}
 		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
@@ -206,7 +206,7 @@ func GroupTokenHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 		}
 		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 		if err != nil {
-			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get Id from url: %v", err)
 		}
 		grp, err := atcd.GetGroupWith(addr.String())
 		if err != nil {
@@ -215,7 +215,7 @@ func GroupTokenHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 			}
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not get group from daemon: %v", err)
 		}
-		if grp.ID != id {
+		if grp.Id != id {
 			return nil, HttpErrorf(http.StatusUnauthorized, "Invalid group")
 		}
 		token, err := atcd.GetGroupToken(id)
@@ -239,7 +239,7 @@ func GroupShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 	atcd := GetAtcd(r)
 	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
-		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get Id from url: %v", err)
 	}
 	switch r.Method {
 	case "GET":
@@ -309,7 +309,7 @@ func getSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Reque
 		return nil, nil
 	}
 	return GroupShaping{
-		Id:      group.ID,
+		Id:      group.Id,
 		Shaping: group.Shaping,
 	}, nil
 }
@@ -332,17 +332,17 @@ func createSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Re
 	}
 	// This is allowed since the requestor is shaping their own device!
 	if req_info.Token == "" {
-		req_info.Token, err = atcd.GetGroupToken(group.ID)
+		req_info.Token, err = atcd.GetGroupToken(group.Id)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not get token from daemon: %v", err)
 		}
 	}
-	setting, err := atcd.ShapeGroup(group.ID, req_info.Shaping, req_info.Token)
+	setting, err := atcd.ShapeGroup(group.Id, req_info.Shaping, req_info.Token)
 	if err != nil {
 		return nil, HttpErrorf(http.StatusBadGateway, "Could not shape: %v", err)
 	}
 	return GroupShaping{
-		Id:      group.ID,
+		Id:      group.Id,
 		Shaping: setting,
 	}, nil
 }
@@ -363,12 +363,12 @@ func deleteSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Re
 	}
 	// This is allowed since the requestor is shaping their own device!
 	if req_info.Token == "" {
-		req_info.Token, err = atcd.GetGroupToken(group.ID)
+		req_info.Token, err = atcd.GetGroupToken(group.Id)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not get token from daemon: %v", err)
 		}
 	}
-	err = atcd.UnshapeGroup(group.ID, req_info.Token)
+	err = atcd.UnshapeGroup(group.Id, req_info.Token)
 	if err != nil {
 		return nil, HttpErrorf(http.StatusBadGateway, "Could not delete shaping from atcd: %v", err)
 	}
@@ -417,7 +417,7 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpEr
 	case "DELETE":
 		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 		if err != nil {
-			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get ID from url: %v", err)
+			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get Id from url: %v", err)
 		}
 		db := GetDB(r)
 		db.DeleteProfile(id)
