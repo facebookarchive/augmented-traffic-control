@@ -96,7 +96,7 @@ func (atcd *Atcd) ListGroups() ([]*atc_thrift.ShapingGroup, error) {
 			return nil, DbError
 		}
 		results = append(results, &atc_thrift.ShapingGroup{
-			ID:      grp.id,
+			Id:      grp.id,
 			Shaping: grp.tc,
 			Members: TargetsToStrings(members),
 		})
@@ -135,7 +135,7 @@ func (atcd *Atcd) CreateGroup(member string) (*atc_thrift.ShapingGroup, error) {
 	if err := atcd.shaper.CreateGroup(dbgrp.id, tgt); err != nil {
 		return nil, err
 	}
-	grp.ID = dbgrp.id
+	grp.Id = dbgrp.id
 	defer atcd.Cleanup()
 	return grp, nil
 }
@@ -154,7 +154,7 @@ func (atcd *Atcd) GetGroup(id int64) (*atc_thrift.ShapingGroup, error) {
 		return nil, DbError
 	}
 	grp := &atc_thrift.ShapingGroup{
-		ID:      id,
+		Id:      id,
 		Members: TargetsToStrings(members),
 		Shaping: group.tc,
 	}
