@@ -208,10 +208,8 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 			ClassId:  htbc.Attrs().Handle,
 			Rate:     uint32(rate),
 			PeakRate: uint32(rate),
-			// FIXME: We should be coming with a better way to decide the
-			// the buffer size.
-			Buffer: 12000,
-			Action: action,
+			Buffer:   calculateBufferSize(uint32(shaping.GetRate()), uint32(shaping.GetDelay().Delay * 1000)),
+			Action:   action,
 		})
 		if err != nil {
 			return fmt.Errorf("Could not create fw filter struct: %v", err)
@@ -361,4 +359,13 @@ func setupRootQdisc(link netlink.Link) error {
 		return fmt.Errorf("Could not create root qdisc (%s): %v", link.Attrs().Name, err)
 	}
 	return nil
+}
+
+func calculateBufferSize(rate uint32, latency uint32) uint32 {
+	if rate == 0 || latency == 0 {
+		return 12000 //FIXME: what to do when our rate or latency is 0?
+	}
+	bufsize := (2 * latency * rate) / 1000;
+	Log.Debugf("Buffer size 2 * %d * %d / 1000 => %d", latency, rate, bufsize);
+	return bufsize
 }
