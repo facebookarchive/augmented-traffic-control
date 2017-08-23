@@ -19,6 +19,7 @@ GET = $(GO) get
 LIST = $(GO) list
 BINGEN = $(GOPATH)/bin/go-bindata # github.com/jteeuwen/go-bindata
 THRIFT = thrift
+THRIFT_GO_FLAGS=thrift_import=github.com/apache/thrift/lib/go/thrift
 NPM = npm
 
 # The $(GO) project root
@@ -38,20 +39,22 @@ lint: lint-ui lint-daemon lint-api lint-client
 ### Binaries
 ###
 
-bin/atcd: src/daemon/*.go src/atcd/*.go src/log/*.go src/shaping/*.go
+bin/atcd: src/atc_thrift src/daemon/*.go src/atcd/*.go src/log/*.go src/shaping/*.go
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atcd
 
-bin/atc_api: src/api/*.go src/atc_api/*.go src/log/*.go src/assets/bindata.go
+bin/atc_api: src/atc_thrift src/api/*.go src/atc_api/*.go src/log/*.go src/assets/bindata.go
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atc_api
 
-bin/atc: src/log/*.go src/atc/*.go
+bin/atc: src/atc_thrift src/log/*.go src/atc/*.go
 	@mkdir -p bin
 	$(BUILD) -o $@ ${SRC}/atc
 
 src/atc_thrift: if/atc_thrift.thrift
-	$(THRIFT) --out src/ --gen go if/atc_thrift.thrift
+	$(THRIFT) --out src/ --gen go:$(THRIFT_GO_FLAGS) if/atc_thrift.thrift
+	# fix import
+	gofmt -w -r "\"atc_thrift\" -> \"github.com/facebook/augmented-traffic-control/src/atc_thrift\"" src/atc_thrift/atcd-remote/atcd-remote.go
 
 ###
 ### UI

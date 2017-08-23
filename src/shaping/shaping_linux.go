@@ -10,7 +10,6 @@ import (
 	"github.com/facebook/augmented-traffic-control/src/iptables"
 	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var FILTER_IP_TYPE = []uint16{syscall.ETH_P_IP, syscall.ETH_P_IPV6}
@@ -181,7 +180,7 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 	// rate was not set and is considered unlimited.
 	// In that case, let set the rate as high as we can.
 	// Note: currently, it is implemented as a u32 by the netlink library.
-	rate := uint64(shaping.GetRate() * 1000)
+	rate := uint64(shaping.Rate * 1000)
 	if rate == 0 {
 		// rate is given in bps but under the hood it expect Bps. Multiply by 8
 		// because the netlink lib will divide it later on. That allows us to
@@ -241,16 +240,16 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 		// Handle:    netlink.MakeHandle(uint16(id+0x8000), 0),
 		Parent: netlink.MakeHandle(1, uint16(id)),
 	}, netlink.NetemQdiscAttrs{
-		Latency:     uint32(shaping.GetDelay().Delay * 1000),   // in ms
-		Jitter:      uint32(shaping.GetDelay().Jitter * 1000),  // in ms
-		DelayCorr:   float32(shaping.GetDelay().Correlation),   // in %
-		Loss:        float32(shaping.GetLoss().Percentage),     // in %
-		LossCorr:    float32(shaping.GetLoss().Correlation),    // in %
-		ReorderProb: float32(shaping.GetReorder().Percentage),  // in %
-		ReorderCorr: float32(shaping.GetReorder().Correlation), // in %
-		Gap:         uint32(shaping.GetReorder().Gap),
-		CorruptProb: float32(shaping.GetCorruption().Percentage),  // in %
-		CorruptCorr: float32(shaping.GetCorruption().Correlation), // in %
+		Latency:     uint32(shaping.Delay.Delay * 1000),   // in ms
+		Jitter:      uint32(shaping.Delay.Jitter * 1000),  // in ms
+		DelayCorr:   float32(shaping.Delay.Correlation),   // in %
+		Loss:        float32(shaping.Loss.Percentage),     // in %
+		LossCorr:    float32(shaping.Loss.Correlation),    // in %
+		ReorderProb: float32(shaping.Reorder.Percentage),  // in %
+		ReorderCorr: float32(shaping.Reorder.Correlation), // in %
+		Gap:         uint32(shaping.Reorder.Gap),
+		CorruptProb: float32(shaping.Corruption.Percentage),  // in %
+		CorruptCorr: float32(shaping.Corruption.Correlation), // in %
 	})
 	Log.Debugf("Adding netem qdisc: %#v", netem)
 	if err := netlink.QdiscAdd(netem); err != nil {
