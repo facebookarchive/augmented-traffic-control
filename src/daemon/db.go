@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/iptables"
 
@@ -133,7 +135,7 @@ func (runner *DbRunner) GetGroup(id int64) (*DbGroup, error) {
 	defer runner.mutex.RUnlock()
 	row := runner.prep("group").QueryRow(id)
 	grp, err := scanGroup(row)
-	if err == sql.ErrNoRows {
+	if errors.Cause(err) == sql.ErrNoRows {
 		return nil, nil
 	}
 	runner.log(err)
@@ -197,7 +199,7 @@ func (runner *DbRunner) GetMember(addr iptables.Target) (*DbMember, error) {
 	defer runner.mutex.RUnlock()
 	row := runner.prep("member").QueryRow(addr.String())
 	member, err := scanMember(row)
-	if err == sql.ErrNoRows {
+	if errors.Cause(err) == sql.ErrNoRows {
 		return nil, nil
 	}
 	runner.log(err)
@@ -308,7 +310,7 @@ func (runner *DbRunner) getAllGroups(grps chan *DbGroup) error {
 	for rows.Next() {
 		grp, err := scanGroup(rows)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "error scanning group")
 		}
 		grps <- grp
 	}
@@ -323,7 +325,7 @@ func (runner *DbRunner) nextGroupId() (int64, error) {
 	// max(id) returns nil if the table is empty instead of an error
 	// hence the double pointer...
 	err := row.Scan(&id)
-	if err == sql.ErrNoRows || id == nil {
+	if errors.Cause(err) == sql.ErrNoRows || id == nil {
 		// No groups yet
 		return 1, nil
 	}
@@ -423,14 +425,14 @@ func scanGroup(sc scanner) (*DbGroup, error) {
 		secret   string
 	)
 	if err := sc.Scan(&id, &secret, &tc_bytes, &timeout); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error scanning columns of group")
 	}
 	var shape *atc_thrift.Shaping
 	if tc_bytes != nil && len(tc_bytes) > 0 {
 		shape = &atc_thrift.Shaping{}
 		err := json.Unmarshal(tc_bytes, shape)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "error unmarshalling json")
 		}
 	}
 	return &DbGroup{

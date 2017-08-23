@@ -8,6 +8,7 @@ import (
 	"github.com/facebook/augmented-traffic-control/src/iptables"
 	"github.com/hgfischer/go-otp"
 	"github.com/pborman/uuid"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -44,7 +45,7 @@ func ReshapeFromDb(shaper *ShapingEngine, db *DbRunner) error {
 				err = shaper.JoinGroup(group.id, member)
 			}
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "failed to evaluate members of group %d", group.id)
 			}
 		}
 
@@ -52,7 +53,7 @@ func ReshapeFromDb(shaper *ShapingEngine, db *DbRunner) error {
 		// but only if the group has shaping settings to begin with
 		if group.tc != nil {
 			if err := shaper.Shape(group.id, group.tc); err != nil {
-				return err
+				return errors.Wrapf(err, "failed to shape for group %d", group.id)
 			}
 		}
 	}
