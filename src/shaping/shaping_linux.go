@@ -10,6 +10,8 @@ import (
 	"github.com/facebook/augmented-traffic-control/src/iptables"
 	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
+
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var FILTER_IP_TYPE = []uint16{syscall.ETH_P_IP, syscall.ETH_P_IPV6}
@@ -220,7 +222,7 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 			ClassId:  htbc.Attrs().Handle,
 			Rate:     uint32(rate),
 			PeakRate: uint32(rate),
-			Buffer:   calculateBufferSize(uint32(shaping.GetRate()), uint32(shaping.GetDelay().Delay * 1000)),
+			Buffer:   calculateBufferSize(uint32(shaping.Rate), uint32(shaping.Delay.Delay*1000)),
 			Action:   action,
 		})
 		if err != nil {
@@ -379,7 +381,7 @@ func calculateBufferSize(rate uint32, latency uint32) uint32 {
 	if rate == 0 || latency == 0 {
 		return 12000 //FIXME: what to do when our rate or latency is 0?
 	}
-	bufsize := (2 * latency * rate) / 1000;
-	Log.Debugf("Buffer size 2 * %d * %d / 1000 => %d", latency, rate, bufsize);
+	bufsize := (2 * latency * rate) / 1000
+	Log.Debugf("Buffer size 2 * %d * %d / 1000 => %d", latency, rate, bufsize)
 	return bufsize
 }
