@@ -91,6 +91,30 @@ test-api:
 	$(TEST) ${SRC}/api
 	$(TEST) ${SRC}/atc_api
 
+docker-run:
+	docker build -t atc .
+	docker run -ti \
+		--rm \
+		--privileged \
+		-v "$(PWD)":/usr/src/myapp \
+		-w /usr/src/myapp \
+		-p 9090:9090 \
+		-p 8080:8080 \
+		atc bash
+
+docker-automated-test:
+	docker build -t atc .
+	docker run -ti \
+		--rm \
+		--privileged \
+		-v "$(PWD)":/usr/src/myapp \
+		-w /usr/src/myapp \
+		-p 9090:9090 \
+		-p 8080:8080 \
+		-e RESET_DB=true \
+		-e RESET_LOGS=true \
+		atc bash -c "utils/automated-test.sh"
+
 ###
 ### Lint
 ###
