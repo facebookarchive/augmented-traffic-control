@@ -121,7 +121,7 @@ func (srv *Server) Serve() {
 func (srv *Server) setupHandlers() {
 	r := mux.NewRouter()
 	apir := r.PathPrefix(ROOT_URL).Subrouter()
-	for url, f := range API_URL_MAP {
+	for url, f := range APIURLMap {
 		h := NewHandler(srv, f)
 		apir.HandleFunc(url, h)
 		apir.HandleFunc(url+"/", h)

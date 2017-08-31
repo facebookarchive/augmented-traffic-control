@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	API_URL_MAP = map[string]HandlerFunc{
+	// APIURLMap contains the mapping between the URLS and the HTTP Handlers
+	APIURLMap = map[string]HandlerFunc{
 		"/":                 RedirectHandler(ROOT_URL + "/shape"),
 		"/info":             InfoHandler,
 		"/group":            GroupsHandler,
@@ -26,6 +27,8 @@ var (
 	}
 )
 
+// RedirectHandler is a handler builder which returns a function that sends an HTTP
+// redirect to the given URL.
 func RedirectHandler(url string) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
 		http.Redirect(w, r, url, http.StatusFound)
@@ -33,17 +36,18 @@ func RedirectHandler(url string) HandlerFunc {
 	}
 }
 
+// InfoHandler is the HTTP handler for information operations.
 func InfoHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	CORS(w, "GET")
+	CORS(w, http.MethodGet)
 	switch r.Method {
-	case "GET":
+	case http.MethodGet:
 		serv := GetServer(r)
 		atcd := GetAtcd(r)
 		addr, cerr := GetClientAddr(r)
 		if cerr != nil {
 			return nil, cerr
 		}
-		daemon_info, err := atcd.GetAtcdInfo()
+		daemonInfo, err := atcd.GetAtcdInfo()
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not communicate with ATC Daemon: %v", err)
 		}
@@ -54,8 +58,8 @@ func InfoHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError
 		info := ServerInfo{
 			Api: serv.GetInfo(r),
 			Atcd: DaemonInfo{
-				Platform: daemon_info.Platform.String(),
-				Version:  daemon_info.Version,
+				Platform: daemonInfo.Platform.String(),
+				Version:  daemonInfo.Version,
 			},
 			Client: ClientInfo{
 				Addr:      addr.String(),
@@ -64,18 +68,19 @@ func InfoHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError
 			},
 		}
 		return info, nil
-	case "OPTIONS":
+	case http.MethodOptions:
 		return nil, nil
 	default:
 		return nil, InvalidMethod(r)
 	}
 }
 
+// GroupsHandler is the HTTP endpoint for handling Group requests
 func GroupsHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	CORS(w, "GET", "POST")
+	CORS(w, http.MethodGet, http.MethodPost)
 	atcd := GetAtcd(r)
 	switch r.Method {
-	case "POST":
+	case http.MethodPost:
 		addr, cerr := GetClientAddr(r)
 		if cerr != nil {
 			return nil, cerr
@@ -89,7 +94,7 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErr
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not get group token: %v", err)
 		}
 		return CreatedGroup{grp, token}, nil
-	case "GET":
+	case http.MethodGet:
 		addr, cerr := GetClientAddr(r)
 		if cerr != nil {
 			return nil, cerr
@@ -100,18 +105,19 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErr
 			return nil, nil
 		}
 		return group, nil
-	case "OPTIONS":
+	case http.MethodOptions:
 		return nil, nil
 	default:
 		return nil, InvalidMethod(r)
 	}
 }
 
+// GroupHandler if the HTTP Handler for the Group requests.
 func GroupHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	CORS(w, "GET")
+	CORS(w, http.MethodGet)
 	atcd := GetAtcd(r)
 	switch r.Method {
-	case "GET":
+	case http.MethodGet:
 		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get Id from url: %v", err)
@@ -124,31 +130,32 @@ func GroupHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpErro
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not get group from daemon: %v", err)
 		}
 		return group, nil
-	case "OPTIONS":
+	case http.MethodOptions:
 		return nil, nil
 	default:
 		return nil, InvalidMethod(r)
 	}
 }
 
+// GroupJoinHandler is the HTTP Hanlder for joining a member to a group
 func GroupJoinHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	CORS(w, "POST")
+	CORS(w, http.MethodPost)
 	atcd := GetAtcd(r)
 	switch r.Method {
-	case "POST":
+	case http.MethodPost:
 		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get Id from url: %v", err)
 		}
-		req_info := &Token{}
-		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
+		reqInfo := &Token{}
+		if err = json.NewDecoder(r.Body).Decode(reqInfo); err != nil {
 			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 		}
 		member, cerr := GetClientAddr(r)
 		if cerr != nil {
 			return nil, cerr
 		}
-		err = atcd.JoinGroup(id, member.String(), req_info.Token)
+		err = atcd.JoinGroup(id, member.String(), reqInfo.Token)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not join group: %v", err)
 		}
@@ -156,31 +163,32 @@ func GroupJoinHandler(w http.ResponseWriter, r *http.Request) (interface{}, Http
 			Id:     id,
 			Member: member.String(),
 		}, nil
-	case "OPTIONS":
+	case http.MethodOptions:
 		return nil, nil
 	default:
 		return nil, InvalidMethod(r)
 	}
 }
 
+// GroupLeaveHandler is the HTTP Handler for removing a member from a group
 func GroupLeaveHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	CORS(w, "POST")
+	CORS(w, http.MethodPost)
 	atcd := GetAtcd(r)
 	switch r.Method {
-	case "POST":
+	case http.MethodPost:
 		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get Id from url: %v", err)
 		}
-		req_info := &Token{}
-		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
+		reqInfo := &Token{}
+		if err = json.NewDecoder(r.Body).Decode(reqInfo); err != nil {
 			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 		}
 		member, cerr := GetClientAddr(r)
 		if cerr != nil {
 			return nil, cerr
 		}
-		err = atcd.LeaveGroup(id, member.String(), req_info.Token)
+		err = atcd.LeaveGroup(id, member.String(), reqInfo.Token)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not join group: %v", err)
 		}
@@ -188,18 +196,19 @@ func GroupLeaveHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 			Id:     id,
 			Member: member.String(),
 		}, nil
-	case "OPTIONS":
+	case http.MethodOptions:
 		return nil, nil
 	default:
 		return nil, InvalidMethod(r)
 	}
 }
 
+// GroupTokenHandler is the HTTP Handler for reading group tokens
 func GroupTokenHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	CORS(w, "GET")
+	CORS(w, http.MethodGet)
 	atcd := GetAtcd(r)
 	switch r.Method {
-	case "GET":
+	case http.MethodGet:
 		addr, cerr := GetClientAddr(r)
 		if cerr != nil {
 			return nil, cerr
@@ -227,7 +236,7 @@ func GroupTokenHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 			Token: token,
 			Id:    id,
 		}, nil
-	case "OPTIONS":
+	case http.MethodOptions:
 		return nil, nil
 	default:
 		return nil, InvalidMethod(r)
@@ -235,14 +244,14 @@ func GroupTokenHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 }
 
 func GroupShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	CORS(w, "GET", "POST", "DELETE")
+	CORS(w, http.MethodGet, http.MethodPost, http.MethodDelete)
 	atcd := GetAtcd(r)
 	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
 		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get Id from url: %v", err)
 	}
 	switch r.Method {
-	case "GET":
+	case http.MethodGet:
 		group, err := atcd.GetGroup(id)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not get shaping from atcd: %v", err)
@@ -251,12 +260,12 @@ func GroupShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 			Id:      id,
 			Shaping: group.Shaping,
 		}, nil
-	case "POST":
-		req_info := &TokenShaping{}
-		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
+	case http.MethodPost:
+		reqInfo := &TokenShaping{}
+		if err := json.NewDecoder(r.Body).Decode(reqInfo); err != nil {
 			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 		}
-		setting, err := atcd.ShapeGroup(id, req_info.Shaping, req_info.Token)
+		setting, err := atcd.ShapeGroup(id, reqInfo.Shaping, reqInfo.Token)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not shape: %v", err)
 		}
@@ -264,34 +273,39 @@ func GroupShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, Htt
 			Id:      id,
 			Shaping: setting,
 		}, nil
-	case "DELETE":
-		req_info := &Token{}
-		if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
-			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
-		}
-		err = atcd.UnshapeGroup(id, req_info.Token)
-		if err != nil {
-			return nil, HttpErrorf(http.StatusBadGateway, "Could not delete shaping from atcd: %v", err)
-		}
-		return nil, nil
-	case "OPTIONS":
+	case http.MethodDelete:
+		return GroupShapeDelete(w, r, atcd, id)
+	case http.MethodOptions:
 		return nil, nil
 	default:
 		return nil, InvalidMethod(r)
 	}
 }
 
+func GroupShapeDelete(w http.ResponseWriter, r *http.Request, atcd atc_thrift.Atcd, id int64) (interface{}, HttpError) {
+	reqInfo := &Token{}
+	if err := json.NewDecoder(r.Body).Decode(reqInfo); err != nil {
+		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
+	}
+	err := atcd.UnshapeGroup(id, reqInfo.Token)
+	if err != nil {
+		return nil, HttpErrorf(http.StatusBadGateway, "Could not delete shaping from atcd: %v", err)
+	}
+	return nil, nil
+}
+
+// ShapeHandler is the HTTP method for operating on shaping profiles
 func ShapeHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	CORS(w, "GET", "POST", "DELETE")
+	CORS(w, http.MethodGet, http.MethodPost, http.MethodDelete)
 	atcd := GetAtcd(r)
 	switch r.Method {
-	case "GET":
+	case http.MethodGet:
 		return getSimpleShaping(atcd, w, r)
-	case "POST":
+	case http.MethodPost:
 		return createSimpleShaping(atcd, w, r)
-	case "DELETE":
+	case http.MethodDelete:
 		return deleteSimpleShaping(atcd, w, r)
-	case "OPTIONS":
+	case http.MethodOptions:
 		return nil, nil
 	default:
 		return nil, InvalidMethod(r)
@@ -326,18 +340,18 @@ func createSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Re
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not create group: %v", err)
 		}
 	}
-	req_info := &TokenShaping{}
-	if err := json.NewDecoder(r.Body).Decode(req_info); err != nil {
+	reqInfo := &TokenShaping{}
+	if err = json.NewDecoder(r.Body).Decode(reqInfo); err != nil {
 		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 	}
 	// This is allowed since the requestor is shaping their own device!
-	if req_info.Token == "" {
-		req_info.Token, err = atcd.GetGroupToken(group.Id)
+	if reqInfo.Token == "" {
+		reqInfo.Token, err = atcd.GetGroupToken(group.Id)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not get token from daemon: %v", err)
 		}
 	}
-	setting, err := atcd.ShapeGroup(group.Id, req_info.Shaping, req_info.Token)
+	setting, err := atcd.ShapeGroup(group.Id, reqInfo.Shaping, reqInfo.Token)
 	if err != nil {
 		return nil, HttpErrorf(http.StatusBadGateway, "Could not shape: %v", err)
 	}
@@ -356,19 +370,19 @@ func deleteSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return nil, HttpErrorf(http.StatusNotFound, "Address not being shaped")
 	}
-	req_info := &Token{}
-	err = json.NewDecoder(r.Body).Decode(req_info)
+	reqInfo := &Token{}
+	err = json.NewDecoder(r.Body).Decode(reqInfo)
 	if !(err == nil || err == io.EOF) {
 		return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
 	}
 	// This is allowed since the requestor is shaping their own device!
-	if req_info.Token == "" {
-		req_info.Token, err = atcd.GetGroupToken(group.Id)
+	if reqInfo.Token == "" {
+		reqInfo.Token, err = atcd.GetGroupToken(group.Id)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusBadGateway, "Could not get token from daemon: %v", err)
 		}
 	}
-	err = atcd.UnshapeGroup(group.Id, req_info.Token)
+	err = atcd.UnshapeGroup(group.Id, reqInfo.Token)
 	if err != nil {
 		return nil, HttpErrorf(http.StatusBadGateway, "Could not delete shaping from atcd: %v", err)
 	}
@@ -376,16 +390,16 @@ func deleteSimpleShaping(atcd atc_thrift.Atcd, w http.ResponseWriter, r *http.Re
 }
 
 func ProfilesHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	CORS(w, "GET", "POST")
+	CORS(w, http.MethodGet, http.MethodPost)
 	db := GetDB(r)
 	switch r.Method {
-	case "GET":
+	case http.MethodGet:
 		profiles := <-db.GetProfiles()
 		if profiles == nil {
 			return nil, HttpErrorf(http.StatusInternalServerError, "Couldn't load profiles from database")
 		}
 		return Profiles{profiles}, nil
-	case "POST":
+	case http.MethodPost:
 		var p ProfileRequest
 		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not parse json from request: %v", err)
@@ -404,7 +418,7 @@ func ProfilesHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpE
 			return nil, HttpErrorf(http.StatusInternalServerError, "Couldn't save profile to database")
 		}
 		return prof, nil
-	case "OPTIONS":
+	case http.MethodOptions:
 		return nil, nil
 	default:
 		return nil, InvalidMethod(r)
@@ -412,9 +426,9 @@ func ProfilesHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpE
 }
 
 func ProfileHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpError) {
-	CORS(w, "DELETE")
+	CORS(w, http.MethodDelete)
 	switch r.Method {
-	case "DELETE":
+	case http.MethodDelete:
 		id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 		if err != nil {
 			return nil, HttpErrorf(http.StatusNotAcceptable, "Could not get Id from url: %v", err)
@@ -422,7 +436,7 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) (interface{}, HttpEr
 		db := GetDB(r)
 		db.DeleteProfile(id)
 		return nil, nil
-	case "OPTIONS":
+	case http.MethodOptions:
 		return nil, nil
 	default:
 		return nil, InvalidMethod(r)
