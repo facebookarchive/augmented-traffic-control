@@ -123,8 +123,8 @@ func (srv *Server) setupHandlers() {
 	apir := r.PathPrefix(ROOT_URL).Subrouter()
 	for url, f := range APIURLMap {
 		h := NewHandler(srv, f)
-		apir.HandleFunc(url, h)
-		apir.HandleFunc(url+"/", h)
+		apir.Handle(url, h)
+		apir.Handle(url+"/", h)
 	}
 	r.HandleFunc("/", srv.assets.Index)
 	r.HandleFunc("/static/{folder}/{name}", srv.assets.Asset)

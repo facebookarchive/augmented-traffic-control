@@ -58,8 +58,8 @@ type HandlerFunc func(http.ResponseWriter, *http.Request) (interface{}, HttpErro
 // internal to this file:
 type errorFunc func(http.ResponseWriter, *http.Request) HttpError
 
-func NewHandler(srv *Server, f HandlerFunc) http.HandlerFunc {
-	return ErrorHandler(ContextHandler(srv, JsonHandler(f)))
+func NewHandler(srv *Server, f HandlerFunc) http.Handler {
+	return context.ClearHandler(ErrorHandler(ContextHandler(srv, JsonHandler(f))))
 }
 
 // Http handler to set context data for requests.
