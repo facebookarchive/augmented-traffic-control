@@ -1,4 +1,5 @@
-package main
+// Package cli provides the command line entrypint for the atcd binary
+package cli
 
 import (
 	"bytes"
@@ -6,16 +7,17 @@ import (
 	"net"
 	"os"
 
-	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/daemon"
 	logging "github.com/facebook/augmented-traffic-control/src/log"
 	"github.com/facebook/augmented-traffic-control/src/shaping"
-	"gopkg.in/alecthomas/kingpin.v2"
-	"gopkg.in/yaml.v2"
+
+	"github.com/apache/thrift/lib/go/thrift"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
-func main() {
+func Execute() {
 	args := parseArgs()
 	logging.DEBUG = args.Verbose
 

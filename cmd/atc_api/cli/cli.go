@@ -1,4 +1,5 @@
-package main
+// Package cli provides the command line entrypoint for the atc_api binary
+package cli
 
 import (
 	"errors"
@@ -8,7 +9,7 @@ import (
 
 	"github.com/facebook/augmented-traffic-control/src/api"
 	logging "github.com/facebook/augmented-traffic-control/src/log"
-	"gopkg.in/alecthomas/kingpin.v2"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 func TestAtcdConnection(thrift_url *url.URL) error {
@@ -22,7 +23,7 @@ func TestAtcdConnection(thrift_url *url.URL) error {
 	return nil
 }
 
-func main() {
+func Execute() {
 	args := ParseArgs()
 	logging.DEBUG = args.Verbose
 
