@@ -1,4 +1,5 @@
-package main
+// Package cli provides the entrypoint for the atcd binary
+package cli
 
 import (
 	"bytes"
@@ -9,10 +10,11 @@ import (
 	"strings"
 
 	"github.com/facebook/augmented-traffic-control/src/api"
-
 	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
-	atclog "github.com/facebook/augmented-traffic-control/src/log"
-	"gopkg.in/alecthomas/kingpin.v2"
+
+	atc_log "github.com/facebook/augmented-traffic-control/src/log"
+
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
@@ -22,7 +24,7 @@ var (
 )
 
 func init() {
-	Log = atclog.Stdlog()
+	Log = atc_log.Stdlog()
 }
 
 func GetEnv(name, def string) string {
@@ -33,7 +35,8 @@ func GetEnv(name, def string) string {
 	}
 }
 
-func main() {
+// Execute executes the command line interface
+func Execute() {
 	thriftUrl := kingpin.Flag("thrift-addr", "thrift server url in the format 'proto://host:port' (env:ATCD_ADDR)").Short('r').
 		Default("json://127.0.0.1:9090").Envar("ATCD_ADDR").URL()
 

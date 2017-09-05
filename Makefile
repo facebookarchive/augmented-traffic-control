@@ -25,6 +25,8 @@ NPM = npm
 # The $(GO) project root
 PROJECT = github.com/facebook/augmented-traffic-control
 SRC = ${PROJECT}/src
+CMD = ${PROJECT}/cmd
+
 
 USERID = $(shell id -u)
 
@@ -39,17 +41,17 @@ lint: lint-ui lint-daemon lint-api lint-client
 ### Binaries
 ###
 
-bin/atcd: src/atc_thrift src/daemon/*.go src/atcd/*.go src/log/*.go src/shaping/*.go
+bin/atcd: cmd/atcd/*.go cmd/atcd/cli/*.go src/atc_thrift src/daemon/*.go src/log/*.go src/shaping/*.go
 	@mkdir -p bin
-	$(BUILD) -o $@ ${SRC}/atcd
+	$(BUILD) -o $@ ${CMD}/atcd
 
-bin/atc_api: src/atc_thrift src/api/*.go src/atc_api/*.go src/log/*.go src/assets/bindata.go
+bin/atc_api: cmd/atc_api/*.go cmd/atc_api/cli/*.go src/atc_thrift src/api/*.go src/log/*.go src/assets/bindata.go
 	@mkdir -p bin
-	$(BUILD) -o $@ ${SRC}/atc_api
+	$(BUILD) -o $@ ${CMD}/atc_api
 
-bin/atc: src/atc_thrift src/log/*.go src/atc/*.go
+bin/atc: cmd/atc/*.go cmd/atc/cli/*.go src/atc_thrift src/log/*.go
 	@mkdir -p bin
-	$(BUILD) -o $@ ${SRC}/atc
+	$(BUILD) -o $@ ${CMD}/atc
 
 src/atc_thrift: if/atc_thrift.thrift
 	$(THRIFT) --out src/ --gen go:$(THRIFT_GO_FLAGS) if/atc_thrift.thrift
