@@ -13,10 +13,12 @@ Installing and configuring docker is out of the scope of this document, but plen
 
 ### Using docker
 
-The `Dockerfile` provided in this repo is pretty limited and basically build from golang:latest image. To build the ATC image, you need to run:
+The `Dockerfile` provided in this repo is pretty limited and basically build from golang:1.8-jessie image. To build the ATC image, you need to run:
 
 ```
-make docker-build
+glide i
+make
+docker build -t atc .
 ```
 
 Once you have the image build, you can get a shell in the container by running:
