@@ -1,4 +1,4 @@
-FROM golang:latest
+FROM golang:1.8-jessie
 RUN apt-get -y update && apt-get -y install iptables rsyslog iperf3 && systemctl enable rsyslog && apt-get -y clean
 
 COPY ./utils/docker_entrypoint.sh /
