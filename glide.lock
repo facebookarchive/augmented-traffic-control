@@ -1,24 +1,16 @@
-hash: 24dd85605b7c94a4ecc2c7fd16496787124c613e5fe272ec102575af738b01c0
-updated: 2017-08-08T16:35:10.119385051-07:00
+hash: 6be4b9e32cdccc2a84025f8d4c955804c3a5de20daaa81cb9077349a03e4eead
+updated: 2017-09-20T15:04:12.490267301-07:00
 imports:
-- name: git.apache.org/thrift.git
-  version: 0dd823580c78a79ae9696eb9b3650e400fff140f
-  subpackages:
-  - lib/go/thrift
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
   subpackages:
   - parse
 - name: github.com/alecthomas/units
   version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
-- name: github.com/apache/thrift
-  version: 0dd823580c78a79ae9696eb9b3650e400fff140f
-  subpackages:
-  - lib/go/thrift
 - name: github.com/gorilla/context
   version: 1ea25387ff6f684839d82767c1733ff4d4d15d0a
 - name: github.com/gorilla/mux
-  version: bcd8bc72b08df0f70df986b97f95590779502d31
+  version: 24fca303ac6da784b9e8269f724ddeb0b2eea5e7
 - name: github.com/hgfischer/go-otp
   version: ae459b7572ee6c0fe3394a750678aacffd138060
 - name: github.com/mattn/go-sqlite3
@@ -41,6 +33,12 @@ imports:
   version: 1087e65c9441605df944fb12c33f0fe7072d18ca
 - name: gopkg.in/yaml.v2
   version: 25c4ec802a7d637f88d584ab26798e94ad14c13b
+- name: thrift
+  version: 0dd823580c78a79ae9696eb9b3650e400fff140f
+  repo: http://git.apache.org/thrift.git
+  vcs: git
+  subpackages:
+  - lib/go/thrift
 testImports:
 - name: github.com/alecthomas/assert
   version: 561411bbb7e98b005e520f4c0f491c2d23782048

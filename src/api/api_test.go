@@ -10,8 +10,8 @@ import (
 	"runtime"
 	"testing"
 
+	"atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/api/stub"
-	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 )
 
 // IP address for test server to bind to.

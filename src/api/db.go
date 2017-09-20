@@ -8,7 +8,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"atc_thrift"
 	_ "github.com/mattn/go-sqlite3"
 )
 

@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/iptables"
 	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"

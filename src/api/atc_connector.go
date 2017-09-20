@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"atc_thrift"
+	"thrift/lib/go/thrift"
 )
 
 var (

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"atc_thrift"
+
 	"github.com/facebook/augmented-traffic-control/src/iptables"
 	"github.com/hgfischer/go-otp"
 	"github.com/pborman/uuid"

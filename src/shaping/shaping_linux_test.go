@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
+	"atc_thrift"
 	assertlib "github.com/alecthomas/assert"
-	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/iptables"
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netns"

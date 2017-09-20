@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 
+	"atc_thrift"
 	"github.com/facebook/augmented-traffic-control/src/api"
-	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
 
 	atc_log "github.com/facebook/augmented-traffic-control/src/log"
 

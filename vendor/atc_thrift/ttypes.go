@@ -5,8 +5,8 @@ package atc_thrift
 
 import (
 	"fmt"
-	"github.com/apache/thrift/lib/go/thrift"
 	"math"
+	"thrift/lib/go/thrift"
 )
 
 // (needed to ensure safety because of naive import list construction.)
