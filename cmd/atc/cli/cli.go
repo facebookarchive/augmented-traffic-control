@@ -161,14 +161,18 @@ func Execute() {
 		}
 		GroupShape(id, token, &atc_thrift.Shaping{
 			Up: &atc_thrift.LinkShaping{
-				Rate:  *upRate,
-				Delay: &atc_thrift.Delay{Delay: *upDelay},
-				Loss:  &atc_thrift.Loss{Percentage: *upLoss},
+				Rate:       *upRate,
+				Delay:      &atc_thrift.Delay{Delay: *upDelay},
+				Loss:       &atc_thrift.Loss{Percentage: *upLoss},
+				Corruption: &atc_thrift.Corruption{},
+				Reorder:    &atc_thrift.Reorder{},
 			},
 			Down: &atc_thrift.LinkShaping{
-				Rate:  *dnRate,
-				Delay: &atc_thrift.Delay{Delay: *dnDelay},
-				Loss:  &atc_thrift.Loss{Percentage: *dnLoss},
+				Rate:       *dnRate,
+				Delay:      &atc_thrift.Delay{Delay: *dnDelay},
+				Loss:       &atc_thrift.Loss{Percentage: *dnLoss},
+				Corruption: &atc_thrift.Corruption{},
+				Reorder:    &atc_thrift.Reorder{},
 			},
 		})
 	default:
