@@ -3,7 +3,7 @@ package api
 import (
 	"testing"
 
-	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"atc_thrift"
 )
 
 var (

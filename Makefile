@@ -19,7 +19,7 @@ GET = $(GO) get
 LIST = $(GO) list
 BINGEN = $(GOPATH)/bin/go-bindata # github.com/jteeuwen/go-bindata
 THRIFT = thrift
-THRIFT_GO_FLAGS=thrift_import=github.com/apache/thrift/lib/go/thrift
+THRIFT_GO_FLAGS=thrift_import=thrift/lib/go/thrift
 NPM = npm
 
 # The $(GO) project root
@@ -32,7 +32,7 @@ USERID = $(shell id -u)
 
 .PHONY: all bin tests ui lint
 bin: bin/atcd bin/atc_api bin/atc
-all: src/atc_thrift lint ui tests bin
+all: vendor/atc_thrift lint ui tests bin
 tests: test-daemon test-api test-shaping
 ui: src/assets/bindata.go
 lint: lint-ui lint-daemon lint-api lint-client
@@ -41,22 +41,21 @@ lint: lint-ui lint-daemon lint-api lint-client
 ### Binaries
 ###
 
-bin/atcd: cmd/atcd/*.go cmd/atcd/cli/*.go src/atc_thrift src/daemon/*.go src/log/*.go src/shaping/*.go
+bin/atcd: cmd/atcd/*.go cmd/atcd/cli/*.go vendor/atc_thrift src/daemon/*.go src/log/*.go src/shaping/*.go
 	@mkdir -p bin
 	$(BUILD) -o $@ ${CMD}/atcd
 
-bin/atc_api: cmd/atc_api/*.go cmd/atc_api/cli/*.go src/atc_thrift src/api/*.go src/log/*.go src/assets/bindata.go
+bin/atc_api: cmd/atc_api/*.go cmd/atc_api/cli/*.go vendor/atc_thrift src/api/*.go src/log/*.go src/assets/bindata.go
 	@mkdir -p bin
 	$(BUILD) -o $@ ${CMD}/atc_api
 
-bin/atc: cmd/atc/*.go cmd/atc/cli/*.go src/atc_thrift src/log/*.go
+bin/atc: cmd/atc/*.go cmd/atc/cli/*.go vendor/atc_thrift src/log/*.go
 	@mkdir -p bin
 	$(BUILD) -o $@ ${CMD}/atc
 
-src/atc_thrift: if/atc_thrift.thrift
-	$(THRIFT) --out src/ --gen go:$(THRIFT_GO_FLAGS) if/atc_thrift.thrift
-	# fix import
-	gofmt -w -r "\"atc_thrift\" -> \"github.com/facebook/augmented-traffic-control/src/atc_thrift\"" src/atc_thrift/atcd-remote/atcd-remote.go
+vendor/atc_thrift: if/atc_thrift.thrift
+	mkdir -p vendor
+	$(THRIFT) --out vendor/ --gen go:$(THRIFT_GO_FLAGS) if/atc_thrift.thrift
 
 ###
 ### UI
@@ -156,7 +155,7 @@ clean:
 
 # Remove all generated files and binaries
 clean-all: clean
-	rm -rf src/atc_thrift src/assets/bindata.go
+	rm -rf vendor/atc_thrift src/assets/bindata.go
 
 # Copy built binaries into /usr/local/bin/
 install:

@@ -9,7 +9,7 @@ import (
 	"net/textproto"
 	"runtime/debug"
 
-	"github.com/facebook/augmented-traffic-control/src/atc_thrift"
+	"atc_thrift"
 	"github.com/gorilla/context"
 )
 
