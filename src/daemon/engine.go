@@ -18,7 +18,13 @@ type ShapingEngine struct {
 	resolution int
 }
 
-func NewShapingEngine(resolution int, thriftAddr *net.TCPAddr, conf *Config) (*ShapingEngine, error) {
+func NewShapingEngine(resolution int, thriftAddr *net.TCPAddr, conf *Config, fakeShaping bool) (*ShapingEngine, error) {
+
+	if fakeShaping {
+		shaper := &shaping.FakeShaper{}
+		return buildShapingEngine(resolution, thriftAddr, shaper, conf)
+	}
+
 	shaper, err := shaping.GetShaper()
 	if err != nil {
 		return nil, err
@@ -26,6 +32,7 @@ func NewShapingEngine(resolution int, thriftAddr *net.TCPAddr, conf *Config) (*S
 	if err := shaper.Initialize(); err != nil {
 		return nil, err
 	}
+
 	return buildShapingEngine(resolution, thriftAddr, shaper, conf)
 }
 

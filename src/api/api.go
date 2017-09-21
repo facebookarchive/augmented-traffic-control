@@ -10,6 +10,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type AssetManager interface {
+	Asset(w http.ResponseWriter, r *http.Request)
+	Index(w http.ResponseWriter, r *http.Request)
+}
+
 var (
 	// APIURLMap contains the mapping between the URLS and the HTTP Handlers
 	APIURLMap = map[string]HandlerFunc{

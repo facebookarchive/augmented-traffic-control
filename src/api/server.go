@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -32,13 +33,28 @@ type Server struct {
 	Handler   http.Handler
 	listener  net.Listener
 	Atcd      AtcdCloser
-	db        *DbRunner
+	db        DbRunner
 	bind_info *bindInfo
 	assets    AssetManager
 }
 
 func ListenAndServe(options AtcApiOptions) (*Server, error) {
-	db, err := NewDbRunner(options.DBDriver, options.DBConn)
+	var db DbRunner
+	var err error
+
+	switch options.DBDriver {
+	case "sqlite3":
+		fallthrough
+	case "mysql":
+		fallthrough
+	case "postgres":
+		db, err = NewSqlRunner(options.DBDriver, options.DBConn)
+	case "memory":
+		db, err = NewMemoryRunner()
+	default:
+		err = fmt.Errorf("Unsupported database driver %s", options.DBDriver)
+	}
+
 	if err != nil {
 		return nil, err
 	}

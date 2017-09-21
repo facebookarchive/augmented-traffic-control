@@ -24,7 +24,7 @@ var (
 )
 
 func TestDBCreatesSchema(t *testing.T) {
-	db, err := NewDbRunner("sqlite3", ":memory:")
+	db, err := NewSqlRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func TestDBCreatesSchema(t *testing.T) {
 }
 
 func TestDBInsertsGroup(t *testing.T) {
-	db, err := NewDbRunner("sqlite3", ":memory:")
+	db, err := NewSqlRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func TestDBInsertsGroup(t *testing.T) {
 }
 
 func TestDBDeletesGroup(t *testing.T) {
-	db, err := NewDbRunner("sqlite3", ":memory:")
+	db, err := NewSqlRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +92,7 @@ func TestDBDeletesGroup(t *testing.T) {
 }
 
 func TestDBGetsAllGroups(t *testing.T) {
-	db, err := NewDbRunner("sqlite3", ":memory:")
+	db, err := NewSqlRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +117,7 @@ func TestDBGetsAllGroups(t *testing.T) {
 }
 
 func TestDBUpdatesGroup(t *testing.T) {
-	db, err := NewDbRunner("sqlite3", ":memory:")
+	db, err := NewSqlRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +149,7 @@ func TestDBUpdatesGroup(t *testing.T) {
 }
 
 func TestDBInsertsMember(t *testing.T) {
-	db, err := NewDbRunner("sqlite3", ":memory:")
+	db, err := NewSqlRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,7 +175,7 @@ func TestDBInsertsMember(t *testing.T) {
 }
 
 func TestDBGetsMember(t *testing.T) {
-	db, err := NewDbRunner("sqlite3", ":memory:")
+	db, err := NewSqlRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -205,7 +205,7 @@ func TestDBGetsMember(t *testing.T) {
 }
 
 func TestDBGetsMembersForGroup(t *testing.T) {
-	db, err := NewDbRunner("sqlite3", ":memory:")
+	db, err := NewSqlRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -236,7 +236,7 @@ func TestDBGetsMembersForGroup(t *testing.T) {
 }
 
 func TestDBCleansEmptyGroups(t *testing.T) {
-	db, err := NewDbRunner("sqlite3", ":memory:")
+	db, err := NewSqlRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -277,7 +277,7 @@ func TestDBCleansEmptyGroups(t *testing.T) {
 }
 
 func TestDBCleansOldGroups(t *testing.T) {
-	db, err := NewDbRunner("sqlite3", ":memory:")
+	db, err := NewSqlRunner("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
