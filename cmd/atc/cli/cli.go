@@ -18,13 +18,13 @@ import (
 )
 
 var (
-	Log *log.Logger
-
+	Log  *log.Logger
 	atcd *api.AtcdConn
 )
 
 func init() {
 	Log = atc_log.Stdlog()
+	api.Log = atc_log.NewMux(Log)
 }
 
 func GetEnv(name, def string) string {

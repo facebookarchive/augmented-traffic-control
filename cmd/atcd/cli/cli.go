@@ -3,28 +3,46 @@ package cli
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net"
 	"os"
 
-	"atc_thrift"
-
 	"github.com/facebook/augmented-traffic-control/src/daemon"
-	logging "github.com/facebook/augmented-traffic-control/src/log"
+	atc_log "github.com/facebook/augmented-traffic-control/src/log"
 	"github.com/facebook/augmented-traffic-control/src/shaping"
-
-	"thrift/lib/go/thrift"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v2"
+
+	"atc_thrift"
+	"thrift/lib/go/thrift"
 )
+
+func init() {
+	daemon.Log = atc_log.NewMux(atc_log.Syslog(), atc_log.Stdlog())
+}
 
 func Execute() {
 	args := parseArgs()
-	logging.DEBUG = args.Verbose
+	atc_log.DEBUG = args.Verbose
+
+	var err error
+	var db daemon.DbRunner
 
 	// Setup the database
-	db, err := daemon.NewDbRunner(args.DbDriver, args.DbConnstr)
+	switch args.DbDriver {
+	case "mysql":
+		fallthrough
+	case "postgres":
+		fallthrough
+	case "sqlite3":
+		db, err = daemon.NewSqlRunner(args.DbDriver, args.DbConnstr)
+	case "memory":
+		db, err = daemon.NewMemoryRunner()
+	default:
+		err = fmt.Errorf("Unsupported db driver %s", args.DbDriver)
+	}
 	if err != nil {
 		daemon.Log.Fatalf("Couldn't setup database: %v", err)
 	}
@@ -57,7 +75,7 @@ func Execute() {
 	}
 
 	// Wrap the shaper in an engine for hook execution support.
-	eng, err := daemon.NewShapingEngine(args.Resolution, engine_addr, config)
+	eng, err := daemon.NewShapingEngine(args.Resolution, engine_addr, config, args.FakeShaping)
 	if err != nil {
 		daemon.Log.Fatalf("Could not initialize shaping engine: %v", err)
 	}

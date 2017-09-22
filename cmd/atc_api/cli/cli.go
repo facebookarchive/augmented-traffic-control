@@ -7,10 +7,16 @@ import (
 	"os"
 	"time"
 
+	atc_log "github.com/facebook/augmented-traffic-control/src/log"
+
 	"github.com/facebook/augmented-traffic-control/src/api"
 	logging "github.com/facebook/augmented-traffic-control/src/log"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
+
+func init() {
+	api.Log = atc_log.NewMux(atc_log.Syslog(), atc_log.Stdlog())
+}
 
 func TestAtcdConnection(thrift_url *url.URL) error {
 	atcd := api.NewAtcdConn(thrift_url)
