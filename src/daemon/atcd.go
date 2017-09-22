@@ -22,7 +22,7 @@ var (
 	NoSuchItem = fmt.Errorf("NO_SUCH_ITEM")
 )
 
-func ReshapeFromDb(shaper *ShapingEngine, db *DbRunner) error {
+func ReshapeFromDb(shaper *ShapingEngine, db DbRunner) error {
 	groups, err := db.GetAllGroups()
 	if err != nil {
 		return err
@@ -62,12 +62,12 @@ func ReshapeFromDb(shaper *ShapingEngine, db *DbRunner) error {
 }
 
 type Atcd struct {
-	db      *DbRunner
+	db      DbRunner
 	shaper  *ShapingEngine
 	options AtcdOptions
 }
 
-func NewAtcd(db *DbRunner, shaper *ShapingEngine, options *AtcdOptions) atc_thrift.Atcd {
+func NewAtcd(db DbRunner, shaper *ShapingEngine, options *AtcdOptions) atc_thrift.Atcd {
 	if options == nil {
 		options = &DefaultAtcdOptions
 	}

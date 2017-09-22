@@ -68,7 +68,7 @@ type DbMember struct {
 	group_id int64
 }
 
-type DbRunner struct {
+type sqlDbRunner struct {
 	db              *sql.DB
 	mutex           *sync.RWMutex
 	prepared        map[string]*sql.Stmt
@@ -76,7 +76,7 @@ type DbRunner struct {
 	driver, connstr string
 }
 
-func NewDbRunner(driver, connstr string) (*DbRunner, error) {
+func NewSqlRunner(driver, connstr string) (DbRunner, error) {
 	db, err := sql.Open(driver, connstr)
 	if err != nil {
 		return nil, fmt.Errorf("Could not open database connection: %v", err)
@@ -84,7 +84,7 @@ func NewDbRunner(driver, connstr string) (*DbRunner, error) {
 	mutex := &sync.RWMutex{}
 	mutex.Lock()
 	defer mutex.Unlock()
-	runner := &DbRunner{
+	runner := &sqlDbRunner{
 		db:       db,
 		mutex:    mutex,
 		prepared: make(map[string]*sql.Stmt),
@@ -111,11 +111,11 @@ func NewDbRunner(driver, connstr string) (*DbRunner, error) {
 	return runner, nil
 }
 
-func (runner *DbRunner) Close() {
+func (runner *sqlDbRunner) Close() {
 	runner.close(true)
 }
 
-func (runner *DbRunner) close(lock bool) {
+func (runner *sqlDbRunner) close(lock bool) {
 	if lock {
 		runner.mutex.Lock()
 	}
@@ -130,7 +130,7 @@ func (runner *DbRunner) close(lock bool) {
 *** Porcelain (public)
 **/
 
-func (runner *DbRunner) GetGroup(id int64) (*DbGroup, error) {
+func (runner *sqlDbRunner) GetGroup(id int64) (*DbGroup, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	row := runner.prep("group").QueryRow(id)
@@ -142,7 +142,7 @@ func (runner *DbRunner) GetGroup(id int64) (*DbGroup, error) {
 	return grp, err
 }
 
-func (runner *DbRunner) GetAllGroups() (chan *DbGroup, error) {
+func (runner *sqlDbRunner) GetAllGroups() (chan *DbGroup, error) {
 	if err := runner.healthCheck(); err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (runner *DbRunner) GetAllGroups() (chan *DbGroup, error) {
 	return result, nil
 }
 
-func (runner *DbRunner) DeleteGroup(id int64) error {
+func (runner *sqlDbRunner) DeleteGroup(id int64) error {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	_, err := runner.prep("group delete").Exec(id)
@@ -163,7 +163,7 @@ func (runner *DbRunner) DeleteGroup(id int64) error {
 	return err
 }
 
-func (runner *DbRunner) UpdateGroup(group DbGroup) (*DbGroup, error) {
+func (runner *sqlDbRunner) UpdateGroup(group DbGroup) (*DbGroup, error) {
 	runner.mutex.RLock()
 	var err error
 	defer runner.mutex.RUnlock()
@@ -194,7 +194,7 @@ func (runner *DbRunner) UpdateGroup(group DbGroup) (*DbGroup, error) {
 	return &group, nil
 }
 
-func (runner *DbRunner) GetMember(addr iptables.Target) (*DbMember, error) {
+func (runner *sqlDbRunner) GetMember(addr iptables.Target) (*DbMember, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	row := runner.prep("member").QueryRow(addr.String())
@@ -206,7 +206,7 @@ func (runner *DbRunner) GetMember(addr iptables.Target) (*DbMember, error) {
 	return member, err
 }
 
-func (runner *DbRunner) UpdateMember(member DbMember) (*DbMember, error) {
+func (runner *sqlDbRunner) UpdateMember(member DbMember) (*DbMember, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	_, err := runner.prep("member update").Exec(member.addr.String(), member.group_id)
@@ -217,7 +217,7 @@ func (runner *DbRunner) UpdateMember(member DbMember) (*DbMember, error) {
 	return &member, nil
 }
 
-func (runner *DbRunner) DeleteMember(addr iptables.Target) error {
+func (runner *sqlDbRunner) DeleteMember(addr iptables.Target) error {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	_, err := runner.prep("member delete").Exec(addr.String())
@@ -225,7 +225,7 @@ func (runner *DbRunner) DeleteMember(addr iptables.Target) error {
 	return err
 }
 
-func (runner *DbRunner) GetMembersOf(id int64) (chan iptables.Target, error) {
+func (runner *sqlDbRunner) GetMembersOf(id int64) (chan iptables.Target, error) {
 	if err := runner.healthCheck(); err != nil {
 		return nil, err
 	}
@@ -238,7 +238,7 @@ func (runner *DbRunner) GetMembersOf(id int64) (chan iptables.Target, error) {
 	return result, nil
 }
 
-func (runner *DbRunner) GetAllMembers() (chan *DbMember, error) {
+func (runner *sqlDbRunner) GetAllMembers() (chan *DbMember, error) {
 	if err := runner.healthCheck(); err != nil {
 		return nil, err
 	}
@@ -251,7 +251,7 @@ func (runner *DbRunner) GetAllMembers() (chan *DbMember, error) {
 	return results, nil
 }
 
-func (runner *DbRunner) Cleanup() error {
+func (runner *sqlDbRunner) Cleanup() error {
 	if err := runner.healthCheck(); err != nil {
 		return err
 	}
@@ -275,7 +275,7 @@ func (runner *DbRunner) Cleanup() error {
 *** Plumbing (private...ish)
 **/
 
-func (runner *DbRunner) healthCheck() error {
+func (runner *sqlDbRunner) healthCheck() error {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	row := runner.prep("health").QueryRow()
@@ -289,17 +289,17 @@ func (runner *DbRunner) healthCheck() error {
 	return nil
 }
 
-func (runner *DbRunner) log(err error) {
+func (runner *sqlDbRunner) log(err error) {
 	if err != nil {
 		Log.Printf("DB: error: %v\n", err)
 	}
 }
 
-func (runner *DbRunner) prep(name string) *sql.Stmt {
+func (runner *sqlDbRunner) prep(name string) *sql.Stmt {
 	return runner.prepared[name]
 }
 
-func (runner *DbRunner) getAllGroups(grps chan *DbGroup) error {
+func (runner *sqlDbRunner) getAllGroups(grps chan *DbGroup) error {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	rows, err := runner.prep("groups").Query()
@@ -317,7 +317,7 @@ func (runner *DbRunner) getAllGroups(grps chan *DbGroup) error {
 	return nil
 }
 
-func (runner *DbRunner) nextGroupId() (int64, error) {
+func (runner *sqlDbRunner) nextGroupId() (int64, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	row := runner.prep("group max id").QueryRow()
@@ -336,7 +336,7 @@ func (runner *DbRunner) nextGroupId() (int64, error) {
 	return *id + 1, nil
 }
 
-func (runner *DbRunner) getMembersOf(id int64, members chan iptables.Target) error {
+func (runner *sqlDbRunner) getMembersOf(id int64, members chan iptables.Target) error {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	rows, err := runner.prep("members in group").Query(id)
@@ -358,7 +358,7 @@ func (runner *DbRunner) getMembersOf(id int64, members chan iptables.Target) err
 	return nil
 }
 
-func (runner *DbRunner) getAllMembers(members chan *DbMember) error {
+func (runner *sqlDbRunner) getAllMembers(members chan *DbMember) error {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	rows, err := runner.prep("all members").Query()
@@ -381,7 +381,7 @@ func (runner *DbRunner) getAllMembers(members chan *DbMember) error {
 	return nil
 }
 
-func (runner *DbRunner) cleanupOldGroups() (int64, error) {
+func (runner *sqlDbRunner) cleanupOldGroups() (int64, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	res, err := runner.prep("old group cleanup").Exec(time.Now().Unix())
@@ -395,7 +395,7 @@ func (runner *DbRunner) cleanupOldGroups() (int64, error) {
 	return n, nil
 }
 
-func (runner *DbRunner) cleanupEmptyGroups() (int64, error) {
+func (runner *sqlDbRunner) cleanupEmptyGroups() (int64, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	res, err := runner.prep("empty group cleanup").Exec()

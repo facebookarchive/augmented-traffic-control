@@ -14,11 +14,11 @@ var (
 )
 
 func Syslog() *log.Logger {
-	log, err := syslog.NewLogger(syslog.LOG_USER|syslog.LOG_INFO, 0)
+	ln, err := syslog.NewLogger(syslog.LOG_USER|syslog.LOG_INFO, 0)
 	if err != nil {
 		log.Println("warning: Could not create syslog logger:", err)
 	}
-	return log
+	return ln
 }
 
 func Stdlog() *log.Logger {

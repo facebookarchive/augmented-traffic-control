@@ -44,9 +44,9 @@ func GetServer(r *http.Request) *Server {
 	return nil
 }
 
-func GetDB(r *http.Request) *DbRunner {
+func GetDB(r *http.Request) DbRunner {
 	if rv := context.Get(r, db_context_key); rv != nil {
-		return rv.(*DbRunner)
+		return rv.(DbRunner)
 	}
 	log.Printf("Error: could not GetDB for request %v\n", r)
 	return nil

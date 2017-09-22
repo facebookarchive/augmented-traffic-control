@@ -5,7 +5,3 @@ import (
 )
 
 var Log *LogMux
-
-func init() {
-	Log = NewMux(Syslog(), Stdlog())
-}

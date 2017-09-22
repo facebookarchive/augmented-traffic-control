@@ -29,14 +29,14 @@ var (
 	}
 )
 
-type DbRunner struct {
+type sqlDbRunner struct {
 	db              *sql.DB
 	mutex           *sync.RWMutex
 	prepared        map[string]*sql.Stmt
 	driver, connstr string
 }
 
-func NewDbRunner(driver, connstr string) (*DbRunner, error) {
+func NewSqlRunner(driver, connstr string) (DbRunner, error) {
 	db, err := sql.Open(driver, connstr)
 	if err != nil {
 		return nil, fmt.Errorf("Could not open database connection: %v", err)
@@ -44,7 +44,7 @@ func NewDbRunner(driver, connstr string) (*DbRunner, error) {
 	mutex := &sync.RWMutex{}
 	mutex.Lock()
 	defer mutex.Unlock()
-	runner := &DbRunner{
+	runner := &sqlDbRunner{
 		db:       db,
 		mutex:    mutex,
 		prepared: make(map[string]*sql.Stmt),
@@ -71,7 +71,7 @@ func NewDbRunner(driver, connstr string) (*DbRunner, error) {
 	return runner, nil
 }
 
-func (runner *DbRunner) Close() {
+func (runner *sqlDbRunner) Close() {
 	runner.mutex.Lock()
 	// Don't unlock the mutex again
 	for _, stmt := range runner.prepared {
@@ -80,7 +80,7 @@ func (runner *DbRunner) Close() {
 	runner.db.Close()
 }
 
-func (runner *DbRunner) close(lock bool) {
+func (runner *sqlDbRunner) close(lock bool) {
 	if lock {
 		runner.mutex.Lock()
 	}
@@ -97,7 +97,7 @@ func (runner *DbRunner) close(lock bool) {
 *** Porcelain (public)
 **/
 
-func (runner *DbRunner) UpdateProfile(profile Profile) chan *Profile {
+func (runner *sqlDbRunner) UpdateProfile(profile Profile) chan *Profile {
 	result := make(chan *Profile)
 	go func() {
 		defer close(result)
@@ -110,7 +110,7 @@ func (runner *DbRunner) UpdateProfile(profile Profile) chan *Profile {
 	return result
 }
 
-func (runner *DbRunner) GetProfiles() chan []Profile {
+func (runner *sqlDbRunner) GetProfiles() chan []Profile {
 	result := make(chan []Profile)
 	go func() {
 		defer close(result)
@@ -123,7 +123,7 @@ func (runner *DbRunner) GetProfiles() chan []Profile {
 	return result
 }
 
-func (runner *DbRunner) DeleteProfile(id int64) {
+func (runner *sqlDbRunner) DeleteProfile(id int64) {
 	go func() {
 		runner.log(runner.deleteProfile(id))
 	}()
@@ -133,17 +133,17 @@ func (runner *DbRunner) DeleteProfile(id int64) {
 *** Plumbing (private...ish)
 **/
 
-func (runner *DbRunner) log(err error) {
+func (runner *sqlDbRunner) log(err error) {
 	if err != nil {
 		log.Printf("DB: error: %v\n", err)
 	}
 }
 
-func (runner *DbRunner) prep(name string) *sql.Stmt {
+func (runner *sqlDbRunner) prep(name string) *sql.Stmt {
 	return runner.prepared[name]
 }
 
-func (runner *DbRunner) nextProfileId() (int64, error) {
+func (runner *sqlDbRunner) nextProfileId() (int64, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	row := runner.prep("profiles max id").QueryRow()
@@ -162,7 +162,7 @@ func (runner *DbRunner) nextProfileId() (int64, error) {
 	return *id + 1, nil
 }
 
-func (runner *DbRunner) updateProfile(profile Profile) (*Profile, error) {
+func (runner *sqlDbRunner) updateProfile(profile Profile) (*Profile, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	var err error
@@ -185,7 +185,7 @@ func (runner *DbRunner) updateProfile(profile Profile) (*Profile, error) {
 	return &profile, nil
 }
 
-func (runner *DbRunner) getProfiles() ([]Profile, error) {
+func (runner *sqlDbRunner) getProfiles() ([]Profile, error) {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	rows, err := runner.prep("profiles").Query()
@@ -204,7 +204,7 @@ func (runner *DbRunner) getProfiles() ([]Profile, error) {
 	return profiles, nil
 }
 
-func (runner *DbRunner) deleteProfile(id int64) error {
+func (runner *sqlDbRunner) deleteProfile(id int64) error {
 	runner.mutex.RLock()
 	defer runner.mutex.RUnlock()
 	_, err := runner.prep("profile delete").Exec(id)
