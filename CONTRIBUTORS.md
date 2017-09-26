@@ -7,4 +7,5 @@
 * Gus Luxton
 * John Morrow
 * Patrick Shuff
+* Sheena Artrip
 * Zeal Jagannatha
