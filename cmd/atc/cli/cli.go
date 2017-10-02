@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"atc_thrift"
+
 	"github.com/facebook/augmented-traffic-control/src/api"
 
 	atc_log "github.com/facebook/augmented-traffic-control/src/log"
@@ -37,8 +38,13 @@ func GetEnv(name, def string) string {
 
 // Execute executes the command line interface
 func Execute() {
-	thriftUrl := kingpin.Flag("thrift-addr", "thrift server url in the format 'proto://host:port' (env:ATCD_ADDR)").Short('r').
-		Default("json://127.0.0.1:9090").Envar("ATCD_ADDR").URL()
+	thriftUrl :=
+		kingpin.Flag("thrift-addr",
+			"thrift server url in the format 'proto://host:port' (env:ATCD_ADDR)").
+			Short('r').
+			Default("json://127.0.0.1:9090").
+			Envar("ATCD_ADDR").
+			URL()
 
 	var (
 		defMember = GetEnv("ATC_MEMBER", "")

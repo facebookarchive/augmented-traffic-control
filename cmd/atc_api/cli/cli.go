@@ -29,7 +29,7 @@ func TestAtcdConnection(thrift_url *url.URL) error {
 	return nil
 }
 
-func Execute() {
+func Execute(ox ...api.OptionFunc) {
 	args := ParseArgs()
 	logging.DEBUG = args.Verbose
 
@@ -51,7 +51,7 @@ func Execute() {
 
 	api.Log.Println("Listening on", args.Addr)
 
-	srv, err := api.ListenAndServe(args.AtcApiOptions)
+	srv, err := api.ListenAndServe(args.AtcApiOptions, ox...)
 	if err != nil {
 		api.Log.Fatalln("failed to listen and serve:", err)
 	}

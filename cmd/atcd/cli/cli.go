@@ -3,7 +3,6 @@ package cli
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net"
 	"os"
@@ -23,26 +22,17 @@ func init() {
 	daemon.Log = atc_log.NewMux(atc_log.Syslog(), atc_log.Stdlog())
 }
 
-func Execute() {
+func Execute(ox ...OptionFunc) {
 	args := parseArgs()
 	atc_log.DEBUG = args.Verbose
 
-	var err error
-	var db daemon.DbRunner
-
-	// Setup the database
-	switch args.DbDriver {
-	case "mysql":
-		fallthrough
-	case "postgres":
-		fallthrough
-	case "sqlite3":
-		db, err = daemon.NewSqlRunner(args.DbDriver, args.DbConnstr)
-	case "memory":
-		db, err = daemon.NewMemoryRunner()
-	default:
-		err = fmt.Errorf("Unsupported db driver %s", args.DbDriver)
+	// apply functional arguments
+	opts := defaults()
+	for _, o := range ox {
+		opts = o(opts)
 	}
+
+	db, err := opts.dbFactory(args.DbDriver, args.DbConnstr)
 	if err != nil {
 		daemon.Log.Fatalf("Couldn't setup database: %v", err)
 	}

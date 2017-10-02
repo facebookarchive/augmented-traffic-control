@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"atc_thrift"
+
 	"github.com/facebook/augmented-traffic-control/src/shaping"
 )
 

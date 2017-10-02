@@ -6,6 +6,7 @@ package shaping
 
 import (
 	"atc_thrift"
+
 	"github.com/facebook/augmented-traffic-control/src/iptables"
 	. "github.com/facebook/augmented-traffic-control/src/log"
 )

@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"atc_thrift"
+
 	assertlib "github.com/alecthomas/assert"
 	"github.com/facebook/augmented-traffic-control/src/iptables"
 	"github.com/vishvananda/netlink"

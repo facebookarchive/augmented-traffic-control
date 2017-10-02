@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -38,26 +37,19 @@ type Server struct {
 	assets    AssetManager
 }
 
-func ListenAndServe(options AtcApiOptions) (*Server, error) {
-	var db DbRunner
-	var err error
+func ListenAndServe(options AtcApiOptions, ox ...OptionFunc) (*Server, error) {
 
-	switch options.DBDriver {
-	case "sqlite3":
-		fallthrough
-	case "mysql":
-		fallthrough
-	case "postgres":
-		db, err = NewSqlRunner(options.DBDriver, options.DBConn)
-	case "memory":
-		db, err = NewMemoryRunner()
-	default:
-		err = fmt.Errorf("Unsupported database driver %s", options.DBDriver)
+	// apply functional arguments
+	opts := defaults()
+	for _, o := range ox {
+		opts = o(opts)
 	}
 
+	db, err := opts.dbFactory(options.DBDriver, options.DBConn)
 	if err != nil {
 		return nil, err
 	}
+
 	srv := &Server{
 		AtcApiOptions: options,
 		listener:      nil,
