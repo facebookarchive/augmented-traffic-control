@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	PANIC_STACK = false
+	PanicStack = false
 }
 
 func FakeResponse() *httptest.ResponseRecorder {
@@ -34,35 +34,35 @@ func FakeRequest(method, url string, body interface{}) *http.Request {
 
 func TestHandlesReturnedError(t *testing.T) {
 	// Note 12345 isn't a real HTTP status code. It's just for testing.
-	status_code := 12345
+	statusCode := 12345
 	message := "This message is okay in tests!"
 
-	real_handler := func(w http.ResponseWriter, r *http.Request) HttpError {
-		return HttpErrorf(status_code, message)
+	realHandler := func(w http.ResponseWriter, r *http.Request) HttpError {
+		return HttpErrorf(statusCode, message)
 	}
-	err_handler := ErrorHandler(real_handler)
+	errHandler := ErrorHandler(realHandler)
 	w := httptest.NewRecorder()
-	err_handler(w, nil)
+	errHandler(w, nil)
 
 	// check status code is set
-	if w.Code != status_code {
-		t.Errorf("Expected status code %v != %v", status_code, w.Code)
+	if w.Code != statusCode {
+		t.Errorf("Expected status code %v != %v", statusCode, w.Code)
 	}
 
 	// check message is set
-	actual_message := strings.TrimSpace(w.Body.String())
-	if actual_message != message {
-		t.Errorf("Expected error message %q != %q", message, actual_message)
+	actualMessage := strings.TrimSpace(w.Body.String())
+	if actualMessage != message {
+		t.Errorf("Expected error message %q != %q", message, actualMessage)
 	}
 }
 
 func TestHandlesThrownError(t *testing.T) {
-	real_handler := func(w http.ResponseWriter, r *http.Request) HttpError {
+	realHandler := func(w http.ResponseWriter, r *http.Request) HttpError {
 		panic("this message is okay in tests!")
 	}
-	err_handler := ErrorHandler(real_handler)
+	errHandler := ErrorHandler(realHandler)
 	w := FakeResponse()
-	err_handler(w, nil)
+	errHandler(w, nil)
 
 	// check status code is set
 	if w.Code != ServerError.Status() {
@@ -70,27 +70,26 @@ func TestHandlesThrownError(t *testing.T) {
 	}
 
 	// check message is set
-	actual_message := strings.TrimSpace(w.Body.String())
-	if actual_message != ServerError.Error() {
-		t.Errorf("Expected error message %q != %q", ServerError.Error(), actual_message)
+	actualMessage := strings.TrimSpace(w.Body.String())
+	if actualMessage != ServerError.Error() {
+		t.Errorf("Expected error message %q != %q", ServerError.Error(), actualMessage)
 	}
 }
 
 func TestGetsProxiedAddr(t *testing.T) {
-	testProxy := func(client_addr string,
-		header_addrs []string, server_addr string) (string, error) {
+	testProxy := func(clientAddr string,
+		headerAddrs []string, serverAddr string) (string, error) {
 		r, _ := http.NewRequest("GET", "/", nil)
-		r.RemoteAddr = client_addr + ":0" // net.SplitHostPort requires a port
-		for _, header_addr := range header_addrs {
-			r.Header.Add("X_HTTP_REAL_IP", header_addr)
+		r.RemoteAddr = clientAddr + ":0" // net.SplitHostPort requires a port
+		for _, headerAddr := range headerAddrs {
+			r.Header.Add("X_HTTP_REAL_IP", headerAddr)
 		}
-		srv := &Server{AtcApiOptions: AtcApiOptions{ProxyAddr: server_addr}}
+		srv := &Server{AtcApiOptions: AtcApiOptions{ProxyAddr: serverAddr}}
 		addr, err := getProxiedClientAddr(srv, r)
 		if addr != nil {
 			return addr.String(), err
-		} else {
-			return "", err
 		}
+		return "", err
 	}
 
 	// Neither the server nor the client are proxied.

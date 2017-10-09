@@ -30,7 +30,7 @@ func (mgr *LocalAssetManager) Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Need to do this so GetClientAddr will work
-	context.Set(r, srv_context_key, mgr.srv)
+	context.Set(r, srvContextKey, mgr.srv)
 
 	tmpl_data, err := mgr.srv.bind_info.templateFor(r)
 	if err != nil {
