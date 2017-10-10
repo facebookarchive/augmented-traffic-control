@@ -113,7 +113,7 @@ type Args struct {
 
 func parseArgs() Args {
 	// ShapingFlags sets up platform-specific flags for the shaper.
-	shaping.ShapingFlags()
+	shaping.Flags()
 
 	args := Args{}
 

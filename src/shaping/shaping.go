@@ -1,24 +1,26 @@
-/*
-The `shaping` package contains the `Shaper` interface to which platform-specific
-shapers must conform. It also contains platform-specific shapers.
-*/
+// Package shaping package the `Shaper` interface to which platform-specific
+// shapers must conform. It also contains platform-specific shapers.
 package shaping
 
 import (
 	"atc_thrift"
 
 	"github.com/facebook/augmented-traffic-control/src/iptables"
-	. "github.com/facebook/augmented-traffic-control/src/log"
+	atc_log "github.com/facebook/augmented-traffic-control/src/log"
 )
 
-var Log *LogMux
+// Log is the package-wide logger
+var Log *atc_log.LogMux
 
 func init() {
-	Log = NewMux(Syslog(), Stdlog())
+	Log = atc_log.NewMux(atc_log.Syslog(), atc_log.Stdlog())
 }
 
+// Target is a target ipaddress for which to apply shaping rules
 type Target iptables.Target
 
+// A Shaper is a collection of platform-specific operations
+// for shaping network traffic
 type Shaper interface {
 	// Get the platform type for this shaper.
 	GetPlatform() atc_thrift.PlatformType
@@ -48,23 +50,26 @@ type Shaper interface {
 	Unshape(id int64) error
 }
 
-/*
-A stub shaper used by tests.
+// FakeShaper is a stub shaper used by tests.
+// All functions except GetPlatform return nil.
+// GetPlatform returns atc_thrift.PlatformType_LINUX
+func FakeShaper() Shaper {
+	return &fakeShaper{}
+}
 
-All functions except GetPlatform return nil.
+// you do not have to document if you do not export
+// the struct
 
-GetPlatform returns atc_thrift.PlatformType_LINUX
-*/
-type FakeShaper struct{}
+type fakeShaper struct{}
 
-func (FakeShaper) GetPlatform() atc_thrift.PlatformType {
+func (fakeShaper) GetPlatform() atc_thrift.PlatformType {
 	return atc_thrift.PlatformType_LINUX
 }
 
-func (FakeShaper) Initialize() error                                 { return nil }
-func (FakeShaper) CreateGroup(int64, Target) error                   { return nil }
-func (FakeShaper) JoinGroup(int64, Target) error                     { return nil }
-func (FakeShaper) LeaveGroup(int64, Target) error                    { return nil }
-func (FakeShaper) DeleteGroup(int64) error                           { return nil }
-func (FakeShaper) Shape(id int64, shaping *atc_thrift.Shaping) error { return nil }
-func (FakeShaper) Unshape(int64) error                               { return nil }
+func (fakeShaper) Initialize() error                                 { return nil }
+func (fakeShaper) CreateGroup(int64, Target) error                   { return nil }
+func (fakeShaper) JoinGroup(int64, Target) error                     { return nil }
+func (fakeShaper) LeaveGroup(int64, Target) error                    { return nil }
+func (fakeShaper) DeleteGroup(int64) error                           { return nil }
+func (fakeShaper) Shape(id int64, shaping *atc_thrift.Shaping) error { return nil }
+func (fakeShaper) Unshape(int64) error                               { return nil }

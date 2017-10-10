@@ -140,7 +140,7 @@ func Setup(t *testing.T, secure bool) *testAtcd {
 	options := DefaultAtcdOptions
 	options.Secure = secure
 
-	eng, err := buildShapingEngine(10, nil, shaping.FakeShaper{}, &Config{})
+	eng, err := buildShapingEngine(10, nil, shaping.FakeShaper(), &Config{})
 	if err != nil {
 		t.Fatal(err)
 	}

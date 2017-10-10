@@ -15,35 +15,42 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
-var FILTER_IP_TYPE = []uint16{syscall.ETH_P_IP, syscall.ETH_P_IPV6}
+// FilterIPType defines the types of IP addresses to
+// create the netlink filter on.
+var FilterIPType = []uint16{syscall.ETH_P_IP, syscall.ETH_P_IPV6}
 
 var (
 	// location of the iptables binaries
-	IPTABLES  string
+
+	// IPTABLES is the location of the iptables binary
+	IPTABLES string
+
+	// IP6TABLES is the location of the ip6tables binary
 	IP6TABLES string
 
 	// Names of the wan and lan interfaces (e.g. eth0, enp6s0)
-	WAN_INT string
-	LAN_INT string
 
-	DONT_DROP_PACKETS bool
+	// WanInterface is the wan interface name
+	WanInterface string
+
+	// LanInterface is the lan interface name
+	LanInterface string
+
+	// DontDropPackets is the flag for not dropping packets
+	DontDropPackets bool
 )
 
-/*
-Sets up platform-specific flags for the shaper.
-*/
-func ShapingFlags() {
+// Flags sets up platform-specific flags for the shaper.
+func Flags() {
 	kingpin.Flag("iptables", "location of the iptables binary").StringVar(&IPTABLES)
 	kingpin.Flag("ip6tables", "location of the ip6tables binary").StringVar(&IP6TABLES)
-	kingpin.Flag("wan", "name of the WAN interface").StringVar(&WAN_INT)
-	kingpin.Flag("lan", "name of the LAN interface").StringVar(&LAN_INT)
-	kingpin.Flag("dont-drop-packets", "Buffer packets that overflow the queue instead of dropping them").BoolVar(&DONT_DROP_PACKETS)
+	kingpin.Flag("wan", "name of the WAN interface").StringVar(&WanInterface)
+	kingpin.Flag("lan", "name of the LAN interface").StringVar(&LanInterface)
+	kingpin.Flag("dont-drop-packets", "Buffer packets that overflow the queue instead of dropping them").BoolVar(&DontDropPackets)
 }
 
-/*
-Returns a shaper suitable for the current platform.
-This build of ATC is compiled with iptables support and only works on linux.
-*/
+// GetShaper returns a shaper suitable for the current platform.
+// This build of ATC is compiled with iptables support and only works on linux.
 func GetShaper() (Shaper, error) {
 	var err error
 	// Make sure that the location of the iptables binaries are set
@@ -83,7 +90,7 @@ func (nl *netlinkShaper) GetPlatform() atc_thrift.PlatformType {
 
 func (nl *netlinkShaper) Initialize() error {
 	Log.Debugln("Initializing shaper using netlink")
-	if WAN_INT == "eth0" && LAN_INT == "eth1" {
+	if WanInterface == "eth0" && LanInterface == "eth1" {
 		Log.Println("-wan and -lan were not provided. Using defaults. This is probably not what you want!")
 	}
 	// Clean out mangle's FORWARD chain. There might be remaining
@@ -112,7 +119,7 @@ func (nl *netlinkShaper) Initialize() error {
 Create a group. The ID used here is assumed to be unique to this group and won't change.
 */
 func (nl *netlinkShaper) CreateGroup(id int64, member Target) (err error) {
-	err = nl.mark_packets_for(member, id)
+	err = nl.markPacketsFor(member, id)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to mark packets for group")
 	}
@@ -120,7 +127,7 @@ func (nl *netlinkShaper) CreateGroup(id int64, member Target) (err error) {
 }
 
 func (nl *netlinkShaper) JoinGroup(id int64, member Target) (err error) {
-	err = nl.mark_packets_for(member, id)
+	err = nl.markPacketsFor(member, id)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to mark packets for group")
 	}
@@ -128,7 +135,7 @@ func (nl *netlinkShaper) JoinGroup(id int64, member Target) (err error) {
 }
 
 func (nl *netlinkShaper) LeaveGroup(id int64, member Target) (err error) {
-	err = nl.remove_marking_for(member, id)
+	err = nl.removeMarkingFor(member, id)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to remove marking for group")
 	}
@@ -146,20 +153,20 @@ func (nl *netlinkShaper) Shape(id int64, shaping *atc_thrift.Shaping) error {
 		return err
 	}
 	// Unshape before shaping. (FIXME: #173)
-	if err := shape_off(id, lan); err != nil {
-		Log.Printf("Could not temporarily unshape lan(%s) interface: %v", LAN_INT, err)
+	if err := shapeOff(id, lan); err != nil {
+		Log.Printf("Could not temporarily unshape lan(%s) interface: %v", LanInterface, err)
 	}
-	if err := shape_off(id, wan); err != nil {
-		Log.Printf("Could not temporarily unshape wan(%s) interface: %v", WAN_INT, err)
+	if err := shapeOff(id, wan); err != nil {
+		Log.Printf("Could not temporarily unshape wan(%s) interface: %v", WanInterface, err)
 	}
 	// Shape on the OUTBOUND side.
 	// Traffic on the lan interface is incoming, so down.
-	if err := shape_on(id, shaping.Down, lan); err != nil {
-		return fmt.Errorf("Could not shape lan(%s) interface: %v", LAN_INT, err)
+	if err := shapeOn(id, shaping.Down, lan); err != nil {
+		return fmt.Errorf("Could not shape lan(%s) interface: %v", LanInterface, err)
 	}
 	// Traffic on the wan interface is outgoing, so up.
-	if err := shape_on(id, shaping.Up, wan); err != nil {
-		return fmt.Errorf("Could not shape wan(%s) interface: %v", WAN_INT, err)
+	if err := shapeOn(id, shaping.Up, wan); err != nil {
+		return fmt.Errorf("Could not shape wan(%s) interface: %v", WanInterface, err)
 	}
 	return nil
 }
@@ -169,16 +176,16 @@ func (nl *netlinkShaper) Unshape(id int64) error {
 	if err != nil {
 		return err
 	}
-	if err := shape_off(id, lan); err != nil {
-		return fmt.Errorf("Could not unshape lan(%s) interface: %v", LAN_INT, err)
+	if err := shapeOff(id, lan); err != nil {
+		return fmt.Errorf("Could not unshape lan(%s) interface: %v", LanInterface, err)
 	}
-	if err := shape_off(id, wan); err != nil {
-		return fmt.Errorf("Could not unshape wan(%s) interface: %v", WAN_INT, err)
+	if err := shapeOff(id, wan); err != nil {
+		return fmt.Errorf("Could not unshape wan(%s) interface: %v", WanInterface, err)
 	}
 	return nil
 }
 
-func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) error {
+func shapeOn(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) error {
 	// Rate is a required argument for HTB class. If we are given a value of 0,
 	// rate was not set and is considered unlimited.
 	// In that case, let set the rate as high as we can.
@@ -209,10 +216,10 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 	// filters packets with mark 0x2 to classid 1:2
 	// We need to add the filter for both IPv4 and IPv6
 	action := netlink.TC_POLICE_SHOT
-	if DONT_DROP_PACKETS {
+	if DontDropPackets {
 		action = netlink.TC_POLICE_OK
 	}
-	for idx, proto := range FILTER_IP_TYPE {
+	for idx, proto := range FilterIPType {
 		fw, err := netlink.NewFw(netlink.FilterAttrs{
 			LinkIndex: link.Attrs().Index,
 			Parent:    netlink.MakeHandle(1, 0),
@@ -262,14 +269,14 @@ func shape_on(id int64, shaping *atc_thrift.LinkShaping, link netlink.Link) erro
 	return nil
 }
 
-func shape_off(id int64, link netlink.Link) error {
+func shapeOff(id int64, link netlink.Link) error {
 	htbc := netlink.NewHtbClass(netlink.ClassAttrs{
 		LinkIndex: link.Attrs().Index,
 		Handle:    netlink.MakeHandle(1, uint16(id)),
 		Parent:    netlink.MakeHandle(1, 0),
 	}, netlink.HtbClassAttrs{})
 
-	for idx, proto := range FILTER_IP_TYPE {
+	for idx, proto := range FilterIPType {
 		fw, err := netlink.NewFw(netlink.FilterAttrs{
 			LinkIndex: link.Attrs().Index,
 			Parent:    netlink.MakeHandle(1, 0),
@@ -296,27 +303,27 @@ func shape_off(id int64, link netlink.Link) error {
 	return nil
 }
 
-func (nl *netlinkShaper) mark_packets_for(target Target, mark int64) (err error) {
+func (nl *netlinkShaper) markPacketsFor(target Target, mark int64) (err error) {
 	ipt := nl.tablesFor(target)
 	chain := ipt.Table("mangle").Chain("FORWARD")
-	if err = chain.Append(iptables.Rule{Destination: target, In: WAN_INT}.SetMark(mark)); err != nil {
+	if err = chain.Append(iptables.Rule{Destination: target, In: WanInterface}.SetMark(mark)); err != nil {
 		err = errors.Wrapf(err, "Could not mark packets for %s: %v", target)
 		return
 	}
-	if err = chain.Append(iptables.Rule{Source: target, In: LAN_INT}.SetMark(mark)); err != nil {
+	if err = chain.Append(iptables.Rule{Source: target, In: LanInterface}.SetMark(mark)); err != nil {
 		err = errors.Wrapf(err, "Could not mark packets for %s", target)
 		return
 	}
 	return
 }
 
-func (nl *netlinkShaper) remove_marking_for(target Target, mark int64) error {
+func (nl *netlinkShaper) removeMarkingFor(target Target, mark int64) error {
 	ipt := nl.tablesFor(target)
 	chain := ipt.Table("mangle").Chain("FORWARD")
-	if err := chain.Delete(iptables.Rule{Destination: target, In: WAN_INT}.SetMark(mark)); err != nil {
+	if err := chain.Delete(iptables.Rule{Destination: target, In: WanInterface}.SetMark(mark)); err != nil {
 		return fmt.Errorf("Could not mark packets for %s: %v", target, err)
 	}
-	if err := chain.Delete(iptables.Rule{Source: target, In: LAN_INT}.SetMark(mark)); err != nil {
+	if err := chain.Delete(iptables.Rule{Source: target, In: LanInterface}.SetMark(mark)); err != nil {
 		return fmt.Errorf("Could not mark packets for %s: %v", target, err)
 	}
 	return nil
@@ -325,9 +332,9 @@ func (nl *netlinkShaper) remove_marking_for(target Target, mark int64) error {
 func (nl *netlinkShaper) tablesFor(target Target) *iptables.IPTables {
 	if target.V6() {
 		return nl.ip6t
-	} else {
-		return nl.ip4t
 	}
+
+	return nl.ip4t
 }
 
 func (nl *netlinkShaper) flush() error {
@@ -338,14 +345,14 @@ func (nl *netlinkShaper) flush() error {
 }
 
 func lookupInterfaces() (wan, lan netlink.Link, err error) {
-	lan, err = netlink.LinkByName(LAN_INT)
+	lan, err = netlink.LinkByName(LanInterface)
 	if err != nil {
-		err = fmt.Errorf("Could not find lan(%s) interface: %v", LAN_INT, err)
+		err = fmt.Errorf("Could not find lan(%s) interface: %v", LanInterface, err)
 		return
 	}
-	wan, err = netlink.LinkByName(WAN_INT)
+	wan, err = netlink.LinkByName(WanInterface)
 	if err != nil {
-		err = fmt.Errorf("Could not find wan(%s) interface: %v", WAN_INT, err)
+		err = fmt.Errorf("Could not find wan(%s) interface: %v", WanInterface, err)
 		return
 	}
 	return
@@ -365,14 +372,14 @@ func setupRootQdisc(link netlink.Link) error {
 	}
 
 	// Setup new HTB qdisc as root
-	root_qdisc := netlink.NewHtb(netlink.QdiscAttrs{
+	rootQDisc := netlink.NewHtb(netlink.QdiscAttrs{
 		LinkIndex: link.Attrs().Index,
 		Parent:    netlink.HANDLE_ROOT,
 		Handle:    netlink.MakeHandle(1, 0),
 	})
-	Log.Debugf("Creating new root qdisc on %s: %#v\n", link.Attrs().Name, root_qdisc)
+	Log.Debugf("Creating new root qdisc on %s: %#v\n", link.Attrs().Name, rootQDisc)
 
-	if err := netlink.QdiscAdd(root_qdisc); err != nil {
+	if err := netlink.QdiscAdd(rootQDisc); err != nil {
 		return fmt.Errorf("Could not create root qdisc (%s): %v", link.Attrs().Name, err)
 	}
 	return nil

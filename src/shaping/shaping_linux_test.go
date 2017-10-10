@@ -26,6 +26,11 @@ func init() {
 }
 
 func TestCreatesRootQdisc(t *testing.T) {
+	if os.Getenv("INTEGRATION_TEST") == "" {
+		t.SkipNow()
+		return
+	}
+
 	tearDown, link := setUpNetlinkTest(t)
 	defer tearDown()
 
@@ -36,9 +41,9 @@ func TestCreatesRootQdisc(t *testing.T) {
 	check(t, err, "couldn't list qdiscs")
 
 	if testing.Verbose() {
-		test_cmd(t, "tc", "qdisc", "show", "dev", link.Attrs().Name)
-		test_cmd(t, "tc", "class", "show", "dev", link.Attrs().Name)
-		test_cmd(t, "tc", "filter", "show", "dev", link.Attrs().Name)
+		testCmd(t, "tc", "qdisc", "show", "dev", link.Attrs().Name)
+		testCmd(t, "tc", "class", "show", "dev", link.Attrs().Name)
+		testCmd(t, "tc", "filter", "show", "dev", link.Attrs().Name)
 	}
 
 	// FIXME Better asserts
@@ -53,12 +58,17 @@ func TestCreatesRootQdisc(t *testing.T) {
 }
 
 func TestShapeOn(t *testing.T) {
+	if os.Getenv("INTEGRATION_TEST") == "" {
+		t.SkipNow()
+		return
+	}
+
 	tearDown, link := setUpNetlinkTest(t)
 	defer tearDown()
 
 	check(t, setupRootQdisc(link), "couldn't create root qdisc")
 
-	// Set up class + filters (ipv4/ipv6) using shape_on
+	// Set up class + filters (ipv4/ipv6) using shapeOn
 	mark := int64(5)
 	shaping := &atc_thrift.LinkShaping{
 		Rate:       10,
@@ -67,7 +77,7 @@ func TestShapeOn(t *testing.T) {
 		Loss:       &atc_thrift.Loss{Percentage: 10, Correlation: 6.3},
 		Corruption: &atc_thrift.Corruption{Percentage: 3.4},
 	}
-	check(t, shape_on(mark, shaping, link), "could not enable shaping")
+	check(t, shapeOn(mark, shaping, link), "could not enable shaping")
 
 	classes, err := netlink.ClassList(
 		link, netlink.MakeHandle(0x1, uint16(mark)),
@@ -81,9 +91,9 @@ func TestShapeOn(t *testing.T) {
 	check(t, err, "couldn't list filters")
 
 	if testing.Verbose() {
-		test_cmd(t, "tc", "qdisc", "show", "dev", link.Attrs().Name)
-		test_cmd(t, "tc", "class", "show", "dev", link.Attrs().Name)
-		test_cmd(t, "tc", "filter", "show", "dev", link.Attrs().Name)
+		testCmd(t, "tc", "qdisc", "show", "dev", link.Attrs().Name)
+		testCmd(t, "tc", "class", "show", "dev", link.Attrs().Name)
+		testCmd(t, "tc", "filter", "show", "dev", link.Attrs().Name)
 	}
 
 	// FIXME Better asserts
@@ -95,15 +105,20 @@ func TestShapeOn(t *testing.T) {
 }
 
 func TestShapeRate0(t *testing.T) {
+	if os.Getenv("INTEGRATION_TEST") == "" {
+		t.SkipNow()
+		return
+	}
+
 	tearDown, link := setUpNetlinkTest(t)
 	defer tearDown()
 
 	check(t, setupRootQdisc(link), "couldn't create root qdisc")
 
-	// Set up class + filters (ipv4/ipv6) using shape_on
+	// Set up class + filters (ipv4/ipv6) using shapeOn
 	mark := int64(5)
 	shaping := &atc_thrift.LinkShaping{}
-	check(t, shape_on(mark, shaping, link), "could not enable shaping")
+	check(t, shapeOn(mark, shaping, link), "could not enable shaping")
 
 	classes, err := netlink.ClassList(
 		link, netlink.MakeHandle(0x1, uint16(mark)),
@@ -119,9 +134,9 @@ func TestShapeRate0(t *testing.T) {
 	// the netlink implementation is supporting 64 bits).
 
 	if testing.Verbose() {
-		test_cmd(t, "tc", "qdisc", "show", "dev", link.Attrs().Name)
-		test_cmd(t, "tc", "class", "show", "dev", link.Attrs().Name)
-		test_cmd(t, "tc", "filter", "show", "dev", link.Attrs().Name)
+		testCmd(t, "tc", "qdisc", "show", "dev", link.Attrs().Name)
+		testCmd(t, "tc", "class", "show", "dev", link.Attrs().Name)
+		testCmd(t, "tc", "filter", "show", "dev", link.Attrs().Name)
 	}
 	if class.Rate != math.MaxUint32 {
 		t.Fatal("Failed to set unlimited rate.")
@@ -129,28 +144,33 @@ func TestShapeRate0(t *testing.T) {
 }
 
 func TestShapeOff(t *testing.T) {
+	if os.Getenv("INTEGRATION_TEST") == "" {
+		t.SkipNow()
+		return
+	}
+
 	tearDown, link := setUpNetlinkTest(t)
 	defer tearDown()
 
 	check(t, setupRootQdisc(link), "couldn't create root qdisc")
 
-	// Set up class + filters (ipv4/ipv6) using shape_on
+	// Set up class + filters (ipv4/ipv6) using shapeOn
 	mark := int64(5)
 	shaping := &atc_thrift.LinkShaping{
 		Rate:  10,
 		Delay: &atc_thrift.Delay{Delay: 10},
 		Loss:  &atc_thrift.Loss{Percentage: 10},
 	}
-	check(t, shape_on(mark, shaping, link), "could not enable shaping")
-	check(t, shape_off(mark, link), "could not disable shaping")
+	check(t, shapeOn(mark, shaping, link), "could not enable shaping")
+	check(t, shapeOff(mark, link), "could not disable shaping")
 
 	filters, err := netlink.FilterList(link, netlink.MakeHandle(0x1, 0))
 	check(t, err, "could not list filters")
 
 	if testing.Verbose() {
-		test_cmd(t, "tc", "qdisc", "show", "dev", link.Attrs().Name)
-		test_cmd(t, "tc", "class", "show", "dev", link.Attrs().Name)
-		test_cmd(t, "tc", "filter", "show", "dev", link.Attrs().Name)
+		testCmd(t, "tc", "qdisc", "show", "dev", link.Attrs().Name)
+		testCmd(t, "tc", "class", "show", "dev", link.Attrs().Name)
+		testCmd(t, "tc", "filter", "show", "dev", link.Attrs().Name)
 	}
 
 	// FIXME Better asserts
@@ -162,10 +182,15 @@ func TestShapeOff(t *testing.T) {
 }
 
 func TestShapeTwice(t *testing.T) {
+	if os.Getenv("INTEGRATION_TEST") == "" {
+		t.SkipNow()
+		return
+	}
+
 	assert, tearDown, shaper := setUpShaperTest(t)
 	defer tearDown()
 
-	// Set up class + filters (ipv4/ipv6) using shape_on
+	// Set up class + filters (ipv4/ipv6) using shapeOn
 	mark := int64(7)
 	shaping := &atc_thrift.Shaping{
 		Up: &atc_thrift.LinkShaping{
@@ -187,9 +212,9 @@ func TestShapeTwice(t *testing.T) {
 
 	if testing.Verbose() {
 		for _, s := range []string{"wan", "lan"} {
-			test_cmd(t, "tc", "qdisc", "show", "dev", s)
-			test_cmd(t, "tc", "class", "show", "dev", s)
-			test_cmd(t, "tc", "filter", "show", "dev", s)
+			testCmd(t, "tc", "qdisc", "show", "dev", s)
+			testCmd(t, "tc", "class", "show", "dev", s)
+			testCmd(t, "tc", "filter", "show", "dev", s)
 		}
 	}
 
@@ -197,6 +222,11 @@ func TestShapeTwice(t *testing.T) {
 }
 
 func TestGroupCreateJoin(t *testing.T) {
+	if os.Getenv("INTEGRATION_TEST") == "" {
+		t.SkipNow()
+		return
+	}
+
 	// Do this all in the same network namespace so all the groups exist at once.
 	assert, tearDown, shaper := setUpShaperTest(t)
 	defer tearDown()
@@ -211,7 +241,7 @@ func TestGroupCreateJoin(t *testing.T) {
 
 	// Test some random setups.
 	// 10 IPs in each group, between 0 and 10 IPv4 addresses per group
-	for f := 0; f <= 10; f += 1 {
+	for f := 0; f <= 10; f++ {
 		testGroupCreateJoin(assert, shaper, randIPGens(10, f)...)
 	}
 }
@@ -320,8 +350,8 @@ func setUpShaperTest(t *testing.T) (*assertlib.Assertions, func(), *netlinkShape
 	assert.NoError(setupRootQdisc(link), "could not setup wan root qdisc")
 	link = setUpDummyInterface(t, "lan")
 	assert.NoError(setupRootQdisc(link), "could not setup lan root qdisc")
-	LAN_INT = "lan"
-	WAN_INT = "wan"
+	LanInterface = "lan"
+	WanInterface = "wan"
 
 	shaper, err := GetShaper()
 	assert.NoError(err, "could not get shaper")
@@ -380,7 +410,7 @@ func check(t *testing.T, err error, s string) {
 	}
 }
 
-func test_cmd(t *testing.T, cmd string, args ...string) {
+func testCmd(t *testing.T, cmd string, args ...string) {
 	if cmdOut, err := exec.Command(cmd, args...).CombinedOutput(); err != nil {
 		t.Fatalf("There was an error running cmd %v:\n%v\n", err, string(cmdOut))
 	} else {

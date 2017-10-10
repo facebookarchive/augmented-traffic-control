@@ -22,7 +22,7 @@ type ShapingEngine struct {
 func NewShapingEngine(resolution int, thriftAddr *net.TCPAddr, conf *Config, fakeShaping bool) (*ShapingEngine, error) {
 
 	if fakeShaping {
-		shaper := &shaping.FakeShaper{}
+		shaper := shaping.FakeShaper()
 		return buildShapingEngine(resolution, thriftAddr, shaper, conf)
 	}
 
