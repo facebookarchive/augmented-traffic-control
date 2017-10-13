@@ -23,7 +23,7 @@ func (mgr *BundleAssetManager) Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Need to do this so GetClientAddr will work
-	context.Set(r, srv_context_key, mgr.srv)
+	context.Set(r, srvContextKey, mgr.srv)
 
 	tmpl, err := template.New("root").Parse(string(data))
 	if err != nil {
