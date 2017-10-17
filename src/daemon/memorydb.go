@@ -13,9 +13,11 @@ type memoryRunner struct {
 	mutex       sync.RWMutex
 	members     map[string]*DbMember
 	groups      map[int64]*DbGroup
-	lastGroupId int64
+	lastGroupID int64
 }
 
+// NewMemoryRunner builds a new database runner
+// that stores everything in memory
 func NewMemoryRunner() (DbRunner, error) {
 	runner := &memoryRunner{
 		members: make(map[string]*DbMember),
@@ -61,7 +63,7 @@ func (runner *memoryRunner) DeleteGroup(id int64) error {
 func (runner *memoryRunner) UpdateGroup(group DbGroup) (*DbGroup, error) {
 	var err error
 	if group.id == 0 {
-		group.id, err = runner.nextGroupId()
+		group.id, err = runner.nextGroupID()
 		if err != nil {
 			runner.log(err)
 			return nil, err
@@ -145,12 +147,12 @@ func (runner *memoryRunner) getAllGroups(grps chan *DbGroup) error {
 	return nil
 }
 
-func (runner *memoryRunner) nextGroupId() (int64, error) {
+func (runner *memoryRunner) nextGroupID() (int64, error) {
 	runner.mutex.Lock()
 	defer runner.mutex.Unlock()
 
-	runner.lastGroupId++
-	return runner.lastGroupId, nil
+	runner.lastGroupID++
+	return runner.lastGroupID, nil
 }
 
 func (runner *memoryRunner) getMembersOf(id int64, members chan iptables.Target) error {

@@ -1,7 +1,8 @@
 package daemon
 
 import (
-	. "github.com/facebook/augmented-traffic-control/src/log"
+	atc_log "github.com/facebook/augmented-traffic-control/src/log"
 )
 
-var Log *LogMux
+// Log is the package-level log for the daemon package
+var Log *atc_log.LogMux
