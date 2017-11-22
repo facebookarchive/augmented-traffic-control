@@ -63,7 +63,7 @@ The most important options to configure are:
 
 In order to shape traffic, `atcd` leverages Linux's builtin [Traffic Control subsystem][tchowto]. Communication with the Traffic Control subsystem is done over the netlink API and facilitated by [pyroute2][pyroute2], a pure python netlink library.
 
-Packets that needs to be shaped are expected to be marked. Based on that mark, a classifier will put the packets in the right "buckets", which then will throttle the bandwith, add latency, drop packets, corrupt them... depending on the shaping settings.
+Packets that needs to be shaped are expected to be marked. Based on that mark, a classifier will put the packets in the right "buckets", which then will throttle the bandwidth, add latency, drop packets, corrupt them... depending on the shaping settings.
 
 The diagram below illustrate the flow an IP packet goes through:
 ![ATC Diagram][atc_diagram]
