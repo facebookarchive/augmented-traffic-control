@@ -65,12 +65,15 @@ func ListenAndServe(options AtcApiOptions, ox ...OptionFunc) (*Server, error) {
 		},
 		assets: nil,
 	}
+
+  r := opts.muxFactory(srv)
+
 	if options.AssetPath == "" {
 		srv.assets = &BundleAssetManager{srv}
 	} else {
 		srv.assets = &LocalAssetManager{srv, options.AssetPath}
 	}
-	srv.setupHandlers()
+  srv.setupHandlers(r)
 	err = srv.ListenAndServe()
 	if err != nil {
 		return nil, err
@@ -126,8 +129,7 @@ func (srv *Server) Serve() {
 	_srv.Serve(srv.listener)
 }
 
-func (srv *Server) setupHandlers() {
-	r := mux.NewRouter()
+func (srv *Server) setupHandlers(r *mux.Router) {}
 	apir := r.PathPrefix(ROOT_URL).Subrouter()
 	for url, f := range APIURLMap {
 		h := NewHandler(srv, f)
