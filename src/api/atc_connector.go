@@ -9,12 +9,12 @@ import (
 )
 
 var (
-	ProtoFactories = map[string]thrift.TProtocolFactory{
-		"json": thrift.NewTJSONProtocolFactory(),
+	ProtoFactories = map[string]thrift.ProtocolFactory{
+		"json": thrift.NewJSONProtocolFactory(),
 	}
 )
 
-func getThriftProtocol(thrift_proto string) (thrift.TProtocolFactory, error) {
+func getThriftProtocol(thrift_proto string) (thrift.ProtocolFactory, error) {
 	f, ok := ProtoFactories[thrift_proto]
 	if !ok {
 		return nil, fmt.Errorf("Unknown thrift protocol: %q", thrift_proto)
@@ -29,7 +29,7 @@ type AtcdCloser interface {
 
 type AtcdConn struct {
 	*atc_thrift.AtcdClient
-	xport      thrift.TTransport
+	xport      thrift.Transport
 	thrift_url *url.URL
 }
 
@@ -41,7 +41,7 @@ func NewAtcdConn(thrift_url *url.URL) *AtcdConn {
 
 func (atcd *AtcdConn) Open() error {
 	var err error
-	atcd.xport, err = thrift.NewTSocket(atcd.thrift_url.Host)
+	atcd.xport, err = thrift.NewSocket(atcd.thrift_url.Host)
 	if err != nil {
 		return err
 	}

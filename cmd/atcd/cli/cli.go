@@ -139,15 +139,15 @@ func parseArgs() Args {
 
 // Runs the ATCD thrift server on the provided address.
 func runServer(atcd atc_thrift.Atcd, addr *net.TCPAddr) error {
-	transport, err := thrift.NewTServerSocket(addr.String())
+	transport, err := thrift.NewServerSocket(addr.String())
 	if err != nil {
 		return err
 	}
 	processor := atc_thrift.NewAtcdProcessor(atcd)
 
-	pfactory := thrift.NewTJSONProtocolFactory()
-	tfactory := thrift.NewTTransportFactory()
-	server := thrift.NewTSimpleServer4(processor, transport, tfactory, pfactory)
+	pfactory := thrift.NewJSONProtocolFactory()
+	tfactory := thrift.NewTransportFactory()
+	server := thrift.NewSimpleServer4(processor, transport, tfactory, pfactory)
 
 	daemon.Log.Printf("Starting the thrift server on %v\n", addr)
 	return server.Serve()
