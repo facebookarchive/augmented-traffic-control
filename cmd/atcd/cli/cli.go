@@ -149,7 +149,7 @@ func runServer(atcd atc_thrift.Atcd, addr *net.TCPAddr) error {
 	tfactory := thrift.NewTransportFactory()
 	server := thrift.NewSimpleServer(processor, transport,
 		thrift.TransportFactories(tfactory),
-		thrift.ProtocolFactories(tfactory))
+		thrift.ProtocolFactories(pfactory))
 
 	daemon.Log.Printf("Starting the thrift server on %v\n", addr)
 	return server.Serve()
