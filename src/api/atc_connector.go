@@ -41,7 +41,7 @@ func NewAtcdConn(thrift_url *url.URL) *AtcdConn {
 
 func (atcd *AtcdConn) Open() error {
 	var err error
-	atcd.xport, err = thrift.NewSocket(atcd.thrift_url.Host)
+	atcd.xport, err = thrift.NewSocket(thrift.SocketAddr(atcd.thrift_url.Host))
 	if err != nil {
 		return err
 	}
