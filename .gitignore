@@ -48,3 +48,7 @@ build-pkg
 lib
 log/
 db/
+
+vendor/*
+!vendor/atc_thrift
+!vendor/atc_thrift/*
